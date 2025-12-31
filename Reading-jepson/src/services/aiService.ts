@@ -1,0 +1,415 @@
+/**
+ * AI Service for Reading Application
+ * 
+ * Integrates with OpenAI API to provide:
+ * - Reading level estimation
+ * - Passage adjustment with vocabulary integration
+ * - Comprehension question generation
+ * - Inquiry question customization for vocabulary
+ */
+
+import type { 
+  QuestionType 
+} from '@/types/firestore'
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL = 'gpt-4o-mini' // Cost-effective model, can upgrade to gpt-4o for better quality
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface ReadingLevelEstimate {
+  grade: number // e.g., 6.5
+  lexile?: string // e.g., "850L"
+  fleschKincaid?: number
+  confidence: 'high' | 'medium' | 'low'
+  reasoning: string
+}
+
+export interface ComprehensionQuestion {
+  type: QuestionType
+  prompt: string
+  rubric?: string
+  orderIndex: number
+}
+
+export interface InquiryVocabData {
+  word: string
+  definition: string
+  exampleSentence: string
+  inquiryPrompts: string[]
+  truthBites: string[]
+  inferenceQuestion: string
+}
+
+export interface PassageAdjustmentParams {
+  originalText: string
+  targetReadingLevel?: string
+  vocabWords: string[]
+  affixes: string[]
+  instructions?: string
+}
+
+export interface PassageAdjustmentResult {
+  adjustedText: string
+  wordCount: number
+  vocabIntegrated: number
+  affixesIntegrated: number
+  changes: string[]
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+async function callOpenAI(messages: any[], temperature = 0.7, responseFormat?: { type: 'json_object' }): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+  }
+
+  const response = await fetch(OPENAI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      temperature,
+      ...(responseFormat && { response_format: responseFormat })
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`)
+  }
+
+  const data = await response.json()
+  return data.choices[0].message.content
+}
+
+// ============================================================================
+// Reading Level Estimation
+// ============================================================================
+
+export async function estimateReadingLevel(text: string): Promise<ReadingLevelEstimate> {
+  const prompt = `Analyze the following passage and estimate its reading level.
+
+Passage:
+"""
+${text}
+"""
+
+Consider:
+- Sentence complexity and length
+- Vocabulary difficulty
+- Concept density
+- Text structure
+
+Respond with a JSON object containing:
+{
+  "grade": <number, e.g., 6.5>,
+  "lexile": <string, e.g., "850L">,
+  "fleschKincaid": <number>,
+  "confidence": <"high" | "medium" | "low">,
+  "reasoning": <string explaining your assessment>
+}`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert in reading assessment and text complexity analysis.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callOpenAI(messages, 0.3, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
+// ============================================================================
+// Passage Adjustment with Vocabulary Integration
+// ============================================================================
+
+export async function adjustPassageWithVocab(params: PassageAdjustmentParams): Promise<PassageAdjustmentResult> {
+  const { originalText, targetReadingLevel, vocabWords, affixes, instructions } = params
+
+  const prompt = `Adjust the following passage to naturally incorporate the target vocabulary words and affixes while maintaining readability and coherence.
+
+Original Passage:
+"""
+${originalText}
+"""
+
+Target Vocabulary Words:
+${vocabWords.map(w => `- ${w}`).join('\n')}
+
+Target Affixes to Feature:
+${affixes.map(a => `- ${a}`).join('\n')}
+
+${targetReadingLevel ? `Target Reading Level: ${targetReadingLevel}` : ''}
+${instructions ? `Additional Instructions: ${instructions}` : ''}
+
+Requirements:
+1. Naturally integrate as many vocabulary words as possible (aim for all if feasible)
+2. Use words containing the target affixes where appropriate
+3. Maintain the core meaning and narrative flow
+4. Keep sentences clear and appropriate for the reading level
+5. The passage should feel natural, not forced
+
+Respond with a JSON object:
+{
+  "adjustedText": <string, the revised passage>,
+  "wordCount": <number>,
+  "vocabIntegrated": <number of vocab words successfully integrated>,
+  "affixesIntegrated": <number of affixes featured>,
+  "changes": <array of strings describing major changes made>
+}`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert educator skilled at adapting reading passages to include specific vocabulary while maintaining natural, engaging prose.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callOpenAI(messages, 0.7, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
+// ============================================================================
+// Comprehension Question Generation
+// ============================================================================
+
+export async function generateComprehensionQuestions(
+  passageText: string,
+  day: 2 | 4 | 5,
+  count: { literal?: number; inferential?: number; mainIdea?: number } = {}
+): Promise<ComprehensionQuestion[]> {
+  
+  const defaultCounts = {
+    literal: count.literal ?? 3,
+    inferential: count.inferential ?? 3,
+    mainIdea: count.mainIdea ?? 1
+  }
+
+  const dayContext = day === 2 
+    ? 'first reading comprehension (focus on basic understanding)'
+    : day === 4
+    ? 'deeper analysis (focus on main idea and supporting details)'
+    : 'Friday assessment (comprehensive evaluation)'
+
+  const prompt = `Generate comprehension questions for the following passage. This is for ${dayContext}.
+
+Passage:
+"""
+${passageText}
+"""
+
+Generate:
+- ${defaultCounts.literal} literal questions (direct recall from text)
+- ${defaultCounts.inferential} inferential questions (require making connections and inferences)
+- ${defaultCounts.mainIdea} main idea question(s) (focus on central theme/purpose)
+
+For each question, provide:
+- The question type
+- The question prompt (clear, grade-appropriate)
+- A rubric for evaluating answers (what key points should be included)
+
+Respond with a JSON object:
+{
+  "questions": [
+    {
+      "type": "literal" | "inferential" | "mainIdea",
+      "prompt": <string>,
+      "rubric": <string>,
+      "orderIndex": <number, starting from 0>
+    }
+  ]
+}`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an experienced reading teacher skilled at creating thought-provoking comprehension questions aligned to grade-level standards.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callOpenAI(messages, 0.7, { type: 'json_object' })
+  const result = JSON.parse(response)
+  return result.questions
+}
+
+// ============================================================================
+// Inquiry Vocabulary Question Generation
+// ============================================================================
+
+const INQUIRY_TEMPLATE = `Teacher Inquiry Vocabulary Routine Template:
+
+Structure:
+1. Progressive reveal with 3-4 prompts that guide students toward the meaning
+2. Each prompt includes a "truth-bite" - a small hint that increases clarity
+3. Final inference question for students to articulate their understanding
+
+Prompt Pattern:
+- Start with observable clues in the context sentence
+- Ask about word structure (roots, affixes, cognates)
+- Guide toward connections and implications
+- End with synthesis question
+
+Truth-bite Pattern:
+- Brief, factual statements
+- No full definition
+- Build progressively toward meaning`
+
+export async function generateInquiryQuestions(
+  word: string,
+  definition: string,
+  exampleSentence: string
+): Promise<InquiryVocabData> {
+  
+  const prompt = `Create an inquiry-based vocabulary routine for the word "${word}" following the progressive reveal method.
+
+Word: ${word}
+Definition: ${definition}
+Context Sentence: ${exampleSentence}
+
+${INQUIRY_TEMPLATE}
+
+Example format (for a different word):
+{
+  "word": "bureaucracy",
+  "definition": "A system of government officials who carry out rules",
+  "exampleSentence": "The emperor relied on a bureaucracy that helped organize the government and keep it running.",
+  "inquiryPrompts": [
+    "Is this describing one helper or a group that helps?",
+    "What does this group help with — government laws or farming?",
+    "Does the emperor do everything by himself, or does this group assist?",
+    "So, if a bureaucracy is a group that helps the government run, what might it mean?"
+  ],
+  "truthBites": [
+    "bureaucracy is a group, not a single person",
+    "they organize and support government functions",
+    "bureaucracy assists leadership",
+    "a bureaucracy is a system of officials"
+  ],
+  "inferenceQuestion": "Based on the clues, what do you think bureaucracy means?"
+}
+
+Now create the inquiry routine for "${word}".
+Respond with JSON matching this exact format.`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert in vocabulary instruction using inquiry-based methods. You create thought-provoking questions that guide students to discover word meanings through context and word structure.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callOpenAI(messages, 0.8, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
+// ============================================================================
+// Batch Operations
+// ============================================================================
+
+export async function generateInquiryQuestionsForVocabList(
+  vocabList: Array<{ word: string; definition: string; exampleSentence: string }>
+): Promise<InquiryVocabData[]> {
+  const results: InquiryVocabData[] = []
+  
+  // Process in batches to avoid rate limits
+  for (const vocab of vocabList) {
+    try {
+      const inquiry = await generateInquiryQuestions(
+        vocab.word,
+        vocab.definition,
+        vocab.exampleSentence
+      )
+      results.push(inquiry)
+      
+      // Small delay to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch (error) {
+      console.error(`Error generating inquiry for ${vocab.word}:`, error)
+      // Continue with other words
+    }
+  }
+  
+  return results
+}
+
+// ============================================================================
+// Utility: Simple Reading Level Calculation (Fallback)
+// ============================================================================
+
+/**
+ * Calculate Flesch-Kincaid Grade Level (fallback if AI is unavailable)
+ */
+export function calculateFleschKincaidGrade(text: string): number {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
+  const words = text.split(/\s+/).filter(w => w.length > 0).length
+  const syllables = countSyllables(text)
+  
+  if (sentences === 0 || words === 0) return 0
+  
+  const grade = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59
+  return Math.max(0, Math.round(grade * 10) / 10)
+}
+
+function countSyllables(text: string): number {
+  const words = text.toLowerCase().split(/\s+/)
+  let count = 0
+  
+  for (const word of words) {
+    const cleaned = word.replace(/[^a-z]/g, '')
+    if (cleaned.length === 0) continue
+    
+    // Simple syllable counting algorithm
+    const vowels = cleaned.match(/[aeiouy]+/g)
+    count += vowels ? vowels.length : 1
+    
+    // Adjust for silent 'e'
+    if (cleaned.endsWith('e')) count--
+    if (count === 0) count = 1
+  }
+  
+  return count
+}
+
+export default {
+  estimateReadingLevel,
+  adjustPassageWithVocab,
+  generateComprehensionQuestions,
+  generateInquiryQuestions,
+  generateInquiryQuestionsForVocabList,
+  calculateFleschKincaidGrade
+}
+
+
+
+

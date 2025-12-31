@@ -1,0 +1,761 @@
+<template>
+  <div class="print-materials">
+    <div class="print-header no-print">
+      <div class="container">
+        <div class="header-content">
+          <h1>{{ isTeacherVersion ? 'Teacher Materials' : 'Student Workbook' }}</h1>
+          <div class="header-actions">
+            <button @click="handlePrint" class="btn btn-primary">🖨️ Print</button>
+            <button @click="goBack" class="btn btn-secondary">← Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading no-print">Loading materials...</div>
+    <div v-else-if="error" class="error no-print">{{ error }}</div>
+
+    <div v-else class="printable-content container">
+      <!-- Header for printed page -->
+      <div class="print-page-header">
+        <h1>{{ studentName }}</h1>
+        <div class="week-info">
+          <p><strong>Week:</strong> {{ formatDateRange() }}</p>
+          <p v-if="isTeacherVersion" class="teacher-badge">TEACHER COPY</p>
+          <p v-else class="student-badge">STUDENT WORKBOOK</p>
+        </div>
+      </div>
+
+      <!-- DAY 1: Vocabulary & Affixes -->
+      <div class="print-section">
+        <h2>Day 1: Vocabulary & Affixes</h2>
+        
+        <!-- Student Version: Words with blanks -->
+        <div v-if="!isTeacherVersion" class="student-vocab-section">
+          <h3>Student Directions:</h3>
+          <p class="directions">
+            Read each sentence from the passage. Use clues in the sentence and word structure 
+            to infer the meaning. Write your best guess for what the word means.
+          </p>
+          
+          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
+            <p class="vocab-number"><strong>{{ index + 1 }}. {{ word.word }}</strong></p>
+            <p class="context-sentence">"{{ word.exampleSentence }}"</p>
+            <p class="student-inference">{{ word.word }} is: <span class="blank-line">_________________</span></p>
+          </div>
+        </div>
+
+        <!-- Teacher Version: Full inquiry routine -->
+        <div v-if="isTeacherVersion" class="teacher-vocab-section">
+          <h3>Teacher Inquiry Vocabulary Routine With Progressive Reveal Supports</h3>
+          <p class="teacher-note">
+            Each word includes: (1) Context sentence, (2) Teacher prompts guiding toward meaning,
+            (3) Truth-bites that increase clarity, (4) Final student inference question.
+            Use one prompt at a time, slowly revealing more information.
+          </p>
+          
+          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-teacher">
+            <h4>{{ index + 1 }}. {{ word.word }} 
+              <span class="definition-badge">{{ word.definition }}</span>
+            </h4>
+            
+            <p class="context"><strong>Sentence:</strong> "{{ word.exampleSentence }}"</p>
+            
+            <div v-if="word.inquiryPrompts && word.inquiryPrompts.length > 0" class="inquiry-section">
+              <p><strong>Teacher Prompts With Truth-Bites</strong></p>
+              <div v-for="(prompt, pIndex) in word.inquiryPrompts" :key="pIndex" class="prompt-pair">
+                <p class="prompt">{{ pIndex + 1 }}. "{{ prompt }}"</p>
+                <p class="truth-bite" v-if="word.truthBites && word.truthBites[pIndex]">
+                  <em>Truth-bite:</em> {{ word.truthBites[pIndex] }}
+                </p>
+              </div>
+              <p v-if="word.inferenceQuestion" class="final-question">
+                <strong>Final:</strong> "{{ word.inferenceQuestion }}"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Affixes (same for both versions) -->
+        <div class="affix-section">
+          <h3>Affixes</h3>
+          <div v-for="(affix, index) in content.affixes" :key="index" class="affix-item">
+            <p><strong>{{ affix.affix }}</strong> {{ isTeacherVersion ? `(${affix.kind})` : '' }} = {{ affix.meaning }}</p>
+            <p class="affix-examples"><strong>Examples:</strong> {{ affix.examples.join(', ') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAY 2: Weekly Passage & Comprehension -->
+      <div class="print-section page-break">
+        <h2>Day 2: First Read</h2>
+        
+        <div v-if="content.weeklyPassage" class="passage-section">
+          <h3>{{ content.weeklyPassage.title }}</h3>
+          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
+          
+          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+          
+          <!-- Vocabulary Practice (matching) -->
+          <div class="vocab-practice">
+            <h4>Vocabulary Practice</h4>
+            <p>Match each word to the correct meaning.</p>
+            <div class="matching-section">
+              <div class="matching-column">
+                <div v-for="(word, index) in content.vocab.slice(0, 9)" :key="index">
+                  {{ index + 1 }}. {{ word.word }}
+                </div>
+              </div>
+              <div class="matching-column">
+                <p><strong>Word Bank</strong></p>
+                <div v-for="(word, index) in content.vocab.slice(0, 9)" :key="index">
+                  {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comprehension Questions -->
+        <div class="questions-section">
+          <h3>Comprehension Questions</h3>
+          <div v-for="(q, index) in content.day2Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <div class="answer-space">
+              <div class="answer-line"></div>
+              <div class="answer-line"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teacher Answer Key -->
+        <div v-if="isTeacherVersion" class="teacher-answer-key page-break">
+          <h3>TEACHER ANSWER KEY</h3>
+          <h4>Vocabulary Matching Answers</h4>
+          <div v-for="(word, index) in content.vocab.slice(0, 9)" :key="index">
+            {{ index + 1 }} - {{ String.fromCharCode(65 + index) }}
+          </div>
+          
+          <h4>Comprehension Sample Answers</h4>
+          <div v-for="(q, index) in content.day2Questions" :key="index" class="answer-sample">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <p class="sample-answer">(Student answers will vary - look for key concepts)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAY 5: Friday Assessment -->
+      <div class="print-section page-break">
+        <h2>Day 5: Friday Assessment</h2>
+        
+        <div v-if="content.fridayPassage" class="passage-section">
+          <h3>{{ content.fridayPassage.title }}</h3>
+          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.fridayPassage.text) }} words</p>
+          
+          <div class="passage-text">{{ content.fridayPassage.text }}</div>
+        </div>
+
+        <!-- Assessment Questions -->
+        <div class="questions-section">
+          <h3>Assessment Questions</h3>
+          <div v-for="(q, index) in content.day5Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <div class="answer-space">
+              <div class="answer-line"></div>
+              <div class="answer-line"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Fluency Assessment Tracking -->
+        <div class="fluency-tracking">
+          <h3>Fluency Assessment {{ isTeacherVersion ? '(Teacher Recording Form)' : '' }}</h3>
+          <div class="tracking-grid">
+            <div class="tracking-item">
+              <label>Time (seconds):</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Words Per Minute:</label>
+              <div class="tracking-box"></div>
+              <p class="formula">WPM = ({{ calculateWordCount(content.fridayPassage?.text || '') }} words ÷ seconds) × 60</p>
+            </div>
+          </div>
+          
+          <div v-if="isTeacherVersion" class="error-tracking">
+            <h4>Reading Errors (for accuracy calculation)</h4>
+            <div class="errors-grid">
+              <div class="error-item">
+                <label>Omissions (skipped):</label>
+                <div class="error-box"></div>
+              </div>
+              <div class="error-item">
+                <label>Insertions (added):</label>
+                <div class="error-box"></div>
+              </div>
+              <div class="error-item">
+                <label>Substitutions (replaced):</label>
+                <div class="error-box"></div>
+              </div>
+              <div class="error-item">
+                <label>Mispronunciations:</label>
+                <div class="error-box"></div>
+              </div>
+              <div class="error-item total">
+                <label>Total Errors:</label>
+                <div class="error-box"></div>
+              </div>
+              <div class="error-item total">
+                <label>Accuracy %:</label>
+                <div class="error-box"></div>
+                <p class="formula">Accuracy = ((words - errors) ÷ words) × 100</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { 
+  getWeekAssignmentsByStudent,
+  getPassagesByWeek,
+  getVocabByWeek,
+  getAffixesByWeek,
+  getQuestionsByWeek,
+  getStudent
+} from '@/services/firestoreServices'
+import type { 
+  WeekAssignmentDocument,
+  PassageDocument,
+  VocabDocument,
+  AffixDocument,
+  ComprehensionQuestionDocument
+} from '@/types/firestore'
+
+const route = useRoute()
+const router = useRouter()
+
+const assignment = ref<WeekAssignmentDocument & { id: string } | null>(null)
+const studentName = ref('')
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const isTeacherVersion = computed(() => route.query.version === 'teacher')
+
+const content = ref<{
+  vocab: VocabDocument[]
+  affixes: AffixDocument[]
+  weeklyPassage: PassageDocument | null
+  fridayPassage: PassageDocument | null
+  day2Questions: ComprehensionQuestionDocument[]
+  day4Questions: ComprehensionQuestionDocument[]
+  day5Questions: ComprehensionQuestionDocument[]
+}>({
+  vocab: [],
+  affixes: [],
+  weeklyPassage: null,
+  fridayPassage: null,
+  day2Questions: [],
+  day4Questions: [],
+  day5Questions: []
+})
+
+const calculateWordCount = (text: string): number => {
+  if (!text) return 0
+  return text.split(/\s+/).filter(word => word.length > 0).length
+}
+
+const formatDateRange = () => {
+  if (!assignment.value) return ''
+  const start = assignment.value.startDate.toDate()
+  const end = assignment.value.endDate.toDate()
+  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
+const handlePrint = () => {
+  window.print()
+}
+
+const goBack = () => {
+  router.back()
+}
+
+onMounted(async () => {
+  const assignmentId = route.query.assignmentId as string
+  const studentId = route.query.studentId as string
+  
+  if (!assignmentId || !studentId) {
+    error.value = 'Missing assignment or student ID'
+    loading.value = false
+    return
+  }
+  
+  try {
+    const studentDoc = await getStudent(studentId)
+    studentName.value = studentDoc?.displayName || 'Student'
+    
+    const assignments = await getWeekAssignmentsByStudent(studentId)
+    assignment.value = assignments.find(a => a.id === assignmentId) || null
+    
+    if (assignment.value) {
+      const templateId = assignment.value.weekTemplateId
+      
+      const [passages, vocab, affixes, questions] = await Promise.all([
+        getPassagesByWeek(templateId),
+        getVocabByWeek(templateId),
+        getAffixesByWeek(templateId),
+        getQuestionsByWeek(templateId)
+      ])
+      
+      content.value = {
+        vocab,
+        affixes,
+        weeklyPassage: passages.find(p => p.type === 'weekly') || null,
+        fridayPassage: passages.find(p => p.type === 'friday') || null,
+        day2Questions: questions.filter(q => q.day === 2),
+        day4Questions: questions.filter(q => q.day === 4),
+        day5Questions: questions.filter(q => q.day === 5)
+      }
+    }
+  } catch (err: any) {
+    console.error('Error loading materials:', err)
+    error.value = err.message || 'Failed to load materials'
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.print-materials {
+  background: white;
+  min-height: 100vh;
+}
+
+.print-header {
+  background: #f7fafc;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.printable-content {
+  padding: 2rem;
+}
+
+.print-page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #1a202c;
+}
+
+.print-page-header h1 {
+  font-size: 2rem;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.week-info p {
+  margin: 0.25rem 0;
+  color: #4a5568;
+}
+
+.teacher-badge {
+  background: #4a90e2;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.student-badge {
+  background: #48bb78;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.print-section {
+  margin-bottom: 3rem;
+}
+
+.print-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #cbd5e0;
+}
+
+.print-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1.5rem 0 1rem 0;
+}
+
+.directions {
+  background: #f7fafc;
+  padding: 1rem;
+  border-left: 4px solid #4a90e2;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.teacher-note {
+  background: #fff5f5;
+  padding: 1rem;
+  border-left: 4px solid #f56565;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* Student Vocab Format */
+.vocab-item-student {
+  margin-bottom: 2rem;
+  page-break-inside: avoid;
+}
+
+.vocab-number {
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.context-sentence {
+  font-style: italic;
+  line-height: 1.8;
+  margin: 0.5rem 0;
+}
+
+.student-inference {
+  margin-top: 0.75rem;
+  font-weight: 500;
+}
+
+.blank-line {
+  display: inline-block;
+  border-bottom: 2px solid #1a202c;
+  min-width: 300px;
+  margin-left: 0.5rem;
+}
+
+/* Teacher Vocab Format */
+.vocab-item-teacher {
+  margin-bottom: 2.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  page-break-inside: avoid;
+}
+
+.vocab-item-teacher h4 {
+  font-size: 1.125rem;
+  color: #1a202c;
+  margin: 0 0 0.75rem 0;
+}
+
+.definition-badge {
+  background: #4a90e2;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.context {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.inquiry-section {
+  margin-top: 1rem;
+  padding-left: 1rem;
+}
+
+.prompt-pair {
+  margin-bottom: 0.75rem;
+}
+
+.prompt {
+  color: #2d3748;
+  margin: 0.25rem 0;
+  font-weight: 500;
+}
+
+.truth-bite {
+  color: #718096;
+  margin: 0.25rem 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.final-question {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #cbd5e0;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.affix-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.affix-item {
+  margin-bottom: 1rem;
+}
+
+.affix-examples {
+  margin: 0.25rem 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.passage-section {
+  margin: 1.5rem 0;
+}
+
+.word-count {
+  background: #edf2f7;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.passage-text {
+  line-height: 2;
+  font-size: 1.0625rem;
+  margin: 1.5rem 0;
+  text-align: justify;
+}
+
+.vocab-practice {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.matching-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.matching-column div {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.question-item {
+  margin-bottom: 2rem;
+  page-break-inside: avoid;
+}
+
+.question-item p {
+  margin: 0 0 0.5rem 0;
+  line-height: 1.6;
+}
+
+.answer-space {
+  margin-top: 0.75rem;
+}
+
+.answer-line {
+  border-bottom: 1px solid #cbd5e0;
+  height: 25px;
+  margin-bottom: 0.5rem;
+}
+
+.teacher-answer-key {
+  background: #fff5f5;
+  padding: 2rem;
+  border: 3px solid #f56565;
+  border-radius: 8px;
+}
+
+.teacher-answer-key h3 {
+  color: #c53030;
+  text-align: center;
+  margin-top: 0;
+}
+
+.answer-sample {
+  color: #718096;
+  font-style: italic;
+  margin-left: 1rem;
+}
+
+.fluency-tracking {
+  margin-top: 2rem;
+  page-break-inside: avoid;
+}
+
+.tracking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.tracking-item label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.tracking-box {
+  border: 2px solid #1a202c;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.formula {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.error-tracking {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #fff5f5;
+  border-radius: 8px;
+}
+
+.error-tracking h4 {
+  color: #c53030;
+  margin-top: 0;
+}
+
+.errors-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.error-item label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.error-box {
+  border: 2px solid #c53030;
+  height: 35px;
+  border-radius: 4px;
+}
+
+.error-item.total {
+  grid-column: span 1;
+}
+
+.error-item.total label {
+  color: #c53030;
+}
+
+.page-break {
+  page-break-before: always;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-materials {
+    padding: 0;
+  }
+  
+  .printable-content {
+    max-width: 100%;
+    padding: 0.5in;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+  
+  .print-section {
+    page-break-inside: avoid;
+  }
+  
+  .formula {
+    font-size: 8pt;
+  }
+}
+</style>

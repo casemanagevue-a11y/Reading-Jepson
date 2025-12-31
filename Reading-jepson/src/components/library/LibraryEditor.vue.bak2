@@ -1,0 +1,770 @@
+<template>
+  <div class="library-editor">
+    <div class="editor-header">
+      <h2>{{ isNew ? '➕ Add New Item' : '✏️ Edit Item' }}</h2>
+      <button @click="$emit('close')" class="btn-close">×</button>
+    </div>
+
+    <div class="editor-body">
+      <!-- Metadata -->
+      <div class="section">
+        <h3>Metadata</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="required">Subject</label>
+            <select v-model="formData.subject" class="form-select">
+              <option value="ELA">ELA</option>
+              <option value="Science">Science</option>
+              <option value="History">History</option>
+              <option value="Math">Math</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="required">Grade</label>
+            <input 
+              v-model="formData.grade" 
+              type="text" 
+              class="form-input"
+              placeholder="e.g., 6, 7, 6-8"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="required">Unit</label>
+            <input 
+              v-model="formData.unit" 
+              type="text" 
+              class="form-input"
+              placeholder="e.g., Unit 1, Ancient China"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Reading Level (optional)</label>
+          <input 
+            v-model="formData.readingLevel" 
+            type="text" 
+            class="form-input"
+            placeholder="e.g., 6.5, 850L"
+          />
+        </div>
+      </div>
+
+      <!-- Vocabulary Fields -->
+      <div v-if="itemType === 'vocab'" class="section">
+        <h3>Vocabulary Content</h3>
+        
+        <div class="form-group">
+          <label class="required">Word</label>
+          <input 
+            v-model="formData.word" 
+            type="text" 
+            class="form-input"
+            placeholder="Enter vocabulary word..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="required">Definition</label>
+          <textarea 
+            v-model="formData.definition" 
+            class="form-textarea"
+            placeholder="Enter definition..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Example Sentence</label>
+          <textarea 
+            v-model="formData.exampleSentence" 
+            class="form-textarea"
+            placeholder="Enter example sentence..."
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Tags (comma-separated)</label>
+          <input 
+            v-model="tagsString" 
+            type="text" 
+            class="form-input"
+            placeholder="e.g., tier2, content, affixRelated"
+          />
+        </div>
+
+        <!-- Inquiry Questions Section -->
+        <div class="inquiry-section">
+          <div class="section-header">
+            <h4>Inquiry Questions (Optional)</h4>
+            <button 
+              v-if="!formData.inquiryPrompts || formData.inquiryPrompts.length === 0"
+              @click="generateInquiry" 
+              class="btn btn-ai btn-sm"
+              :disabled="isGenerating || !formData.word || !formData.definition"
+            >
+              {{ isGenerating ? '⏳ Generating...' : '✨ Generate with AI' }}
+            </button>
+          </div>
+
+          <div v-if="formData.inquiryPrompts && formData.inquiryPrompts.length > 0">
+            <div v-for="(prompt, index) in formData.inquiryPrompts" :key="index" class="inquiry-item">
+              <label>Prompt {{ index + 1 }}</label>
+              <div class="inquiry-row">
+                <textarea 
+                  v-model="formData.inquiryPrompts[index]" 
+                  class="form-textarea"
+                  rows="2"
+                ></textarea>
+                <button @click="removeInquiryPrompt(index)" class="btn-remove">×</button>
+              </div>
+              
+              <div v-if="formData.truthBites && formData.truthBites[index] !== undefined">
+                <label>Truth-bite {{ index + 1 }}</label>
+                <input 
+                  v-model="formData.truthBites[index]" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Brief hint..."
+                />
+              </div>
+            </div>
+
+            <div v-if="formData.inferenceQuestion !== undefined" class="form-group">
+              <label>Final Inference Question</label>
+              <textarea 
+                v-model="formData.inferenceQuestion" 
+                class="form-textarea"
+                rows="2"
+              ></textarea>
+            </div>
+
+            <button @click="addInquiryPrompt" class="btn btn-secondary btn-sm">
+              + Add Prompt
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Affix Fields -->
+      <div v-if="itemType === 'affix'" class="section">
+        <h3>Affix Content</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="required">Affix</label>
+            <input 
+              v-model="formData.affix" 
+              type="text" 
+              class="form-input"
+              placeholder="e.g., un-, -tion, bene"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="required">Type</label>
+            <select v-model="formData.kind" class="form-select">
+              <option value="prefix">Prefix</option>
+              <option value="suffix">Suffix</option>
+              <option value="root">Root</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="required">Meaning</label>
+          <textarea 
+            v-model="formData.meaning" 
+            class="form-textarea"
+            placeholder="Enter meaning..."
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Examples (comma-separated)</label>
+          <input 
+            v-model="examplesString" 
+            type="text" 
+            class="form-input"
+            placeholder="e.g., unhappy, undo, unfair"
+          />
+        </div>
+      </div>
+
+      <!-- Passage Fields -->
+      <div v-if="itemType === 'passage'" class="section">
+        <h3>Passage Content</h3>
+        
+        <div class="form-group">
+          <label class="required">Title</label>
+          <input 
+            v-model="formData.title" 
+            type="text" 
+            class="form-input"
+            placeholder="Enter passage title..."
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type</label>
+            <select v-model="formData.type" class="form-select">
+              <option value="weekly">Weekly Passage</option>
+              <option value="friday">Friday Cold Read</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Subject Tag</label>
+            <input 
+              v-model="formData.subjectTag" 
+              type="text" 
+              class="form-input"
+              placeholder="e.g., historical-fiction"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="required">Passage Text</label>
+          <textarea 
+            v-model="formData.text" 
+            class="form-textarea"
+            placeholder="Enter passage text..."
+            rows="15"
+          ></textarea>
+          <small class="form-hint">Word count: {{ wordCount }}</small>
+        </div>
+
+        <div v-if="!formData.readingLevel && formData.text" class="ai-action">
+          <button 
+            @click="estimateLevel" 
+            class="btn btn-ai"
+            :disabled="isEstimating"
+          >
+            {{ isEstimating ? '⏳ Analyzing...' : '✨ AI: Estimate Reading Level' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-footer">
+      <button @click="$emit('close')" class="btn btn-secondary">
+        Cancel
+      </button>
+      <button @click="save" class="btn btn-primary" :disabled="!isValid || isSaving">
+        {{ isSaving ? '⏳ Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import libraryServices from '@/services/libraryServices'
+import aiService from '@/services/aiService'
+import type { SubjectFocus, AffixKind, PassageType } from '@/types/firestore'
+
+interface Props {
+  item?: any // Can be vocab, affix, or passage with id
+  itemType: 'vocab' | 'affix' | 'passage'
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  close: []
+  saved: []
+}>()
+
+const authStore = useAuthStore()
+
+// State
+const formData = ref<any>({
+  subject: 'ELA',
+  grade: '',
+  unit: '',
+  readingLevel: ''
+})
+
+const tagsString = ref('')
+const examplesString = ref('')
+const isGenerating = ref(false)
+const isEstimating = ref(false)
+const isSaving = ref(false)
+
+// Computed
+const isNew = computed(() => !props.item || !props.item.id)
+
+const wordCount = computed(() => {
+  if (props.itemType === 'passage' && formData.value.text) {
+    return formData.value.text.split(/\s+/).filter((w: string) => w.length > 0).length
+  }
+  return 0
+})
+
+const isValid = computed(() => {
+  if (!formData.value.subject || !formData.value.grade || !formData.value.unit) {
+    return false
+  }
+
+  if (props.itemType === 'vocab') {
+    return !!(formData.value.word && formData.value.definition)
+  } else if (props.itemType === 'affix') {
+    return !!(formData.value.affix && formData.value.kind && formData.value.meaning)
+  } else {
+    return !!(formData.value.title && formData.value.text)
+  }
+})
+
+// Methods
+function initializeFormData() {
+  if (props.item) {
+    formData.value = { ...props.item }
+    
+    // Convert arrays to comma-separated strings for easier editing
+    if (props.itemType === 'vocab' && formData.value.tags) {
+      tagsString.value = formData.value.tags.join(', ')
+    }
+    if (props.itemType === 'affix' && formData.value.examples) {
+      examplesString.value = formData.value.examples.join(', ')
+    }
+  } else {
+    // New item - initialize with defaults
+    formData.value = {
+      subject: 'ELA' as SubjectFocus,
+      grade: '',
+      unit: '',
+      readingLevel: ''
+    }
+
+    if (props.itemType === 'vocab') {
+      formData.value.word = ''
+      formData.value.definition = ''
+      formData.value.exampleSentence = ''
+      formData.value.tags = []
+    } else if (props.itemType === 'affix') {
+      formData.value.affix = ''
+      formData.value.kind = 'prefix' as AffixKind
+      formData.value.meaning = ''
+      formData.value.examples = []
+    } else {
+      formData.value.title = ''
+      formData.value.text = ''
+      formData.value.type = 'weekly' as PassageType
+      formData.value.subjectTag = ''
+    }
+  }
+}
+
+function addInquiryPrompt() {
+  if (!formData.value.inquiryPrompts) {
+    formData.value.inquiryPrompts = []
+    formData.value.truthBites = []
+  }
+  formData.value.inquiryPrompts.push('')
+  formData.value.truthBites.push('')
+}
+
+function removeInquiryPrompt(index: number) {
+  if (formData.value.inquiryPrompts) {
+    formData.value.inquiryPrompts.splice(index, 1)
+  }
+  if (formData.value.truthBites) {
+    formData.value.truthBites.splice(index, 1)
+  }
+}
+
+async function generateInquiry() {
+  if (!formData.value.word || !formData.value.definition) return
+  
+  isGenerating.value = true
+  try {
+    const result = await aiService.generateInquiryQuestions(
+      formData.value.word,
+      formData.value.definition,
+      formData.value.exampleSentence || `This sentence uses the word ${formData.value.word}.`
+    )
+
+    formData.value.inquiryPrompts = result.inquiryPrompts
+    formData.value.truthBites = result.truthBites
+    formData.value.inferenceQuestion = result.inferenceQuestion
+    if (result.exampleSentence && !formData.value.exampleSentence) {
+      formData.value.exampleSentence = result.exampleSentence
+    }
+
+    alert('✅ AI inquiry questions generated!')
+  } catch (error) {
+    console.error('Error generating inquiry:', error)
+    alert('❌ Error generating inquiry questions. Please check your API key.')
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+async function estimateLevel() {
+  if (!formData.value.text) return
+  
+  isEstimating.value = true
+  try {
+    const result = await aiService.estimateReadingLevel(formData.value.text)
+    formData.value.readingLevel = `${result.grade} (${result.lexile})`
+    alert(`✅ Estimated reading level: Grade ${result.grade}`)
+  } catch (error) {
+    console.error('Error estimating level:', error)
+    const grade = aiService.calculateFleschKincaidGrade(formData.value.text)
+    formData.value.readingLevel = `~${grade}`
+  } finally {
+    isEstimating.value = false
+  }
+}
+
+async function save() {
+  if (!user.value || !isValid.value) return
+  
+  isSaving.value = true
+  try {
+    const teacherUid = user.value.uid
+    const baseData = {
+      teacherUid,
+      subject: formData.value.subject,
+      grade: formData.value.grade,
+      unit: formData.value.unit,
+      readingLevel: formData.value.readingLevel || undefined
+    }
+
+    if (props.itemType === 'vocab') {
+      // Convert tags string to array
+      const tags = tagsString.value 
+        ? tagsString.value.split(',').map(t => t.trim()).filter(t => t)
+        : []
+
+      const vocabData = {
+        ...baseData,
+        word: formData.value.word,
+        definition: formData.value.definition,
+        exampleSentence: formData.value.exampleSentence || '',
+        tags,
+        inquiryPrompts: formData.value.inquiryPrompts,
+        truthBites: formData.value.truthBites,
+        inferenceQuestion: formData.value.inferenceQuestion
+      }
+
+      if (isNew.value) {
+        await libraryServices.createVocabLibrary(vocabData)
+      } else {
+        await libraryServices.updateVocabLibrary(props.item.id, vocabData)
+      }
+    } else if (props.itemType === 'affix') {
+      // Convert examples string to array
+      const examples = examplesString.value
+        ? examplesString.value.split(',').map(e => e.trim()).filter(e => e)
+        : []
+
+      const affixData = {
+        ...baseData,
+        affix: formData.value.affix,
+        kind: formData.value.kind,
+        meaning: formData.value.meaning,
+        examples
+      }
+
+      if (isNew.value) {
+        await libraryServices.createAffixLibrary(affixData)
+      } else {
+        await libraryServices.updateAffixLibrary(props.item.id, affixData)
+      }
+    } else {
+      // Passage
+      const passageData = {
+        ...baseData,
+        title: formData.value.title,
+        text: formData.value.text,
+        type: formData.value.type,
+        subjectTag: formData.value.subjectTag || undefined,
+        wordCount: wordCount.value
+      }
+
+      if (isNew.value) {
+        await libraryServices.createPassageLibrary(passageData)
+      } else {
+        await libraryServices.updatePassageLibrary(props.item.id, passageData)
+      }
+    }
+
+    alert('✅ Item saved successfully!')
+    emit('saved')
+    emit('close')
+  } catch (error) {
+    console.error('Error saving item:', error)
+    alert('❌ Error saving item. Please try again.')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  initializeFormData()
+})
+</script>
+
+<style scoped>
+.library-editor {
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.editor-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #718096;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.editor-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1.5rem 0;
+}
+
+.section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-group label.required::after {
+  content: ' *';
+  color: #e53e3e;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+}
+
+.form-hint {
+  display: block;
+  color: #718096;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* Inquiry section */
+.inquiry-section {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.inquiry-item {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inquiry-item:last-child {
+  border-bottom: none;
+}
+
+.inquiry-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.btn-remove {
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.btn-remove:hover {
+  background: #fc8181;
+  color: white;
+}
+
+/* AI actions */
+.ai-action {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border-radius: 8px;
+  border: 2px dashed #cbd5e0;
+}
+
+.editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.btn-secondary {
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+}
+
+.btn-ai:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(240, 147, 251, 0.5);
+}
+</style>
+

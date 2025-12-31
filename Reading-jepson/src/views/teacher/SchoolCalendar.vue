@@ -1,0 +1,517 @@
+<template>
+  <div class="school-calendar">
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>School Calendar</h1>
+          <p class="subtitle">Manage days off, holidays, and quarter dates</p>
+        </div>
+        <div class="header-actions">
+          <router-link to="/teacher/calendar/setup" class="btn btn-primary">
+            📅 Simple Setup (Recommended)
+          </router-link>
+          <router-link to="/teacher/calendar/import" class="btn btn-secondary">
+            📥 Import Text
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Add Event Form -->
+      <div class="add-event-form">
+        <h2>Add Calendar Event</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Event Type</label>
+          <select v-model="newEvent.eventType" class="form-input" required>
+            <option value="dayOff">Day Off</option>
+            <option value="holiday">Holiday</option>
+            <option value="minimumDay">Minimum Day</option>
+            <option value="quarterStart">Quarter Start</option>
+            <option value="quarterEnd">Quarter End</option>
+            <option value="breakStart">Break Start</option>
+            <option value="breakEnd">Break End</option>
+            <option value="firstDay">First Day of School</option>
+            <option value="lastDay">Last Day of School</option>
+          </select>
+          </div>
+
+          <div class="form-group">
+            <label>Title</label>
+            <input 
+              v-model="newEvent.title" 
+              type="text" 
+              class="form-input" 
+              placeholder="e.g., Thanksgiving Break, Winter Holiday"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input v-model="newEvent.dateStr" type="date" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label>End Date (Optional, for multi-day events)</label>
+            <input v-model="newEvent.endDateStr" type="date" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label>Quarter (Optional)</label>
+            <select v-model="newEvent.quarter" class="form-input">
+              <option :value="undefined">N/A</option>
+              <option :value="1">Quarter 1</option>
+              <option :value="2">Quarter 2</option>
+              <option :value="3">Quarter 3</option>
+              <option :value="4">Quarter 4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description (Optional)</label>
+          <textarea v-model="newEvent.description" class="form-input" rows="2"></textarea>
+        </div>
+
+        <button @click="addEvent" :disabled="!canAddEvent || adding" class="btn btn-primary">
+          {{ adding ? 'Adding...' : 'Add Event' }}
+        </button>
+      </div>
+
+      <div v-if="error" class="error-message">{{ error }}</div>
+      <div v-if="success" class="success-message">{{ success }}</div>
+
+      <!-- Calendar Events List -->
+      <div class="events-section">
+        <h2>Calendar Events</h2>
+        
+        <div class="filter-bar">
+          <select v-model="filterQuarter" class="form-input">
+            <option :value="undefined">All Quarters</option>
+            <option :value="1">Quarter 1</option>
+            <option :value="2">Quarter 2</option>
+            <option :value="3">Quarter 3</option>
+            <option :value="4">Quarter 4</option>
+          </select>
+        </div>
+
+        <div v-if="loadingEvents" class="loading">Loading events...</div>
+        <div v-else-if="filteredEvents.length === 0" class="empty">
+          No calendar events yet. Add your first event above!
+        </div>
+        <div v-else class="events-list">
+          <div v-for="event in filteredEvents" :key="event.id" class="event-card">
+            <div class="event-header">
+              <span :class="['event-type-badge', event.eventType]">{{ formatEventType(event.eventType) }}</span>
+              <button @click="deleteEvent(event.id)" class="btn btn-danger btn-sm">Delete</button>
+            </div>
+            <h3>{{ event.title }}</h3>
+            <div class="event-meta">
+              <span class="event-date">
+                📅 {{ formatEventDate(event.date, event.endDate) }}
+              </span>
+              <span v-if="event.quarter" class="event-quarter">Q{{ event.quarter }}</span>
+            </div>
+            <p v-if="event.description" class="event-description">{{ event.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import { 
+  createCalendarEvent,
+  getCalendarEventsByTeacher,
+  deleteCalendarEvent
+} from '@/services/firestoreServices'
+import { Timestamp } from 'firebase/firestore'
+import type { SchoolCalendarDocument, CalendarEventType } from '@/types/firestore'
+
+const { user, loading: authLoading } = useAuth()
+
+const events = ref<Array<SchoolCalendarDocument & { id: string }>>([])
+const loadingEvents = ref(false)
+const adding = ref(false)
+const error = ref<string | null>(null)
+const success = ref<string | null>(null)
+const filterQuarter = ref<1 | 2 | 3 | 4 | undefined>(undefined)
+
+const newEvent = ref({
+  eventType: 'dayOff' as CalendarEventType,
+  title: '',
+  dateStr: '',
+  endDateStr: '',
+  quarter: undefined as 1 | 2 | 3 | 4 | undefined,
+  description: ''
+})
+
+const canAddEvent = computed(() => {
+  return newEvent.value.title && newEvent.value.dateStr
+})
+
+const filteredEvents = computed(() => {
+  if (!filterQuarter.value) return events.value
+  return events.value.filter(e => e.quarter === filterQuarter.value)
+})
+
+const formatEventType = (type: CalendarEventType): string => {
+  const labels: Record<CalendarEventType, string> = {
+    dayOff: 'Day Off',
+    holiday: 'Holiday',
+    quarterStart: 'Quarter Start',
+    quarterEnd: 'Quarter End',
+    breakStart: 'Break Start',
+    breakEnd: 'Break End',
+    minimumDay: 'Minimum Day',
+    firstDay: 'First Day',
+    lastDay: 'Last Day'
+  }
+  return labels[type] || type
+}
+
+const formatEventDate = (date: Timestamp, endDate?: Timestamp): string => {
+  const start = date.toDate()
+  if (endDate) {
+    const end = endDate.toDate()
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  }
+  return start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const addEvent = async () => {
+  if (!user.value || !canAddEvent.value) return
+  
+  try {
+    adding.value = true
+    error.value = null
+    success.value = null
+    
+    const eventData: any = {
+      teacherUid: user.value.uid,
+      eventType: newEvent.value.eventType,
+      title: newEvent.value.title,
+      date: Timestamp.fromDate(new Date(newEvent.value.dateStr)),
+      description: newEvent.value.description || undefined
+    }
+    
+    if (newEvent.value.endDateStr) {
+      eventData.endDate = Timestamp.fromDate(new Date(newEvent.value.endDateStr))
+    }
+    
+    if (newEvent.value.quarter) {
+      eventData.quarter = newEvent.value.quarter
+    }
+    
+    await createCalendarEvent(eventData)
+    
+    success.value = 'Event added successfully!'
+    
+    // Reset form
+    newEvent.value = {
+      eventType: 'dayOff',
+      title: '',
+      dateStr: '',
+      endDateStr: '',
+      quarter: undefined,
+      description: ''
+    }
+    
+    // Reload events
+    await loadEvents()
+  } catch (err: any) {
+    console.error('Error adding event:', err)
+    error.value = err.message || 'Failed to add event'
+  } finally {
+    adding.value = false
+  }
+}
+
+const deleteEvent = async (eventId: string) => {
+  if (!confirm('Are you sure you want to delete this event?')) return
+  
+  try {
+    await deleteCalendarEvent(eventId)
+    success.value = 'Event deleted successfully!'
+    await loadEvents()
+  } catch (err: any) {
+    console.error('Error deleting event:', err)
+    error.value = err.message || 'Failed to delete event'
+  }
+}
+
+const loadEvents = async () => {
+  if (!user.value) return
+  
+  try {
+    loadingEvents.value = true
+    const eventList = await getCalendarEventsByTeacher(user.value.uid)
+    events.value = eventList
+  } catch (err: any) {
+    console.error('Error loading events:', err)
+    error.value = err.message || 'Failed to load events'
+  } finally {
+    loadingEvents.value = false
+  }
+}
+
+watch([authLoading, user], ([isLoading, currentUser]) => {
+  if (!isLoading && currentUser) {
+    loadEvents()
+  }
+}, { immediate: true })
+</script>
+
+<style scoped>
+.school-calendar {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.add-event-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.add-event-form h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1.5rem 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.events-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.events-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1.5rem 0;
+}
+
+.filter-bar {
+  margin-bottom: 1.5rem;
+}
+
+.filter-bar .form-input {
+  max-width: 200px;
+}
+
+.events-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.event-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.event-card:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.event-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.event-type-badge.dayOff {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.event-type-badge.holiday {
+  background: #feebc8;
+  color: #c05621;
+}
+
+.event-type-badge.quarterStart,
+.event-type-badge.quarterEnd {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.event-type-badge.breakStart,
+.event-type-badge.breakEnd {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.event-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.event-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.event-quarter {
+  font-weight: 600;
+  color: #4a90e2;
+}
+
+.event-description {
+  color: #4a5568;
+  font-size: 0.9375rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 2rem;
+  color: #718096;
+}
+
+.error-message,
+.success-message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: #e53e3e;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c53030;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+</style>

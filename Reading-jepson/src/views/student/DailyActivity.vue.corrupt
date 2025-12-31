@@ -1,0 +1,610 @@
+<template>
+  <div class="daily-activity">
+    <div class="container">
+      <div class="activity-header">
+        <div>
+          <h1>Day {{ currentDay }} Activity</h1>
+          <p class="subtitle">Week of {{ formatWeekDate(week?.weekOf) }}</p>
+        </div>
+        <div class="day-selector">
+          <button 
+            v-for="day in [1, 2, 3, 4, 5]" 
+            :key="day"
+            :class="['day-btn', { active: currentDay === day }]"
+            @click="currentDay = day"
+          >
+            Day {{ day }}
+          </button>
+        </div>
+      </div>
+      
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading activity...</p>
+      </div>
+      
+      <div v-else-if="!week" class="empty-state">
+        <p>No week assigned yet. Check back later!</p>
+      </div>
+      
+      <!-- Day 1: Vocabulary & Affixes -->
+      <div v-else-if="currentDay === 1" class="activity-content">
+        <div class="activity-card">
+          <h2>📚 Vocabulary Words</h2>
+          <p class="instruction">Use the inquiry prompts to infer the meaning of each word. Work through the prompts one at a time.</p>
+          <div class="vocab-list">
+            <VocabularyInquiry 
+              v-for="word in vocabWords" 
+              :key="word.id" 
+              :vocab="word"
+              :show-definition="false"
+            />
+          </div>
+        </div>
+        
+        <div class="activity-card">
+          <h2>🔤 Affixes</h2>
+          <p class="instruction">Learn these high-frequency affixes and their meanings.</p>
+          <div class="affix-grid">
+            <div v-for="affix in affixes" :key="affix.id" class="affix-card">
+              <div class="affix-header">
+                <span class="affix-text">{{ affix.affix }}</span>
+                <span class="affix-kind">{{ affix.kind }}</span>
+              </div>
+              <p class="affix-meaning">{{ affix.meaning }}</p>
+              <div class="affix-examples">
+                <span v-for="example in affix.examples" :key="example" class="example-tag">
+                  {{ example }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Day 2: First Read + Comprehension -->
+      <div v-else-if="currentDay === 2" class="activity-content">
+        <div class="activity-card">
+          <h2>📖 First Read</h2>
+          <p class="instruction">Read the passage aloud. Your teacher will provide feedback.</p>
+          <div v-if="weeklyPassage" class="passage-content">
+            <h3>{{ weeklyPassage.title }}</h3>
+            <div class="passage-text">{{ weeklyPassage.text }}</div>
+          </div>
+        </div>
+        
+        <div v-if="day2Questions.length > 0" class="activity-card">
+          <h2>❓ Comprehension Questions</h2>
+          <p class="instruction">Answer these questions about the passage.</p>
+          <div class="questions-list">
+            <div v-for="(question, index) in day2Questions" :key="question.id" class="question-item">
+              <div class="question-header">
+                <span class="question-number">Q{{ index + 1 }}</span>
+                <span class="question-type">{{ question.type }}</span>
+              </div>
+              <p class="question-text">{{ question.prompt }}</p>
+              <textarea 
+                v-model="answers[`day2-${question.id}`]"
+                placeholder="Your answer..."
+                class="answer-input"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+          <button @click="saveAnswers(2)" class="btn btn-primary">Save Answers</button>
+        </div>
+      </div>
+      
+      <!-- Day 3: Teacher Model + Reread -->
+      <div v-else-if="currentDay === 3" class="activity-content">
+        <div class="activity-card">
+          <h2>👂 Teacher Model</h2>
+          <p class="instruction">Listen as your teacher reads the passage aloud.</p>
+          <div v-if="weeklyPassage" class="passage-content">
+            <h3>{{ weeklyPassage.title }}</h3>
+            <div class="passage-text">{{ weeklyPassage.text }}</div>
+          </div>
+        </div>
+        
+        <div class="activity-card">
+          <h2>📖 Your Reread</h2>
+          <p class="instruction">Now read the passage aloud yourself.</p>
+          <div class="reread-actions">
+            <button @click="markRereadComplete" class="btn btn-primary">
+              Mark Reread Complete
+            </button>
+          </div>
+        </div>
+        
+        <div class="activity-card">
+          <h2>📚 Vocabulary Review</h2>
+          <p class="instruction">Review the vocabulary words from Day 1.</p>
+          <div class="vocab-grid">
+            <div v-for="word in vocabWords" :key="word.id" class="vocab-card">
+              <h3>{{ word.word }}</h3>
+              <p class="definition">{{ word.definition }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Day 4: Reread + Main Idea/Details -->
+      <div v-else-if="currentDay === 4" class="activity-content">
+        <div class="activity-card">
+          <h2>📖 Reread Passage</h2>
+          <p class="instruction">Read the passage one more time.</p>
+          <div v-if="weeklyPassage" class="passage-content">
+            <h3>{{ weeklyPassage.title }}</h3>
+            <div class="passage-text">{{ weeklyPassage.text }}</div>
+          </div>
+        </div>
+        
+        <div v-if="day4Questions.length > 0" class="activity-card">
+          <h2>💡 Main Idea & Details</h2>
+          <p class="instruction">Identify the main idea and supporting details.</p>
+          <div class="questions-list">
+            <div v-for="(question, index) in day4Questions" :key="question.id" class="question-item">
+              <div class="question-header">
+                <span class="question-number">Q{{ index + 1 }}</span>
+                <span class="question-type">{{ question.type }}</span>
+              </div>
+              <p class="question-text">{{ question.prompt }}</p>
+              <textarea 
+                v-model="answers[`day4-${question.id}`]"
+                placeholder="Your answer..."
+                class="answer-input"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+          <button @click="saveAnswers(4)" class="btn btn-primary">Save Answers</button>
+        </div>
+      </div>
+      
+      <!-- Day 5: Cold Read + Assessment -->
+      <div v-else-if="currentDay === 5" class="activity-content">
+        <div class="activity-card">
+          <h2>❄️ Cold Read</h2>
+          <p class="instruction">Read this new passage for the first time. Your teacher will record your reading.</p>
+          <div v-if="fridayPassage" class="passage-content">
+            <h3>{{ fridayPassage.title }}</h3>
+            <div class="passage-text">{{ fridayPassage.text }}</div>
+          </div>
+          <button @click="startColdRead" class="btn btn-primary">Start Cold Read</button>
+        </div>
+        
+        <div v-if="day5Questions.length > 0" class="activity-card">
+          <h2>📝 Assessment Questions</h2>
+          <p class="instruction">Answer these main idea and inference questions.</p>
+          <div class="questions-list">
+            <div v-for="(question, index) in day5Questions" :key="question.id" class="question-item">
+              <div class="question-header">
+                <span class="question-number">Q{{ index + 1 }}</span>
+                <span class="question-type">{{ question.type }}</span>
+              </div>
+              <p class="question-text">{{ question.prompt }}</p>
+              <textarea 
+                v-model="answers[`day5-${question.id}`]"
+                placeholder="Your answer..."
+                class="answer-input"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+          <button @click="saveAnswers(5)" class="btn btn-primary">Submit Assessment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
+import {
+  getWeek,
+  getPassagesByWeek,
+  getVocabByWeek,
+  getAffixesByWeek,
+  getQuestionsByWeek
+} from '@/services/firestoreServices'
+import { Timestamp } from 'firebase/firestore'
+import type { WeekDocument, PassageDocument, VocabDocument, AffixDocument, ComprehensionQuestionDocument } from '@/types/firestore'
+import VocabularyInquiry from '@/components/VocabularyInquiry.vue'
+
+const route = useRoute()
+const { user } = useAuth()
+
+const loading = ref(true)
+const currentDay = ref(1)
+const week = ref<WeekDocument | null>(null)
+const weeklyPassage = ref<(PassageDocument & { id: string }) | null>(null)
+const fridayPassage = ref<(PassageDocument & { id: string }) | null>(null)
+const vocabWords = ref<Array<VocabDocument & { id: string }>>([])
+const affixes = ref<Array<AffixDocument & { id: string }>>([])
+const day2Questions = ref<Array<ComprehensionQuestionDocument & { id: string }>>([])
+const day4Questions = ref<Array<ComprehensionQuestionDocument & { id: string }>>([])
+const day5Questions = ref<Array<ComprehensionQuestionDocument & { id: string }>>([])
+const answers = ref<Record<string, string>>({})
+
+const formatWeekDate = (timestamp?: Timestamp) => {
+  if (!timestamp) return ''
+  return timestamp.toDate().toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric' 
+  })
+}
+
+const startColdRead = () => {
+  // TODO: Implement cold read recording
+  alert('Cold read recording will be implemented soon!')
+}
+
+const markRereadComplete = () => {
+  // TODO: Save reread completion
+  alert('Reread marked as complete!')
+}
+
+const saveAnswers = async (day: number) => {
+  // TODO: Save answers to Firestore
+  alert(`Day ${day} answers saved!`)
+}
+
+onMounted(async () => {
+  const weekId = route.params.weekId as string
+  if (!weekId || !user.value) return
+  
+  try {
+    const weekData = await getWeek(weekId)
+    if (weekData) {
+      week.value = weekData
+      
+      // Load passages
+      const passages = await getPassagesByWeek(weekId)
+      weeklyPassage.value = passages.find(p => p.type === 'weekly') || null
+      fridayPassage.value = passages.find(p => p.type === 'friday') || null
+      
+      // Load vocabulary and affixes
+      vocabWords.value = await getVocabByWeek(weekId)
+      affixes.value = await getAffixesByWeek(weekId)
+      
+      // Load questions
+      const allQuestions = await getQuestionsByWeek(weekId)
+      day2Questions.value = allQuestions.filter(q => q.day === 2).sort((a, b) => a.orderIndex - b.orderIndex)
+      day4Questions.value = allQuestions.filter(q => q.day === 4).sort((a, b) => a.orderIndex - b.orderIndex)
+      day5Questions.value = allQuestions.filter(q => q.day === 5).sort((a, b) => a.orderIndex - b.orderIndex)
+    }
+  } catch (error) {
+    console.error('Error loading activity:', error)
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.daily-activity {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.activity-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.day-selector {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.day-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #718096;
+}
+
+.day-btn:hover {
+  color: #2d3748;
+  background: #f7fafc;
+}
+
+.day-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: #718096;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.activity-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.activity-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.instruction {
+  color: #718096;
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.vocab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.vocab-grid, .affix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.vocab-card {
+  background: #f7fafc;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.vocab-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #667eea;
+  margin: 0 0 0.5rem 0;
+}
+
+.definition {
+  color: #4a5568;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.example {
+  color: #718096;
+  font-style: italic;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+}
+
+.affix-card {
+  background: #f7fafc;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.affix-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.affix-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.affix-kind {
+  padding: 0.25rem 0.75rem;
+  background: #edf2f7;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: capitalize;
+}
+
+.affix-meaning {
+  color: #4a5568;
+  margin: 0.5rem 0;
+}
+
+.affix-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.example-tag {
+  padding: 0.25rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.passage-content {
+  margin-top: 1rem;
+}
+
+.passage-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+}
+
+.passage-text {
+  line-height: 1.8;
+  color: #2d3748;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.question-item {
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.question-number {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 1.125rem;
+}
+
+.question-type {
+  padding: 0.25rem 0.75rem;
+  background: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: capitalize;
+}
+
+.question-text {
+  color: #2d3748;
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.reread-actions {
+  margin-top: 1.5rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+</style>
+
+
+
+
+
+

@@ -1,0 +1,433 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================================
+    // Helper Functions
+    // ============================================================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is a teacher
+    function isTeacher() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    // Check if user is a student
+    function isStudent() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    // Check if user owns the resource (by uid match)
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    // Check if teacher owns/manages a student
+    function isStudentTeacher(studentId) {
+      return isTeacher() && 
+             exists(/databases/$(database)/documents/students/$(studentId)) &&
+             get(/databases/$(database)/documents/students/$(studentId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // Check if teacher manages a student by studentUid
+    function isStudentTeacherByUid(studentUid) {
+      return isTeacher() && 
+             exists(/databases/$(database)/documents/students) &&
+             // Query students collection where studentUid matches and teacherUid matches
+             // Note: This requires a query, so we'll handle it in the rules directly
+             true; // Simplified - will check in specific rules
+    }
+    
+    // Check if student is accessing their own data
+    function isOwnStudent(studentUid) {
+      return isStudent() && request.auth.uid == studentUid;
+    }
+    
+    // Check if teacher manages the week
+    function isWeekTeacher(weekId) {
+      return isTeacher() && 
+             exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+             get(/databases/$(database)/documents/weeks/$(weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // Check if student owns the week (via studentId lookup)
+    function isWeekStudent(weekId) {
+      return isStudent() &&
+             exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+             exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(weekId)).data.studentId)) &&
+             get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(weekId)).data.studentId)).data.studentUid == request.auth.uid;
+    }
+    
+    // Validate user document structure
+    function isValidUser(data) {
+      return data.keys().hasAll(['role', 'displayName', 'email', 'createdAt']) &&
+             data.role is string &&
+             data.role in ['teacher', 'student'] &&
+             data.displayName is string &&
+             data.email is string &&
+             data.createdAt is timestamp;
+    }
+    
+    // Validate student document structure
+    function isValidStudent(data) {
+      return data.keys().hasAll(['displayName', 'studentUid', 'studentEmail', 'teacherUid', 'active', 'createdAt', 'updatedAt']) &&
+             data.displayName is string &&
+             (data.studentUid is string || data.studentUid == null) &&
+             data.studentEmail is string &&
+             data.teacherUid is string &&
+             data.active is bool &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+    
+    // ============================================================================
+    // 1. users Collection
+    // ============================================================================
+    
+    match /users/{uid} {
+      // Users can read their own document
+      allow read: if isOwner(uid);
+      
+      // Only authenticated users can create their own user document
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == uid &&
+                       isValidUser(request.resource.data);
+      
+      // Users can update their own document (but not change role)
+      allow update: if isOwner(uid) &&
+                       request.resource.data.role == resource.data.role &&
+                       isValidUser(request.resource.data);
+      
+      // Only Cloud Functions or admins should delete users
+      allow delete: if false;
+    }
+    
+    // ============================================================================
+    // 2. students Collection
+    // ============================================================================
+    
+    match /students/{studentId} {
+      // Teachers can read their own students
+      // Students can read their own student document
+      allow read: if isStudentTeacher(studentId) || 
+                     (isStudent() && 
+                      exists(/databases/$(database)/documents/students/$(studentId)) &&
+                      get(/databases/$(database)/documents/students/$(studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create students (and must be the teacherUid)
+      allow create: if isTeacher() &&
+                       request.resource.data.teacherUid == request.auth.uid &&
+                       isValidStudent(request.resource.data);
+      
+      // Only teachers can update their own students
+      // Allow updating studentUid from null to a value (claiming account)
+      allow update: if isStudentTeacher(studentId) &&
+                       request.resource.data.teacherUid == resource.data.teacherUid &&
+                       ((resource.data.studentUid == null && request.resource.data.studentUid is string) ||
+                        (request.resource.data.studentUid == resource.data.studentUid)) &&
+                       isValidStudent(request.resource.data);
+      
+      // Only teachers can delete their own students
+      allow delete: if isStudentTeacher(studentId);
+    }
+    
+    // ============================================================================
+    // 3. weeks Collection
+    // ============================================================================
+    
+    match /weeks/{weekId} {
+      // Teachers can read weeks for their students
+      // Students can read weeks assigned to them
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+                   exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(weekId)).data.studentId)) &&
+                   get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(weekId)).data.studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create weeks for their students
+      allow create: if isTeacher() &&
+                       request.resource.data.teacherUid == request.auth.uid &&
+                       exists(/databases/$(database)/documents/students/$(request.resource.data.studentId)) &&
+                       get(/databases/$(database)/documents/students/$(request.resource.data.studentId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can update weeks for their students
+      allow update: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(weekId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can delete weeks for their students
+      allow delete: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 4. passages Collection
+    // ============================================================================
+    
+    match /passages/{passageId} {
+      // Teachers can read passages for their students' weeks
+      // Students can read passages for their weeks
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/passages/$(passageId)) &&
+                     exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/passages/$(passageId)) &&
+                   exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)) &&
+                   exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.studentId)) &&
+                   get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create passages (must own the week)
+      allow create: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can update/delete passages (must own the week)
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/passages/$(passageId)) &&
+                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)) &&
+                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 5. comprehensionQuestions Collection
+    // ============================================================================
+    
+    match /comprehensionQuestions/{questionId} {
+      // Teachers can read questions for their students' weeks
+      // Students can read questions for their weeks
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/comprehensionQuestions/$(questionId)) &&
+                     exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/comprehensionQuestions/$(questionId)) &&
+                   exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)) &&
+                   exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.studentId)) &&
+                   get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create questions (must own the week)
+      allow create: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can update/delete questions (must own the week)
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/comprehensionQuestions/$(questionId)) &&
+                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)) &&
+                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 6. vocab Collection
+    // ============================================================================
+    
+    match /vocab/{wordId} {
+      // Teachers can read vocab for their students' weeks
+      // Students can read vocab for their weeks
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/vocab/$(wordId)) &&
+                     exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/vocab/$(wordId)) &&
+                   exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)) &&
+                   exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.studentId)) &&
+                   get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create vocab (must own the week)
+      allow create: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can update/delete vocab (must own the week)
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/vocab/$(wordId)) &&
+                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)) &&
+                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 7. affixes Collection
+    // ============================================================================
+    
+    match /affixes/{affixId} {
+      // Teachers can read affixes for their students' weeks
+      // Students can read affixes for their weeks
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/affixes/$(affixId)) &&
+                     exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/affixes/$(affixId)) &&
+                   exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)) &&
+                   exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.studentId)) &&
+                   get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
+      
+      // Only teachers can create affixes (must own the week)
+      allow create: if isTeacher() &&
+                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+      
+      // Only teachers can update/delete affixes (must own the week)
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/affixes/$(affixId)) &&
+                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)) &&
+                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 8. wordMastery Collection
+    // ============================================================================
+    
+    match /wordMastery/{masteryId} {
+      // Teachers can read mastery for their students
+      // Students can read their own mastery
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/wordMastery/$(masteryId)) &&
+                     // Check if teacher manages this student by querying students collection
+                     // Note: This is simplified - in practice, you may need to store teacherUid in wordMastery
+                     // or use a Cloud Function to validate
+                     true) || // Simplified for now - consider adding teacherUid to wordMastery for better security
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/wordMastery/$(masteryId)) &&
+                   get(/databases/$(database)/documents/wordMastery/$(masteryId)).data.studentUid == request.auth.uid);
+      
+      // Students can create/update their own mastery records
+      // Teachers can also create/update mastery for their students
+      allow create, update: if (isStudent() && 
+                               request.resource.data.studentUid == request.auth.uid) ||
+                              isTeacher(); // Teachers can manage all mastery (consider restricting to their students)
+      
+      // Only teachers can delete mastery records
+      allow delete: if isTeacher();
+    }
+    
+    // ============================================================================
+    // 9. quizzesPublic Collection (Student-readable, NO answers)
+    // ============================================================================
+    
+    match /quizzesPublic/{quizId} {
+      // Teachers can read quizzes for their students
+      // Students can read their own quizzes (NO answers in this collection)
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                     get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                   get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.studentUid == request.auth.uid);
+      
+      // Only Cloud Functions can create quizzes (via Admin SDK)
+      // Teachers can also create via functions
+      // Note: correctChoiceIndex should never be in questions array for public collection
+      // This is enforced by application logic - security rules validate structure only
+      allow create: if isTeacher() &&
+                       request.resource.data.teacherUid == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['studentUid', 'teacherUid', 'weekId', 'mode', 'assignedAt', 'dueAt', 'questionCount', 'questions']) &&
+                       request.resource.data.questions is list;
+      
+      // Only teachers can update quizzes (e.g., mark as completed)
+      // Students can update completedAt when they finish (via function)
+      allow update: if (isTeacher() && 
+                       exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                       get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.teacherUid == request.auth.uid) ||
+                    (isStudent() &&
+                     exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                     get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.studentUid == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completedAt', 'updatedAt']));
+      
+      // Only teachers can delete quizzes
+      allow delete: if isTeacher() &&
+                       exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                       get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 10. quizzesPrivate Collection (Teacher/Function-only, WITH answers)
+    // ============================================================================
+    
+    match /quizzesPrivate/{quizId} {
+      // ONLY teachers can read private quiz answers
+      // Students CANNOT read this collection at all
+      allow read: if isTeacher() && 
+                     exists(/databases/$(database)/documents/quizzesPrivate/$(quizId)) &&
+                     exists(/databases/$(database)/documents/quizzesPublic/$(quizId)) &&
+                     get(/databases/$(database)/documents/quizzesPublic/$(quizId)).data.teacherUid == request.auth.uid;
+      
+      // Only Cloud Functions can create/update/delete (via Admin SDK)
+      // For security, we restrict direct client writes
+      allow create, update, delete: if false; // Only via Cloud Functions
+    }
+    
+    // ============================================================================
+    // 11. quizAttempts Collection
+    // ============================================================================
+    
+    match /quizAttempts/{attemptId} {
+      // Teachers can read attempts for their students' quizzes
+      // Students can read their own attempts
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/quizAttempts/$(attemptId)) &&
+                     exists(/databases/$(database)/documents/quizzesPublic/$(get(/databases/$(database)/documents/quizAttempts/$(attemptId)).data.quizId)) &&
+                     get(/databases/$(database)/documents/quizzesPublic/$(get(/databases/$(database)/documents/quizAttempts/$(attemptId)).data.quizId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/quizAttempts/$(attemptId)) &&
+                   get(/databases/$(database)/documents/quizAttempts/$(attemptId)).data.studentUid == request.auth.uid);
+      
+      // Students can create their own quiz attempts (via Cloud Function)
+      // Teachers can also create attempts (e.g., for testing)
+      allow create: if (isStudent() && 
+                       request.resource.data.studentUid == request.auth.uid) ||
+                    (isTeacher() &&
+                     exists(/databases/$(database)/documents/quizzesPublic/$(request.resource.data.quizId)) &&
+                     get(/databases/$(database)/documents/quizzesPublic/$(request.resource.data.quizId)).data.teacherUid == request.auth.uid);
+      
+      // Only teachers can update/delete attempts
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/quizAttempts/$(attemptId)) &&
+                               exists(/databases/$(database)/documents/quizzesPublic/$(get(/databases/$(database)/documents/quizAttempts/$(attemptId)).data.quizId)) &&
+                               get(/databases/$(database)/documents/quizzesPublic/$(get(/databases/$(database)/documents/quizAttempts/$(attemptId)).data.quizId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 12. fluencyAssessments Collection
+    // ============================================================================
+    
+    match /fluencyAssessments/{assessmentId} {
+      // Teachers can read assessments for their students
+      // Students can read their own assessments
+      allow read: if (isTeacher() && 
+                     exists(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)) &&
+                     exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)) &&
+                     get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)).data.teacherUid == request.auth.uid) ||
+                  (isStudent() &&
+                   exists(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)) &&
+                   get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.studentUid == request.auth.uid);
+      
+      // Teachers can create assessments for their students
+      // Students can create their own assessments
+      allow create: if (isTeacher() && 
+                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid) ||
+                    (isStudent() && 
+                     request.resource.data.studentUid == request.auth.uid);
+      
+      // Only teachers can update/delete assessments
+      allow update, delete: if isTeacher() &&
+                               exists(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)) &&
+                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)) &&
+                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+  }
+}

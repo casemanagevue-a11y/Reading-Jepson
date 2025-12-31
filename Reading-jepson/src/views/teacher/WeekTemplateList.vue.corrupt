@@ -1,0 +1,218 @@
+<template>
+  <div class="week-templates">
+    <div class="container">
+      <div class="header">
+        <h1>Week Templates</h1>
+        <router-link to="/teacher/week-templates/create" class="btn btn-primary">+ Create Template</router-link>
+      </div>
+
+      <div v-if="loading" class="loading">Loading templates...</div>
+      <div v-else-if="error" class="error">{{ error }}</div>
+      <div v-else-if="templates.length === 0" class="empty">
+        <p>No week templates yet. Create your first reusable lesson plan!</p>
+        <router-link to="/teacher/week-templates/create" class="btn btn-primary">Create Template</router-link>
+      </div>
+      <div v-else class="templates-grid">
+        <div v-for="template in templates" :key="template.id" class="template-card">
+          <div class="template-header">
+            <h3>{{ template.templateName }}</h3>
+            <span class="subject-badge">{{ template.subjectFocus }}</span>
+          </div>
+          <div class="template-meta">
+            <span v-if="template.grade">Grade: {{ template.grade }}</span>
+            <span v-if="template.unit">Unit: {{ template.unit }}</span>
+          </div>
+          <p v-if="template.description" class="template-description">{{ template.description }}</p>
+          <div class="template-actions">
+            <router-link :to="`/teacher/week-assignments/assign?templateId=${template.id}`" class="btn btn-primary btn-sm">
+              Assign to Students
+            </router-link>
+            <router-link :to="`/teacher/week-templates/${template.id}`" class="btn btn-secondary btn-sm">
+              View/Edit
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import { getWeekTemplatesByTeacher } from '@/services/firestoreServices'
+import type { WeekTemplateDocument } from '@/types/firestore'
+
+const { user, loading: authLoading } = useAuth()
+const templates = ref<Array<WeekTemplateDocument & { id: string }>>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const loadTemplates = async () => {
+  if (!user.value) return
+  try {
+    loading.value = true
+    error.value = null
+    const templateList = await getWeekTemplatesByTeacher(user.value.uid)
+    templates.value = templateList
+  } catch (err: any) {
+    console.error('Error loading templates:', err)
+    error.value = err.message || 'Failed to load templates'
+  } finally {
+    loading.value = false
+  }
+}
+
+watch([authLoading, user], ([isLoading, currentUser]) => {
+  if (!isLoading && currentUser) {
+    loadTemplates()
+  }
+}, { immediate: true })
+</script>
+
+<style scoped>
+.week-templates {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.loading,
+.error,
+.empty {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error {
+  color: #e53e3e;
+}
+
+.empty {
+  color: #718096;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.template-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.template-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.75rem;
+}
+
+.template-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+  flex: 1;
+}
+
+.subject-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #4a90e2;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.template-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.template-description {
+  color: #4a5568;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.template-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+</style>

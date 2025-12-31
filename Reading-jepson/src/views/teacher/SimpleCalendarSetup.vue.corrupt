@@ -1,0 +1,649 @@
+<template>
+  <div class="simple-calendar-setup">
+    <div class="container">
+      <div class="header">
+        <h1>School Year Calendar</h1>
+        <p class="subtitle">Mark school days vs days off for accurate lesson planning</p>
+      </div>
+
+      <!-- Quick Setup -->
+      <div class="quick-setup-card">
+        <h2>Quick Setup</h2>
+        
+        <div class="form-group">
+          <label>School Year</label>
+          <select v-model="schoolYear" class="form-input" @change="loadYear">
+            <option value="2024-2025">2024-2025</option>
+            <option value="2025-2026">2025-2026</option>
+            <option value="2026-2027">2026-2027</option>
+          </select>
+        </div>
+
+        <div class="quarters-setup">
+          <h3>Quarter Dates</h3>
+          <p class="note">Set the start and end dates for each quarter</p>
+          
+          <div v-for="q in 4" :key="q" class="quarter-row">
+            <label>Quarter {{ q }}</label>
+            <input 
+              v-model="quarters[q].start" 
+              type="date" 
+              class="form-input"
+              placeholder="Start"
+            />
+            <span class="to">to</span>
+            <input 
+              v-model="quarters[q].end" 
+              type="date" 
+              class="form-input"
+              placeholder="End"
+            />
+          </div>
+        </div>
+
+        <div class="weekends-setup">
+          <h3>Weekends</h3>
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="excludeWeekends" />
+            Automatically mark all Saturdays & Sundays as non-school days
+          </label>
+        </div>
+
+        <button @click="generateCalendar" class="btn btn-primary">
+          Generate Calendar
+        </button>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div v-if="calendarGenerated" class="calendar-grid-section">
+        <div class="calendar-header">
+          <h2>{{ currentMonthName }} {{ currentYear }}</h2>
+          <div class="month-nav">
+            <button @click="previousMonth" class="btn btn-secondary">←</button>
+            <button @click="nextMonth" class="btn btn-secondary">→</button>
+          </div>
+        </div>
+
+        <p class="instructions">
+          Click any day to toggle between school day (green) and day off (gray)
+        </p>
+
+        <div class="calendar-grid">
+          <div class="weekday-header">Sun</div>
+          <div class="weekday-header">Mon</div>
+          <div class="weekday-header">Tue</div>
+          <div class="weekday-header">Wed</div>
+          <div class="weekday-header">Thu</div>
+          <div class="weekday-header">Fri</div>
+          <div class="weekday-header">Sat</div>
+          
+          <div 
+            v-for="(day, index) in monthDays" 
+            :key="index"
+            :class="['calendar-day', {
+              'school-day': day.isSchoolDay,
+              'day-off': !day.isSchoolDay && day.date,
+              'empty': !day.date,
+              'weekend': day.isWeekend
+            }]"
+            @click="toggleDay(day)"
+          >
+            <span v-if="day.date" class="day-number">{{ day.dayNumber }}</span>
+            <span v-if="day.isSchoolDay" class="day-indicator">✓</span>
+          </div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="color-box school-day"></div>
+            <span>School Day</span>
+          </div>
+          <div class="legend-item">
+            <div class="color-box day-off"></div>
+            <span>Day Off</span>
+          </div>
+        </div>
+
+        <div class="save-actions">
+          <button @click="saveCalendar" :disabled="saving" class="btn btn-primary btn-lg">
+            {{ saving ? 'Saving...' : 'Save Calendar' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="error" class="error-message">{{ error }}</div>
+      <div v-if="success" class="success-message">{{ success }}</div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import { createCalendarEvent } from '@/services/firestoreServices'
+import { Timestamp } from 'firebase/firestore'
+
+const { user } = useAuth()
+
+const schoolYear = ref('2025-2026')
+const excludeWeekends = ref(true)
+const calendarGenerated = ref(false)
+const saving = ref(false)
+const error = ref<string | null>(null)
+const success = ref<string | null>(null)
+
+const currentMonth = ref(new Date().getMonth())
+const currentYear = ref(new Date().getFullYear())
+
+const quarters = ref<Record<number, { start: string; end: string }>>({
+  1: { start: '2025-08-14', end: '2025-10-10' },
+  2: { start: '2025-10-13', end: '2025-12-19' },
+  3: { start: '2026-01-05', end: '2026-03-13' },
+  4: { start: '2026-03-16', end: '2026-06-04' }
+})
+
+interface CalendarDay {
+  date: Date | null
+  dayNumber: number
+  isWeekend: boolean
+  isSchoolDay: boolean
+}
+
+const schoolDays = ref<Set<string>>(new Set())
+
+const currentMonthName = computed(() => {
+  return new Date(currentYear.value, currentMonth.value).toLocaleDateString('en-US', { month: 'long' })
+})
+
+const monthDays = computed(() => {
+  const year = currentYear.value
+  const month = currentMonth.value
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const days: CalendarDay[] = []
+  
+  // Add padding for days before month starts
+  const startDayOfWeek = firstDay.getDay()
+  for (let i = 0; i < startDayOfWeek; i++) {
+    days.push({ date: null, dayNumber: 0, isWeekend: false, isSchoolDay: false })
+  }
+  
+  // Add all days in month
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const date = new Date(year, month, day)
+    const dayOfWeek = date.getDay()
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    const dateKey = formatDateKey(date)
+    const isSchoolDay = schoolDays.value.has(dateKey)
+    
+    days.push({
+      date,
+      dayNumber: day,
+      isWeekend,
+      isSchoolDay
+    })
+  }
+  
+  return days
+})
+
+const formatDateKey = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+const loadYear = () => {
+  // Reset when changing year
+  calendarGenerated.value = false
+  schoolDays.value.clear()
+}
+
+const generateCalendar = () => {
+  schoolDays.value.clear()
+  
+  // Mark all weekdays within quarter dates as school days
+  for (let q = 1; q <= 4; q++) {
+    const start = new Date(quarters.value[q].start)
+    const end = new Date(quarters.value[q].end)
+    
+    let current = new Date(start)
+    while (current <= end) {
+      const dayOfWeek = current.getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      
+      // Add as school day if not weekend (or if weekends allowed)
+      if (!isWeekend || !excludeWeekends.value) {
+        schoolDays.value.add(formatDateKey(current))
+      }
+      
+      current.setDate(current.getDate() + 1)
+    }
+  }
+  
+  calendarGenerated.value = true
+  
+  // Navigate to first quarter start month
+  const firstStart = new Date(quarters.value[1].start)
+  currentMonth.value = firstStart.getMonth()
+  currentYear.value = firstStart.getFullYear()
+}
+
+const toggleDay = (day: CalendarDay) => {
+  if (!day.date) return
+  
+  const dateKey = formatDateKey(day.date)
+  if (schoolDays.value.has(dateKey)) {
+    schoolDays.value.delete(dateKey)
+  } else {
+    schoolDays.value.add(dateKey)
+  }
+}
+
+const previousMonth = () => {
+  if (currentMonth.value === 0) {
+    currentMonth.value = 11
+    currentYear.value--
+  } else {
+    currentMonth.value--
+  }
+}
+
+const nextMonth = () => {
+  if (currentMonth.value === 11) {
+    currentMonth.value = 0
+    currentYear.value++
+  } else {
+    currentMonth.value++
+  }
+}
+
+const saveCalendar = async () => {
+  if (!user.value) return
+  
+  try {
+    saving.value = true
+    error.value = null
+    success.value = null
+    
+    // Save quarter boundaries
+    for (let q = 1; q <= 4; q++) {
+      await createCalendarEvent({
+        teacherUid: user.value.uid,
+        eventType: 'quarterStart',
+        title: `Quarter ${q} Start`,
+        date: Timestamp.fromDate(new Date(quarters.value[q].start))
+      })
+      
+      await createCalendarEvent({
+        teacherUid: user.value.uid,
+        eventType: 'quarterEnd',
+        title: `Quarter ${q} End`,
+        date: Timestamp.fromDate(new Date(quarters.value[q].end))
+      })
+    }
+    
+    // Save all non-school days as events
+    const allDates = Array.from(schoolDays.value)
+    const quarterDates = Object.values(quarters.value).flatMap(q => [q.start, q.end])
+    
+    // Find all dates in quarters that are NOT school days
+    for (let q = 1; q <= 4; q++) {
+      const start = new Date(quarters.value[q].start)
+      const end = new Date(quarters.value[q].end)
+      
+      let current = new Date(start)
+      while (current <= end) {
+        const dateKey = formatDateKey(current)
+        
+        // If this date is NOT a school day, save it as day off
+        if (!schoolDays.value.has(dateKey)) {
+          await createCalendarEvent({
+            teacherUid: user.value.uid,
+            eventType: 'dayOff',
+            title: 'Day Off',
+            date: Timestamp.fromDate(new Date(current))
+          })
+        }
+        
+        current.setDate(current.getDate() + 1)
+      }
+    }
+    
+    success.value = `Calendar saved successfully! ${schoolDays.value.size} school days marked.`
+    
+    setTimeout(() => {
+      window.location.href = '/teacher/calendar'
+    }, 2000)
+  } catch (err: any) {
+    console.error('Error saving calendar:', err)
+    error.value = err.message || 'Failed to save calendar'
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
+<style scoped>
+.simple-calendar-setup {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.quick-setup-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.quick-setup-card h2,
+.quick-setup-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1.5rem 0;
+}
+
+.quick-setup-card h3 {
+  font-size: 1.125rem;
+  margin-top: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  max-width: 300px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.quarters-setup {
+  margin: 2rem 0;
+}
+
+.note {
+  color: #718096;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.quarter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quarter-row label {
+  min-width: 80px;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.quarter-row .form-input {
+  width: 150px;
+}
+
+.quarter-row .to {
+  color: #718096;
+}
+
+.weekends-setup {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.calendar-grid-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.month-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.instructions {
+  color: #718096;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-style: italic;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background: #cbd5e0;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.weekday-header {
+  background: #2d3748;
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.calendar-day {
+  background: white;
+  min-height: 80px;
+  padding: 0.5rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-day.empty {
+  background: #f7fafc;
+  cursor: default;
+}
+
+.calendar-day.school-day {
+  background: #c6f6d5;
+  border: 2px solid #48bb78;
+}
+
+.calendar-day.school-day:hover {
+  background: #9ae6b4;
+}
+
+.calendar-day.day-off {
+  background: #e2e8f0;
+}
+
+.calendar-day.day-off:hover {
+  background: #cbd5e0;
+}
+
+.calendar-day.weekend {
+  background: #f7fafc;
+}
+
+.day-number {
+  font-weight: 600;
+  color: #1a202c;
+  font-size: 1.125rem;
+}
+
+.day-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  color: #22543d;
+  font-size: 1.25rem;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: 2px solid #cbd5e0;
+}
+
+.color-box.school-day {
+  background: #c6f6d5;
+  border-color: #48bb78;
+}
+
+.color-box.day-off {
+  background: #e2e8f0;
+  border-color: #a0aec0;
+}
+
+.save-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.error-message,
+.success-message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.error-message {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+
+.btn-lg {
+  padding: 1rem 3rem;
+  font-size: 1.125rem;
+}
+</style>

@@ -1,0 +1,779 @@
+<template>
+  <div class="visual-planner">
+    <div class="container">
+      <div class="header">
+        <h1>Visual Assignment Planner</h1>
+        <p class="subtitle">Drag templates onto school days to create assignments</p>
+      </div>
+
+      <!-- Student Selector -->
+      <div class="student-selector">
+        <label>Planning for:</label>
+        <select v-model="selectedStudentId" class="form-input" @change="loadAssignments">
+          <option value="">Select a student</option>
+          <option v-for="student in students" :key="student.id" :value="student.id">
+            {{ student.displayName }}
+          </option>
+        </select>
+      </div>
+
+      <div v-if="!selectedStudentId" class="empty-state">
+        Select a student to begin planning
+      </div>
+
+      <div v-else class="planner-layout">
+        <!-- Template Palette -->
+        <div class="template-palette">
+          <h3>📚 Week Templates</h3>
+          <p class="palette-note">Drag templates to calendar days below</p>
+          
+          <div class="template-list">
+            <div 
+              v-for="template in templates" 
+              :key="template.id"
+              class="template-card draggable"
+              draggable="true"
+              @dragstart="handleDragStart($event, template)"
+            >
+              <div class="template-name">{{ template.templateName }}</div>
+              <div class="template-meta">
+                <span class="length-badge">{{ template.weekLength }} days</span>
+                <span class="subject-badge">{{ template.subjectFocus }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div class="calendar-section">
+          <div class="calendar-controls">
+            <button @click="previousMonth" class="btn btn-secondary">← Previous Month</button>
+            <h2>{{ currentMonthName }} {{ currentYear }}</h2>
+            <button @click="nextMonth" class="btn btn-secondary">Next Month →</button>
+          </div>
+
+          <div class="calendar-grid">
+            <div class="weekday-header">Sun</div>
+            <div class="weekday-header">Mon</div>
+            <div class="weekday-header">Tue</div>
+            <div class="weekday-header">Wed</div>
+            <div class="weekday-header">Thu</div>
+            <div class="weekday-header">Fri</div>
+            <div class="weekday-header">Sat</div>
+            
+            <div 
+              v-for="(day, index) in monthDays" 
+              :key="index"
+              :class="['calendar-day', {
+                'school-day': day.isSchoolDay,
+                'day-off': day.isDayOff,
+                'empty': !day.date,
+                'weekend': day.isWeekend,
+                'has-assignment': day.assignment,
+                'drag-over': day.isDragOver
+              }]"
+              @drop="handleDrop($event, day)"
+              @dragover="handleDragOver($event, day)"
+              @dragleave="handleDragLeave(day)"
+            >
+              <span v-if="day.date" class="day-number">{{ day.dayNumber }}</span>
+              
+              <div v-if="day.isDayOff" class="day-off-indicator">
+                🚫 Day Off
+              </div>
+              
+              <div v-if="day.assignment" class="assignment-badge">
+                <div class="assignment-name">{{ getTemplateName(day.assignment.weekTemplateId) }}</div>
+                <div class="assignment-day">Day {{ day.assignmentDay }}</div>
+                <button @click.stop="removeAssignment(day.assignment.id)" class="remove-btn">×</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item">
+              <div class="color-box school-day"></div>
+              <span>School Day (drop templates here)</span>
+            </div>
+            <div class="legend-item">
+              <div class="color-box day-off"></div>
+              <span>Day Off (from calendar)</span>
+            </div>
+            <div class="legend-item">
+              <div class="color-box has-assignment"></div>
+              <span>Has Assignment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="error" class="error-message">{{ error }}</div>
+      <div v-if="success" class="success-message">{{ success }}</div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import { 
+  getStudentsByTeacher,
+  getWeekTemplatesByTeacher,
+  getWeekAssignmentsByStudent,
+  getCalendarEventsByTeacher,
+  createWeekAssignment,
+  deleteWeekAssignment,
+  updateWeekAssignment
+} from '@/services/firestoreServices'
+import { Timestamp } from 'firebase/firestore'
+import type { 
+  StudentDocument,
+  WeekTemplateDocument,
+  WeekAssignmentDocument,
+  SchoolCalendarDocument
+} from '@/types/firestore'
+
+const { user, loading: authLoading } = useAuth()
+
+const students = ref<Array<StudentDocument & { id: string }>>([])
+const templates = ref<Array<WeekTemplateDocument & { id: string }>>([])
+const assignments = ref<Array<WeekAssignmentDocument & { id: string }>>([])
+const calendarEvents = ref<Array<SchoolCalendarDocument & { id: string }>>([])
+
+const selectedStudentId = ref('')
+const currentMonth = ref(new Date().getMonth())
+const currentYear = ref(new Date().getFullYear())
+const draggedTemplate = ref<WeekTemplateDocument & { id: string } | null>(null)
+const dragOverDay = ref<string | null>(null)
+const error = ref<string | null>(null)
+const success = ref<string | null>(null)
+
+const currentMonthName = computed(() => {
+  return new Date(currentYear.value, currentMonth.value).toLocaleDateString('en-US', { month: 'long' })
+})
+
+const daysOffSet = computed(() => {
+  const set = new Set<string>()
+  calendarEvents.value.forEach(event => {
+    if (event.eventType === 'dayOff' || event.eventType === 'holiday' || 
+        event.eventType === 'breakStart' || event.eventType === 'breakEnd') {
+      const date = event.date.toDate()
+      const dateKey = formatDateKey(date)
+      set.add(dateKey)
+      
+      // If it's a multi-day event, add all days in range
+      if (event.endDate) {
+        let current = new Date(date)
+        const end = event.endDate.toDate()
+        while (current <= end) {
+          set.add(formatDateKey(current))
+          current.setDate(current.getDate() + 1)
+        }
+      }
+    }
+  })
+  return set
+})
+
+const monthDays = computed(() => {
+  const year = currentYear.value
+  const month = currentMonth.value
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const days: any[] = []
+  
+  // Add padding
+  const startDayOfWeek = firstDay.getDay()
+  for (let i = 0; i < startDayOfWeek; i++) {
+    days.push({ date: null, dayNumber: 0, isEmpty: true })
+  }
+  
+  // Add all days
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const date = new Date(year, month, day)
+    const dayOfWeek = date.getDay()
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    const dateKey = formatDateKey(date)
+    const isDayOff = daysOffSet.value.has(dateKey)
+    const isSchoolDay = !isWeekend && !isDayOff
+    
+    // Find assignment for this date
+    const assignment = assignments.value.find(a => {
+      const start = a.startDate.toDate()
+      const end = a.endDate.toDate()
+      return date >= start && date <= end
+    })
+    
+    // If there's an assignment, calculate which day it is
+    let assignmentDay = 0
+    if (assignment) {
+      const start = assignment.startDate.toDate()
+      assignmentDay = Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    }
+    
+    days.push({
+      date,
+      dateKey,
+      dayNumber: day,
+      isWeekend,
+      isDayOff,
+      isSchoolDay,
+      assignment,
+      assignmentDay,
+      isDragOver: dragOverDay.value === dateKey
+    })
+  }
+  
+  return days
+})
+
+const formatDateKey = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+const getTemplateName = (templateId: string) => {
+  const template = templates.value.find(t => t.id === templateId)
+  return template?.templateName || 'Unknown'
+}
+
+const handleDragStart = (event: DragEvent, template: WeekTemplateDocument & { id: string }) => {
+  draggedTemplate.value = template
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+const handleDragOver = (event: DragEvent, day: any) => {
+  if (!day.isSchoolDay || !draggedTemplate.value) return
+  
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverDay.value = day.dateKey
+}
+
+const handleDragLeave = (day: any) => {
+  if (dragOverDay.value === day.dateKey) {
+    dragOverDay.value = null
+  }
+}
+
+const handleDrop = async (event: DragEvent, day: any) => {
+  event.preventDefault()
+  dragOverDay.value = null
+  
+  if (!day.isSchoolDay || !draggedTemplate.value || !user.value) return
+  
+  try {
+    const template = draggedTemplate.value
+    const startDate = day.date
+    
+    // Calculate end date based on template length and school days
+    const endDate = calculateEndDate(startDate, template.weekLength)
+    
+    // Calculate quarter from date
+    const quarter = calculateQuarterFromDate(startDate)
+    
+    await createWeekAssignment({
+      studentId: selectedStudentId.value,
+      teacherUid: user.value.uid,
+      weekTemplateId: template.id,
+      weekNumber: 0, // Will be calculated
+      quarter: quarter || 1,
+      startDate: Timestamp.fromDate(startDate),
+      endDate: Timestamp.fromDate(endDate),
+      actualDays: [], // Will be calculated
+      status: 'assigned'
+    })
+    
+    success.value = `Assigned "${template.templateName}" starting ${startDate.toLocaleDateString()}`
+    
+    // Reload assignments
+    await loadAssignments()
+    
+    setTimeout(() => {
+      success.value = null
+    }, 3000)
+  } catch (err: any) {
+    console.error('Error creating assignment:', err)
+    error.value = err.message || 'Failed to create assignment'
+  }
+  
+  draggedTemplate.value = null
+}
+
+const calculateEndDate = (startDate: Date, weekLength: number): Date => {
+  // Calculate end date accounting for weekends and days off
+  const end = new Date(startDate)
+  let schoolDaysAdded = 0
+  
+  while (schoolDaysAdded < weekLength - 1) {
+    end.setDate(end.getDate() + 1)
+    const dayOfWeek = end.getDay()
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    const isDayOff = daysOffSet.value.has(formatDateKey(end))
+    
+    if (!isWeekend && !isDayOff) {
+      schoolDaysAdded++
+    }
+  }
+  
+  return end
+}
+
+const calculateQuarterFromDate = (date: Date): 1 | 2 | 3 | 4 | null => {
+  // Find quarter boundaries from calendar events
+  const quarterStarts = calendarEvents.value
+    .filter(e => e.eventType === 'quarterStart')
+    .map(e => ({ date: e.date.toDate(), title: e.title }))
+  
+  const quarterEnds = calendarEvents.value
+    .filter(e => e.eventType === 'quarterEnd')
+    .map(e => ({ date: e.date.toDate(), title: e.title }))
+  
+  for (let q = 1; q <= 4; q++) {
+    const start = quarterStarts.find(s => s.title.includes(`${q}`))
+    const end = quarterEnds.find(e => e.title.includes(`${q}`))
+    
+    if (start && end && date >= start.date && date <= end.date) {
+      return q as 1 | 2 | 3 | 4
+    }
+  }
+  
+  return null
+}
+
+const removeAssignment = async (assignmentId: string) => {
+  if (!confirm('Remove this assignment?')) return
+  
+  try {
+    await deleteWeekAssignment(assignmentId)
+    success.value = 'Assignment removed'
+    await loadAssignments()
+    
+    setTimeout(() => {
+      success.value = null
+    }, 2000)
+  } catch (err: any) {
+    console.error('Error removing assignment:', err)
+    error.value = err.message || 'Failed to remove assignment'
+  }
+}
+
+const previousMonth = () => {
+  if (currentMonth.value === 0) {
+    currentMonth.value = 11
+    currentYear.value--
+  } else {
+    currentMonth.value--
+  }
+}
+
+const nextMonth = () => {
+  if (currentMonth.value === 11) {
+    currentMonth.value = 0
+    currentYear.value++
+  } else {
+    currentMonth.value++
+  }
+}
+
+const loadData = async () => {
+  if (!user.value) return
+  
+  try {
+    const [studentList, templateList, eventList] = await Promise.all([
+      getStudentsByTeacher(user.value.uid),
+      getWeekTemplatesByTeacher(user.value.uid),
+      getCalendarEventsByTeacher(user.value.uid)
+    ])
+    
+    students.value = studentList
+    templates.value = templateList
+    calendarEvents.value = eventList
+  } catch (err: any) {
+    console.error('Error loading data:', err)
+    error.value = err.message || 'Failed to load data'
+  }
+}
+
+const loadAssignments = async () => {
+  if (!selectedStudentId.value) {
+    assignments.value = []
+    return
+  }
+  
+  try {
+    const assignmentList = await getWeekAssignmentsByStudent(selectedStudentId.value)
+    assignments.value = assignmentList
+  } catch (err: any) {
+    console.error('Error loading assignments:', err)
+    error.value = err.message || 'Failed to load assignments'
+  }
+}
+
+watch([authLoading, user], ([isLoading, currentUser]) => {
+  if (!isLoading && currentUser) {
+    loadData()
+  }
+}, { immediate: true })
+</script>
+
+<style scoped>
+.visual-planner {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.student-selector {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.student-selector label {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.form-input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  min-width: 250px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+  color: #718096;
+  font-size: 1.125rem;
+}
+
+.planner-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+}
+
+.template-palette {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+}
+
+.template-palette h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.palette-note {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.template-card {
+  background: #f7fafc;
+  border: 2px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: grab;
+  transition: all 0.2s;
+}
+
+.template-card:hover {
+  border-color: #4a90e2;
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.template-card:active {
+  cursor: grabbing;
+}
+
+.template-name {
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+}
+
+.template-meta {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.length-badge,
+.subject-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.length-badge {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.subject-badge {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.calendar-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.calendar-controls h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background: #cbd5e0;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.weekday-header {
+  background: #2d3748;
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.calendar-day {
+  background: white;
+  min-height: 100px;
+  padding: 0.5rem;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.calendar-day.empty {
+  background: #f7fafc;
+}
+
+.calendar-day.weekend {
+  background: #f7fafc;
+}
+
+.calendar-day.day-off {
+  background: #fed7d7;
+}
+
+.calendar-day.school-day {
+  background: white;
+  border: 2px solid transparent;
+}
+
+.calendar-day.school-day.drag-over {
+  background: #ebf8ff;
+  border-color: #4a90e2;
+  border-style: dashed;
+}
+
+.calendar-day.has-assignment {
+  background: #fefcbf;
+}
+
+.day-number {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.day-off-indicator {
+  text-align: center;
+  color: #c53030;
+  font-size: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.assignment-badge {
+  margin-top: 1.5rem;
+  background: #4a90e2;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  position: relative;
+}
+
+.assignment-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.assignment-day {
+  font-size: 0.625rem;
+  opacity: 0.9;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.remove-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.color-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: 2px solid #cbd5e0;
+}
+
+.color-box.school-day {
+  background: white;
+}
+
+.color-box.day-off {
+  background: #fed7d7;
+}
+
+.color-box.has-assignment {
+  background: #fefcbf;
+}
+
+.error-message,
+.success-message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  text-align: center;
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.error-message {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+</style>

@@ -1,0 +1,483 @@
+/**
+ * Library Services for Reading Application
+ * 
+ * CRUD operations for:
+ * - vocabLibrary
+ * - affixLibrary
+ * - passageLibrary
+ */
+
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  type DocumentData,
+  type QuerySnapshot
+} from 'firebase/firestore'
+import { db } from '@/firebase/config'
+import type {
+  VocabLibraryDocument,
+  AffixLibraryDocument,
+  PassageLibraryDocument,
+  SubjectFocus
+} from '@/types/firestore'
+
+// ============================================================================
+// Types for API responses
+// ============================================================================
+
+export type VocabLibraryWithId = VocabLibraryDocument & { id: string }
+export type AffixLibraryWithId = AffixLibraryDocument & { id: string }
+export type PassageLibraryWithId = PassageLibraryDocument & { id: string }
+
+export interface LibraryFilters {
+  teacherUid: string
+  grade?: string
+  unit?: string
+  subject?: SubjectFocus
+}
+
+export interface AutocompleteOptions {
+  units: string[]
+  grades: string[]
+  subjects: string[]
+}
+
+// ============================================================================
+// Vocabulary Library Services
+// ============================================================================
+
+export async function createVocabLibrary(
+  data: Omit<VocabLibraryDocument, 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  try {
+    const docData: Omit<VocabLibraryDocument, 'id'> = {
+      ...data,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    }
+    const docRef = await addDoc(collection(db, 'vocabLibrary'), docData)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating vocab library item:', error)
+    throw error
+  }
+}
+
+export async function updateVocabLibrary(
+  id: string,
+  updates: Partial<Omit<VocabLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, 'vocabLibrary', id), {
+      ...updates,
+      updatedAt: Timestamp.now()
+    })
+  } catch (error) {
+    console.error('Error updating vocab library item:', error)
+    throw error
+  }
+}
+
+export async function deleteVocabLibrary(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'vocabLibrary', id))
+  } catch (error) {
+    console.error('Error deleting vocab library item:', error)
+    throw error
+  }
+}
+
+export async function getVocabLibrary(id: string): Promise<VocabLibraryWithId | null> {
+  try {
+    const docSnap = await getDoc(doc(db, 'vocabLibrary', id))
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as VocabLibraryWithId
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting vocab library item:', error)
+    throw error
+  }
+}
+
+export async function queryVocabLibrary(filters: LibraryFilters): Promise<VocabLibraryWithId[]> {
+  try {
+    console.log('[queryVocabLibrary] Starting query with filters:', filters)
+    
+    let q = query(
+      collection(db, 'vocabLibrary'),
+      where('teacherUid', '==', filters.teacherUid)
+    )
+
+    if (filters.grade) {
+      q = query(q, where('grade', '==', filters.grade))
+    }
+    if (filters.unit) {
+      q = query(q, where('unit', '==', filters.unit))
+    }
+    if (filters.subject) {
+      q = query(q, where('subject', '==', filters.subject))
+    }
+
+    q = query(q, orderBy('createdAt', 'desc'))
+
+    console.log('[queryVocabLibrary] Executing query...')
+    const snapshot = await getDocs(q)
+    console.log('[queryVocabLibrary] Query returned', snapshot.size, 'documents')
+    
+    const results = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as VocabLibraryWithId[]
+    
+    console.log('[queryVocabLibrary] Processed results:', results.length)
+    return results
+  } catch (error) {
+    console.error('[queryVocabLibrary] Error querying vocab library:', error)
+    throw error
+  }
+}
+
+// ============================================================================
+// Affix Library Services
+// ============================================================================
+
+export async function createAffixLibrary(
+  data: Omit<AffixLibraryDocument, 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  try {
+    const docData: Omit<AffixLibraryDocument, 'id'> = {
+      ...data,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    }
+    const docRef = await addDoc(collection(db, 'affixLibrary'), docData)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating affix library item:', error)
+    throw error
+  }
+}
+
+export async function updateAffixLibrary(
+  id: string,
+  updates: Partial<Omit<AffixLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, 'affixLibrary', id), {
+      ...updates,
+      updatedAt: Timestamp.now()
+    })
+  } catch (error) {
+    console.error('Error updating affix library item:', error)
+    throw error
+  }
+}
+
+export async function deleteAffixLibrary(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'affixLibrary', id))
+  } catch (error) {
+    console.error('Error deleting affix library item:', error)
+    throw error
+  }
+}
+
+export async function getAffixLibrary(id: string): Promise<AffixLibraryWithId | null> {
+  try {
+    const docSnap = await getDoc(doc(db, 'affixLibrary', id))
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as AffixLibraryWithId
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting affix library item:', error)
+    throw error
+  }
+}
+
+export async function queryAffixLibrary(filters: LibraryFilters): Promise<AffixLibraryWithId[]> {
+  try {
+    let q = query(
+      collection(db, 'affixLibrary'),
+      where('teacherUid', '==', filters.teacherUid)
+    )
+
+    if (filters.grade) {
+      q = query(q, where('grade', '==', filters.grade))
+    }
+    if (filters.unit) {
+      q = query(q, where('unit', '==', filters.unit))
+    }
+    if (filters.subject) {
+      q = query(q, where('subject', '==', filters.subject))
+    }
+
+    q = query(q, orderBy('createdAt', 'desc'))
+
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as AffixLibraryWithId[]
+  } catch (error) {
+    console.error('Error querying affix library:', error)
+    throw error
+  }
+}
+
+// ============================================================================
+// Passage Library Services
+// ============================================================================
+
+export async function createPassageLibrary(
+  data: Omit<PassageLibraryDocument, 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  try {
+    // Auto-calculate word count if not provided
+    const wordCount = data.wordCount ?? data.text.split(/\s+/).filter(w => w.length > 0).length
+
+    const docData: Omit<PassageLibraryDocument, 'id'> = {
+      ...data,
+      wordCount,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    }
+    const docRef = await addDoc(collection(db, 'passageLibrary'), docData)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating passage library item:', error)
+    throw error
+  }
+}
+
+export async function updatePassageLibrary(
+  id: string,
+  updates: Partial<Omit<PassageLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
+): Promise<void> {
+  try {
+    // Recalculate word count if text is updated
+    const updateData: any = { ...updates, updatedAt: Timestamp.now() }
+    if (updates.text) {
+      updateData.wordCount = updates.text.split(/\s+/).filter(w => w.length > 0).length
+    }
+
+    await updateDoc(doc(db, 'passageLibrary', id), updateData)
+  } catch (error) {
+    console.error('Error updating passage library item:', error)
+    throw error
+  }
+}
+
+export async function deletePassageLibrary(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'passageLibrary', id))
+  } catch (error) {
+    console.error('Error deleting passage library item:', error)
+    throw error
+  }
+}
+
+export async function getPassageLibrary(id: string): Promise<PassageLibraryWithId | null> {
+  try {
+    const docSnap = await getDoc(doc(db, 'passageLibrary', id))
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as PassageLibraryWithId
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting passage library item:', error)
+    throw error
+  }
+}
+
+export async function queryPassageLibrary(filters: LibraryFilters): Promise<PassageLibraryWithId[]> {
+  try {
+    let q = query(
+      collection(db, 'passageLibrary'),
+      where('teacherUid', '==', filters.teacherUid)
+    )
+
+    if (filters.grade) {
+      q = query(q, where('grade', '==', filters.grade))
+    }
+    if (filters.unit) {
+      q = query(q, where('unit', '==', filters.unit))
+    }
+    if (filters.subject) {
+      q = query(q, where('subject', '==', filters.subject))
+    }
+
+    q = query(q, orderBy('createdAt', 'desc'))
+
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as PassageLibraryWithId[]
+  } catch (error) {
+    console.error('Error querying passage library:', error)
+    throw error
+  }
+}
+
+// ============================================================================
+// Autocomplete Services
+// ============================================================================
+
+/**
+ * Get autocomplete suggestions for units, grades, and subjects
+ * based on existing library items for a teacher
+ */
+export async function getAutocompleteOptions(teacherUid: string): Promise<AutocompleteOptions> {
+  try {
+    const [vocabSnap, affixSnap, passageSnap] = await Promise.all([
+      getDocs(query(collection(db, 'vocabLibrary'), where('teacherUid', '==', teacherUid))),
+      getDocs(query(collection(db, 'affixLibrary'), where('teacherUid', '==', teacherUid))),
+      getDocs(query(collection(db, 'passageLibrary'), where('teacherUid', '==', teacherUid)))
+    ])
+
+    const units = new Set<string>()
+    const grades = new Set<string>()
+    const subjects = new Set<string>()
+
+    const processSnapshot = (snap: QuerySnapshot<DocumentData>) => {
+      snap.docs.forEach(doc => {
+        const data = doc.data()
+        if (data.unit) units.add(data.unit)
+        if (data.grade) grades.add(data.grade)
+        if (data.subject) subjects.add(data.subject)
+      })
+    }
+
+    processSnapshot(vocabSnap)
+    processSnapshot(affixSnap)
+    processSnapshot(passageSnap)
+
+    return {
+      units: Array.from(units).sort(),
+      grades: Array.from(grades).sort(),
+      subjects: Array.from(subjects).sort()
+    }
+  } catch (error) {
+    console.error('Error getting autocomplete options:', error)
+    return { units: [], grades: [], subjects: [] }
+  }
+}
+
+/**
+ * Get count of items in library for a specific grade/unit/subject
+ */
+export async function getLibraryCounts(
+  teacherUid: string,
+  grade?: string,
+  unit?: string,
+  subject?: SubjectFocus
+): Promise<{ vocab: number; affixes: number; passages: number }> {
+  try {
+    const filters: LibraryFilters = { teacherUid, grade, unit, subject }
+    
+    const [vocabItems, affixItems, passageItems] = await Promise.all([
+      queryVocabLibrary(filters),
+      queryAffixLibrary(filters),
+      queryPassageLibrary(filters)
+    ])
+
+    return {
+      vocab: vocabItems.length,
+      affixes: affixItems.length,
+      passages: passageItems.length
+    }
+  } catch (error) {
+    console.error('Error getting library counts:', error)
+    return { vocab: 0, affixes: 0, passages: 0 }
+  }
+}
+
+// ============================================================================
+// Batch Import Services
+// ============================================================================
+
+/**
+ * Import multiple vocabulary items at once
+ */
+export async function batchCreateVocabLibrary(
+  items: Array<Omit<VocabLibraryDocument, 'createdAt' | 'updatedAt'>>
+): Promise<{ successCount: number; errors: string[] }> {
+  let successCount = 0
+  const errors: string[] = []
+
+  for (const item of items) {
+    try {
+      await createVocabLibrary(item)
+      successCount++
+    } catch (error) {
+      errors.push(`Failed to create vocab "${item.word}": ${error}`)
+    }
+  }
+
+  return { successCount, errors }
+}
+
+/**
+ * Import multiple affix items at once
+ */
+export async function batchCreateAffixLibrary(
+  items: Array<Omit<AffixLibraryDocument, 'createdAt' | 'updatedAt'>>
+): Promise<{ successCount: number; errors: string[] }> {
+  let successCount = 0
+  const errors: string[] = []
+
+  for (const item of items) {
+    try {
+      await createAffixLibrary(item)
+      successCount++
+    } catch (error) {
+      errors.push(`Failed to create affix "${item.affix}": ${error}`)
+    }
+  }
+
+  return { successCount, errors }
+}
+
+export default {
+  // Vocab
+  createVocabLibrary,
+  updateVocabLibrary,
+  deleteVocabLibrary,
+  getVocabLibrary,
+  queryVocabLibrary,
+  
+  // Affix
+  createAffixLibrary,
+  updateAffixLibrary,
+  deleteAffixLibrary,
+  getAffixLibrary,
+  queryAffixLibrary,
+  
+  // Passage
+  createPassageLibrary,
+  updatePassageLibrary,
+  deletePassageLibrary,
+  getPassageLibrary,
+  queryPassageLibrary,
+  
+  // Utilities
+  getAutocompleteOptions,
+  getLibraryCounts,
+  batchCreateVocabLibrary,
+  batchCreateAffixLibrary
+}
+
+
+
+

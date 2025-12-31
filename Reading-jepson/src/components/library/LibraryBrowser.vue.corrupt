@@ -1,0 +1,807 @@
+<template>
+  <div class="library-browser">
+    <div class="browser-header">
+      <h2>📚 Content Library</h2>
+      <p class="subtitle">Browse and manage your vocabulary, affixes, and passages</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Content Type</label>
+        <div class="tab-buttons">
+          <button 
+            :class="['tab-btn', { active: contentType === 'vocab' }]"
+            @click="contentType = 'vocab'"
+          >
+            Vocabulary
+          </button>
+          <button 
+            :class="['tab-btn', { active: contentType === 'affix' }]"
+            @click="contentType = 'affix'"
+          >
+            Affixes
+          </button>
+          <button 
+            :class="['tab-btn', { active: contentType === 'passage' }]"
+            @click="contentType = 'passage'"
+          >
+            Passages
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-field">
+          <label>Subject</label>
+          <select v-model="filters.subject" class="form-select">
+            <option value="">All Subjects</option>
+            <option value="ELA">ELA</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Math">Math</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Grade</label>
+          <select v-model="filters.grade" class="form-select">
+            <option value="">All Grades</option>
+            <option v-for="grade in autocompleteOptions.grades" :key="grade" :value="grade">
+              {{ grade }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label>Unit</label>
+          <select v-model="filters.unit" class="form-select">
+            <option value="">All Units</option>
+            <option v-for="unit in autocompleteOptions.units" :key="unit" :value="unit">
+              {{ unit }}
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <button @click="loadLibraryItems" class="btn btn-secondary">
+            🔍 Filter
+          </button>
+        </div>
+      </div>
+
+      <div class="results-summary">
+        <p>
+          Showing <strong>{{ displayedItems.length }}</strong> 
+          {{ contentType === 'vocab' ? 'vocabulary terms' : 
+             contentType === 'affix' ? 'affixes' : 'passages' }}
+        </p>
+        <button @click="$emit('import')" class="btn btn-primary btn-sm">
+          + Import New
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div v-if="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading library items...</p>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="displayedItems.length === 0" class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>No items found</h3>
+      <p>
+        {{ hasFilters 
+          ? 'Try adjusting your filters or import new content' 
+          : 'Start by importing your first items to the library' 
+        }}
+      </p>
+      <button @click="$emit('import')" class="btn btn-primary">
+        + Import Content
+      </button>
+    </div>
+
+    <!-- Vocabulary List -->
+    <div v-else-if="contentType === 'vocab'" class="items-grid vocab-grid">
+      <div 
+        v-for="item in displayedItems" 
+        :key="item.id"
+        class="item-card vocab-card"
+      >
+        <div class="card-header">
+          <h3 class="word">{{ item.word }}</h3>
+          <div class="card-actions">
+            <button @click="editItem(item)" class="btn-icon" title="Edit">
+              ✏️
+            </button>
+            <button @click="deleteItem(item.id)" class="btn-icon" title="Delete">
+              🗑️
+            </button>
+          </div>
+        </div>
+        
+        <p class="definition">{{ item.definition }}</p>
+        
+        <div v-if="item.exampleSentence" class="example">
+          <strong>Example:</strong> {{ item.exampleSentence }}
+        </div>
+
+        <div v-if="item.inquiryPrompts && item.inquiryPrompts.length > 0" class="has-inquiry">
+          ✨ Includes inquiry questions
+        </div>
+
+        <div class="card-meta">
+          <span class="badge">{{ item.subject }}</span>
+          <span class="badge">Grade {{ item.grade }}</span>
+          <span class="badge">{{ item.unit }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Affix List -->
+    <div v-else-if="contentType === 'affix'" class="items-grid affix-grid">
+      <div 
+        v-for="item in displayedItems" 
+        :key="item.id"
+        class="item-card affix-card"
+      >
+        <div class="card-header">
+          <h3 class="affix-name">
+            {{ item.affix }}
+            <span class="affix-type">{{ item.kind }}</span>
+          </h3>
+          <div class="card-actions">
+            <button @click="editItem(item)" class="btn-icon" title="Edit">
+              ✏️
+            </button>
+            <button @click="deleteItem(item.id)" class="btn-icon" title="Delete">
+              🗑️
+            </button>
+          </div>
+        </div>
+        
+        <p class="meaning">{{ item.meaning }}</p>
+        
+        <div v-if="item.examples && item.examples.length > 0" class="examples">
+          <strong>Examples:</strong>
+          <div class="example-tags">
+            <span v-for="(example, idx) in item.examples" :key="idx" class="example-tag">
+              {{ example }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-meta">
+          <span class="badge">{{ item.subject }}</span>
+          <span class="badge">Grade {{ item.grade }}</span>
+          <span class="badge">{{ item.unit }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passage List -->
+    <div v-else-if="contentType === 'passage'" class="items-list passage-list">
+      <div 
+        v-for="item in displayedItems" 
+        :key="item.id"
+        class="item-card passage-card"
+      >
+        <div class="card-header">
+          <div>
+            <h3 class="passage-title">{{ item.title }}</h3>
+            <div class="passage-info">
+              <span v-if="item.type" class="type-badge">{{ item.type }}</span>
+              <span v-if="item.wordCount" class="word-count">{{ item.wordCount }} words</span>
+              <span v-if="item.readingLevel" class="reading-level">Level: {{ item.readingLevel }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button @click="viewPassage(item)" class="btn-icon" title="View">
+              👁️
+            </button>
+            <button @click="editItem(item)" class="btn-icon" title="Edit">
+              ✏️
+            </button>
+            <button @click="deleteItem(item.id)" class="btn-icon" title="Delete">
+              🗑️
+            </button>
+          </div>
+        </div>
+        
+        <p class="passage-excerpt">{{ getExcerpt(item.text) }}</p>
+
+        <div class="card-meta">
+          <span class="badge">{{ item.subject }}</span>
+          <span class="badge">Grade {{ item.grade }}</span>
+          <span class="badge">{{ item.unit }}</span>
+          <span v-if="item.subjectTag" class="badge tag-badge">{{ item.subjectTag }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passage viewer modal -->
+    <div v-if="viewingPassage" class="modal-overlay" @click="viewingPassage = null">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ viewingPassage.title }}</h3>
+          <button @click="viewingPassage = null" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="passage-full-text">
+            {{ viewingPassage.text }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import libraryServices from '@/services/libraryServices'
+import type { 
+  VocabLibraryWithId, 
+  AffixLibraryWithId, 
+  PassageLibraryWithId 
+} from '@/services/libraryServices'
+import type { SubjectFocus } from '@/types/firestore'
+
+const emit = defineEmits<{
+  import: []
+  edit: [item: any]
+}>()
+
+const authStore = useAuthStore()
+
+// State
+const contentType = ref<'vocab' | 'affix' | 'passage'>('vocab')
+const filters = ref({
+  subject: '' as SubjectFocus | '',
+  grade: '',
+  unit: ''
+})
+
+const vocabItems = ref<VocabLibraryWithId[]>([])
+const affixItems = ref<AffixLibraryWithId[]>([])
+const passageItems = ref<PassageLibraryWithId[]>([])
+
+const isLoading = ref(false)
+const viewingPassage = ref<PassageLibraryWithId | null>(null)
+
+const autocompleteOptions = ref({
+  units: [] as string[],
+  grades: [] as string[],
+  subjects: [] as string[]
+})
+
+// Computed
+const displayedItems = computed(() => {
+  if (contentType.value === 'vocab') return vocabItems.value
+  if (contentType.value === 'affix') return affixItems.value
+  return passageItems.value
+})
+
+const hasFilters = computed(() => {
+  return !!(filters.value.subject || filters.value.grade || filters.value.unit)
+})
+
+// Methods
+async function loadLibraryItems() {
+  if (!authStore.user) return
+  
+  isLoading.value = true
+  try {
+    const filterParams = {
+      teacherUid: authStore.user.uid,
+      subject: filters.value.subject || undefined,
+      grade: filters.value.grade || undefined,
+      unit: filters.value.unit || undefined
+    }
+
+    if (contentType.value === 'vocab') {
+      vocabItems.value = await libraryServices.queryVocabLibrary(filterParams)
+    } else if (contentType.value === 'affix') {
+      affixItems.value = await libraryServices.queryAffixLibrary(filterParams)
+    } else {
+      passageItems.value = await libraryServices.queryPassageLibrary(filterParams)
+    }
+  } catch (error) {
+    console.error('Error loading library items:', error)
+    alert('Error loading library items. Please try again.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function loadAutocompleteOptions() {
+  if (!authStore.user) return
+  
+  try {
+    autocompleteOptions.value = await libraryServices.getAutocompleteOptions(authStore.user.uid)
+  } catch (error) {
+    console.error('Error loading autocomplete options:', error)
+  }
+}
+
+function editItem(item: any) {
+  emit('edit', { ...item, type: contentType.value })
+}
+
+async function deleteItem(id: string) {
+  const confirmDelete = confirm('Are you sure you want to delete this item? This action cannot be undone.')
+  if (!confirmDelete) return
+  
+  try {
+    if (contentType.value === 'vocab') {
+      await libraryServices.deleteVocabLibrary(id)
+      vocabItems.value = vocabItems.value.filter(item => item.id !== id)
+    } else if (contentType.value === 'affix') {
+      await libraryServices.deleteAffixLibrary(id)
+      affixItems.value = affixItems.value.filter(item => item.id !== id)
+    } else {
+      await libraryServices.deletePassageLibrary(id)
+      passageItems.value = passageItems.value.filter(item => item.id !== id)
+    }
+    
+    alert('✅ Item deleted successfully')
+  } catch (error) {
+    console.error('Error deleting item:', error)
+    alert('❌ Error deleting item. Please try again.')
+  }
+}
+
+function viewPassage(item: PassageLibraryWithId) {
+  viewingPassage.value = item
+}
+
+function getExcerpt(text: string, maxLength = 200): string {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// Watchers
+watch(contentType, () => {
+  loadLibraryItems()
+})
+
+// Lifecycle
+onMounted(() => {
+  loadAutocompleteOptions()
+  loadLibraryItems()
+})
+</script>
+
+<style scoped>
+.library-browser {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.browser-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.browser-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+}
+
+/* Filters */
+.filters-section {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.filter-group {
+  margin-bottom: 1.5rem;
+}
+
+.filter-group label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #4a5568;
+}
+
+.tab-btn:hover {
+  border-color: #cbd5e0;
+}
+
+.tab-btn.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-field label {
+  display: block;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: white;
+}
+
+.results-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.results-summary p {
+  color: #4a5568;
+  margin: 0;
+}
+
+/* Loading & Empty States */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+  color: #718096;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Item Cards */
+.items-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.vocab-grid,
+.affix-grid {
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.passage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.item-card:hover {
+  border-color: #cbd5e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.word,
+.affix-name,
+.passage-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #667eea;
+  margin: 0;
+}
+
+.affix-type {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  background: #718096;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.definition,
+.meaning {
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.example,
+.examples {
+  background: #f7fafc;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin-bottom: 1rem;
+  border-left: 3px solid #667eea;
+}
+
+.example-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.example-tag {
+  background: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.has-inquiry {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.passage-info {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.type-badge,
+.word-count,
+.reading-level {
+  font-size: 0.85rem;
+  color: #718096;
+  background: #edf2f7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.passage-excerpt {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.card-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a5568;
+  background: #edf2f7;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.tag-badge {
+  background: #e6fffa;
+  color: #0f766e;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.btn-secondary {
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.modal-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #718096;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-close:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.passage-full-text {
+  color: #2d3748;
+  font-size: 1rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+</style>
+
+<think>Great progress! Now I'll mark task 4 as completed and continue with task 5 - creating the LibraryBrowser component. Note that task 8 (AI-powered inquiry questions) is already integrated into the LibraryImport component, so I can mark that as completed too when I update the todos next time.
+
+Let me create the LibraryBrowser component which will allow teachers to view and manage their library content.</think>

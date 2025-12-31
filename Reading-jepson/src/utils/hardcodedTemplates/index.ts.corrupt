@@ -1,0 +1,88 @@
+/**
+ * Hard-coded Template Registry
+ * 
+ * Central registry for all pre-built lesson templates.
+ * Organize templates by quarter for easy navigation.
+ */
+
+import type { HardcodedTemplate, TemplatesByQuarter } from './types';
+import { createWeek1WestAfricaTemplate } from './week01-west-africa';
+
+// Import future templates here as you create them
+// import { createWeek2Template } from './week02-...';
+// import { createWeek3Template } from './week03-...';
+// etc.
+
+/**
+ * All available hard-coded templates organized by quarter
+ */
+export const HARDCODED_TEMPLATES: TemplatesByQuarter = {
+  quarter1: [
+    {
+      id: 'week01-west-africa',
+      name: 'Week 1 — West Africa Geography & Culture',
+      weekNumber: 1,
+      quarter: 1,
+      description: 'History Informational: region, environment, population, natural resources, savanna',
+      grade: '6-8',
+      unit: 'Unit 1',
+      subject: 'History',
+      weekLength: 5,
+      createFunction: createWeek1WestAfricaTemplate,
+    },
+    // Add Week 2-9 for Q1 here
+    // {
+    //   id: 'week02-...',
+    //   name: 'Week 2 — ...',
+    //   weekNumber: 2,
+    //   quarter: 1,
+    //   ...
+    // },
+  ],
+  quarter2: [
+    // Add Week 1-9 for Q2 here
+  ],
+  quarter3: [
+    // Add Week 1-9 for Q3 here
+  ],
+  quarter4: [
+    // Add Week 1-9 for Q4 here
+  ],
+};
+
+/**
+ * Get all templates as a flat array
+ */
+export function getAllTemplates(): HardcodedTemplate[] {
+  return [
+    ...HARDCODED_TEMPLATES.quarter1,
+    ...HARDCODED_TEMPLATES.quarter2,
+    ...HARDCODED_TEMPLATES.quarter3,
+    ...HARDCODED_TEMPLATES.quarter4,
+  ];
+}
+
+/**
+ * Get templates for a specific quarter
+ */
+export function getTemplatesByQuarter(quarter: 1 | 2 | 3 | 4): HardcodedTemplate[] {
+  return HARDCODED_TEMPLATES[`quarter${quarter}` as keyof TemplatesByQuarter];
+}
+
+/**
+ * Find a template by ID
+ */
+export function getTemplateById(id: string): HardcodedTemplate | undefined {
+  return getAllTemplates().find(t => t.id === id);
+}
+
+/**
+ * Create a template by ID
+ */
+export async function createTemplateById(id: string, teacherUid: string): Promise<string> {
+  const template = getTemplateById(id);
+  if (!template) {
+    throw new Error(`Template not found: ${id}`);
+  }
+  return await template.createFunction(teacherUid);
+}

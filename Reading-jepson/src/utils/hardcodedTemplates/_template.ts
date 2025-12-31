@@ -1,0 +1,190 @@
+/**
+ * Week XX — [TOPIC NAME]
+ * Quarter X, Week X
+ * 
+ * Anchor Type: [History/ELA/Science] [Informational/Narrative]
+ * Tier 3 Vocabulary: [word1, word2, word3, word4, word5]
+ * Affixes: [affix1, affix2]
+ * Word Count: ~XXX words
+ */
+
+import {
+  createWeekTemplate,
+  createPassage,
+  createVocabWord,
+  createAffix,
+  createQuestion,
+} from '@/services/firestoreServices';
+import type {
+  WeekTemplateDocument,
+  VocabDocument,
+  AffixDocument,
+  ComprehensionQuestionDocument,
+} from '@/types/firestore';
+
+/**
+ * Creates the complete Week XX template with all content
+ * 
+ * @param teacherUid - The UID of the teacher creating the template
+ * @returns The created template ID
+ */
+export async function createWeekXXTopicNameTemplate(teacherUid: string): Promise<string> {
+  // 1. Create the template document
+  const templateData: Omit<WeekTemplateDocument, 'createdAt' | 'updatedAt'> = {
+    teacherUid,
+    templateName: 'WEEK XX — [TOPIC NAME]',
+    weekLength: 5, // Change to 3 or 4 for short weeks
+    grade: '6-8',
+    unit: 'Unit X',
+    subjectFocus: 'History', // or 'ELA', 'Science'
+    description: '[Anchor Type]. Tier 3 vocabulary: [word1, word2, word3, word4, word5]. Affixes: [affix1, affix2]. Anchor Passage Word Count: ~XXX words.',
+  };
+
+  const templateId = await createWeekTemplate(templateData);
+
+  // 2. Create the anchor passage (weekly passage)
+  await createPassage({
+    weekId: templateId,
+    type: 'weekly',
+    title: '[Passage Title]',
+    text: `[Paste your full anchor passage text here.
+
+Multiple paragraphs are fine.
+
+Include all paragraphs from the passage.]`,
+  });
+
+  // 3. Create Friday passage (placeholder or actual)
+  await createPassage({
+    weekId: templateId,
+    type: 'friday',
+    title: 'Friday Assessment Passage',
+    text: 'Friday passage will be provided separately.',
+  });
+
+  // 4. Create vocabulary words with inquiry prompts
+  const vocabWords: Array<Omit<VocabDocument, 'weekId' | 'createdAt' | 'updatedAt'>> = [
+    {
+      word: '[vocabulary word 1]',
+      definition: '[clear definition]',
+      exampleSentence: '[context sentence from passage]',
+      tags: ['tier3', 'content'],
+      inquiryPrompts: [
+        '[Teacher prompt 1]',
+        '[Teacher prompt 2]',
+        '[Teacher prompt 3]',
+      ],
+      hints: [
+        '[Truth-bite 1: small piece of supporting info]',
+        '[Truth-bite 2]',
+        '[Truth-bite 3]',
+      ],
+      inferenceQuestion: '[Final student inference question]',
+    },
+    {
+      word: '[vocabulary word 2]',
+      definition: '[clear definition]',
+      exampleSentence: '[context sentence from passage]',
+      tags: ['tier3', 'content'],
+      inquiryPrompts: [
+        '[Teacher prompt 1]',
+        '[Teacher prompt 2]',
+      ],
+      hints: [
+        '[Truth-bite 1]',
+        '[Truth-bite 2]',
+      ],
+      inferenceQuestion: '[Final inference question]',
+    },
+    // Add 3 more vocabulary words (total of 5)
+    // Copy the structure above for words 3, 4, and 5
+  ];
+
+  for (const vocab of vocabWords) {
+    await createVocabWord({
+      weekId: templateId,
+      ...vocab,
+    });
+  }
+
+  // 5. Create affixes
+  const affixes: Array<Omit<AffixDocument, 'weekId' | 'createdAt' | 'updatedAt'>> = [
+    {
+      affix: '[affix1]', // e.g., 'inter-', '-ment', 'port'
+      kind: 'prefix', // or 'suffix', 'root'
+      meaning: '[meaning]',
+      examples: ['[example1]', '[example2]', '[example3]'],
+    },
+    {
+      affix: '[affix2]',
+      kind: 'suffix', // or 'prefix', 'root'
+      meaning: '[meaning]',
+      examples: ['[example1]', '[example2]', '[example3]'],
+    },
+  ];
+
+  for (const affix of affixes) {
+    await createAffix({
+      weekId: templateId,
+      ...affix,
+    });
+  }
+
+  // 6. Create Day 2 comprehension questions
+  const day2Questions: Array<Omit<ComprehensionQuestionDocument, 'weekId' | 'createdAt' | 'updatedAt'>> = [
+    {
+      day: 2,
+      type: 'literal',
+      prompt: '[Literal question 1]',
+      orderIndex: 1,
+      rubric: '[Expected answer/key concepts]',
+    },
+    {
+      day: 2,
+      type: 'literal',
+      prompt: '[Literal question 2]',
+      orderIndex: 2,
+      rubric: '[Expected answer]',
+    },
+    {
+      day: 2,
+      type: 'literal',
+      prompt: '[Literal question 3]',
+      orderIndex: 3,
+      rubric: '[Expected answer]',
+    },
+    {
+      day: 2,
+      type: 'literal',
+      prompt: '[Literal question 4]',
+      orderIndex: 4,
+      rubric: '[Expected answer]',
+    },
+    {
+      day: 2,
+      type: 'inferential',
+      prompt: '[Inferential question]',
+      orderIndex: 5,
+      rubric: '[Expected reasoning/answer]',
+    },
+  ];
+
+  for (const question of day2Questions) {
+    await createQuestion({
+      weekId: templateId,
+      ...question,
+    });
+  }
+
+  // 7. Create Day 4 main idea question
+  await createQuestion({
+    weekId: templateId,
+    day: 4,
+    type: 'mainIdea',
+    prompt: 'What is the main idea of this passage? Provide 2-3 details that prove it.',
+    orderIndex: 1,
+    rubric: 'Acceptable: [main idea statement]. Evidence: [detail 1], [detail 2], [detail 3].',
+  });
+
+  return templateId;
+}

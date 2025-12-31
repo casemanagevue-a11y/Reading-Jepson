@@ -1,0 +1,63 @@
+<template>
+  <div class="home-view">
+    <div class="container">
+      <h1>Welcome to Reading Jepson</h1>
+      <div v-if="userProfile" class="user-info">
+        <p>Logged in as: <strong>{{ userProfile.displayName || userProfile.email }}</strong></p>
+        <p v-if="userProfile.displayName">Email: {{ userProfile.email }}</p>
+      </div>
+      <div class="content">
+        <p>Your app is ready! Start building your features here.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useAuth } from '@/composables/useAuth'
+
+const { userProfile } = useAuth()
+</script>
+
+<style scoped>
+.home-view {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.user-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+}
+
+.user-info p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.content {
+  color: #666;
+}
+</style>
+
+
+
+
+
+
+

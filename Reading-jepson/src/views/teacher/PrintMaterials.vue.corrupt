@@ -1,0 +1,466 @@
+<template>
+  <div class="print-materials">
+    <div class="print-header no-print">
+      <div class="container">
+        <div class="header-content">
+          <h1>Print Materials</h1>
+          <div class="header-actions">
+            <button @click="window.print()" class="btn btn-primary">🖨️ Print</button>
+            <button @click="goBack" class="btn btn-secondary">← Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading no-print">Loading materials...</div>
+    <div v-else-if="error" class="error no-print">{{ error }}</div>
+
+    <div v-else class="printable-content container">
+      <!-- Header for printed page -->
+      <div class="print-page-header">
+        <h1>{{ studentName }}</h1>
+        <div class="week-info">
+          <p><strong>Quarter {{ assignment?.quarter }}</strong> - Week {{ assignment?.weekNumber }}</p>
+          <p>{{ formatDateRange() }}</p>
+        </div>
+      </div>
+
+      <!-- Day 1: Vocabulary & Affixes -->
+      <div class="print-section">
+        <h2>Day 1: Vocabulary & Affixes</h2>
+        
+        <div class="vocab-section">
+          <h3>Vocabulary Words</h3>
+          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item">
+            <div class="vocab-header">
+              <strong>{{ index + 1 }}. {{ word.word }}</strong>
+            </div>
+            <p class="definition"><strong>Definition:</strong> {{ word.definition }}</p>
+            <p class="example"><strong>Example:</strong> {{ word.exampleSentence }}</p>
+          </div>
+        </div>
+
+        <div class="affix-section">
+          <h3>Affixes</h3>
+          <div v-for="(affix, index) in content.affixes" :key="index" class="affix-item">
+            <p><strong>{{ index + 1 }}. {{ affix.affix }}</strong> ({{ affix.kind }})</p>
+            <p><strong>Meaning:</strong> {{ affix.meaning }}</p>
+            <p><strong>Examples:</strong> {{ affix.examples.join(', ') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 2: Weekly Passage -->
+      <div class="print-section page-break">
+        <h2>Day 2: First Read</h2>
+        
+        <div v-if="content.weeklyPassage" class="passage-section">
+          <h3>{{ content.weeklyPassage.title }}</h3>
+          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+          
+          <div class="word-count-info">
+            <p><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
+          </div>
+        </div>
+
+        <div class="questions-section">
+          <h3>Literal Comprehension Questions</h3>
+          <div v-for="(q, index) in content.day2Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <div class="answer-space"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 4: Main Idea -->
+      <div class="print-section">
+        <h2>Day 4: Main Idea & Details</h2>
+        
+        <div class="questions-section">
+          <div v-for="(q, index) in content.day4Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <div class="answer-space"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 5: Friday Assessment -->
+      <div class="print-section page-break">
+        <h2>Day 5: Friday Assessment</h2>
+        
+        <div v-if="content.fridayPassage" class="passage-section">
+          <h3>{{ content.fridayPassage.title }}</h3>
+          <div class="passage-text">{{ content.fridayPassage.text }}</div>
+          
+          <div class="word-count-info">
+            <p><strong>Word Count:</strong> {{ calculateWordCount(content.fridayPassage.text) }} words</p>
+          </div>
+        </div>
+
+        <div class="questions-section">
+          <h3>Assessment Questions</h3>
+          <div v-for="(q, index) in content.day5Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <div class="answer-space"></div>
+          </div>
+        </div>
+        
+        <div class="assessment-tracking">
+          <h3>Fluency Assessment</h3>
+          <div class="tracking-grid">
+            <div class="tracking-item">
+              <label>Time (seconds):</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>WPM:</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Omissions:</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Insertions:</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Substitutions:</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Mispronunciations:</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Accuracy %:</label>
+              <div class="tracking-box"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { 
+  getWeekAssignmentsByStudent,
+  getPassagesByWeek,
+  getVocabByWeek,
+  getAffixesByWeek,
+  getQuestionsByWeek,
+  getStudent
+} from '@/services/firestoreServices'
+import type { 
+  WeekAssignmentDocument,
+  PassageDocument,
+  VocabDocument,
+  AffixDocument,
+  ComprehensionQuestionDocument
+} from '@/types/firestore'
+
+const route = useRoute()
+const router = useRouter()
+
+const assignment = ref<WeekAssignmentDocument & { id: string } | null>(null)
+const studentName = ref('')
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const content = ref<{
+  vocab: VocabDocument[]
+  affixes: AffixDocument[]
+  weeklyPassage: PassageDocument | null
+  fridayPassage: PassageDocument | null
+  day2Questions: ComprehensionQuestionDocument[]
+  day4Questions: ComprehensionQuestionDocument[]
+  day5Questions: ComprehensionQuestionDocument[]
+}>({
+  vocab: [],
+  affixes: [],
+  weeklyPassage: null,
+  fridayPassage: null,
+  day2Questions: [],
+  day4Questions: [],
+  day5Questions: []
+})
+
+const calculateWordCount = (text: string): number => {
+  return text.split(/\s+/).filter(word => word.length > 0).length
+}
+
+const formatDateRange = () => {
+  if (!assignment.value) return ''
+  const start = assignment.value.startDate.toDate()
+  const end = assignment.value.endDate.toDate()
+  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
+const goBack = () => {
+  router.back()
+}
+
+onMounted(async () => {
+  const assignmentId = route.query.assignmentId as string
+  
+  if (!assignmentId) {
+    error.value = 'No assignment ID provided'
+    loading.value = false
+    return
+  }
+  
+  try {
+    // For now, we'll need to query to find the specific assignment
+    // This is simplified - in production you'd get by ID directly
+    const studentId = route.query.studentId as string
+    
+    if (studentId) {
+      const studentDoc = await getStudent(studentId)
+      studentName.value = studentDoc?.displayName || 'Student'
+      
+      const assignments = await getWeekAssignmentsByStudent(studentId)
+      assignment.value = assignments.find(a => a.id === assignmentId) || null
+      
+      if (assignment.value) {
+        const templateId = assignment.value.weekTemplateId
+        
+        const [passages, vocab, affixes, questions] = await Promise.all([
+          getPassagesByWeek(templateId),
+          getVocabByWeek(templateId),
+          getAffixesByWeek(templateId),
+          getQuestionsByWeek(templateId)
+        ])
+        
+        content.value = {
+          vocab,
+          affixes,
+          weeklyPassage: passages.find(p => p.type === 'weekly') || null,
+          fridayPassage: passages.find(p => p.type === 'friday') || null,
+          day2Questions: questions.filter(q => q.day === 2),
+          day4Questions: questions.filter(q => q.day === 4),
+          day5Questions: questions.filter(q => q.day === 5)
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('Error loading materials:', err)
+    error.value = err.message || 'Failed to load materials'
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.print-materials {
+  background: white;
+  min-height: 100vh;
+}
+
+.print-header {
+  background: #f7fafc;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.printable-content {
+  padding: 2rem;
+}
+
+.print-page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px solid #1a202c;
+}
+
+.print-page-header h1 {
+  font-size: 2rem;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.week-info p {
+  margin: 0.25rem 0;
+  color: #4a5568;
+}
+
+.print-section {
+  margin-bottom: 3rem;
+}
+
+.print-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #cbd5e0;
+}
+
+.print-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1.5rem 0 1rem 0;
+}
+
+.vocab-item,
+.affix-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.vocab-header {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.definition,
+.example {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.passage-section {
+  margin: 1.5rem 0;
+}
+
+.passage-text {
+  line-height: 2;
+  font-size: 1.125rem;
+  margin: 1rem 0;
+  text-align: justify;
+}
+
+.word-count-info {
+  background: #edf2f7;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.question-item {
+  margin-bottom: 1.5rem;
+}
+
+.question-item p {
+  margin: 0 0 0.5rem 0;
+  line-height: 1.6;
+}
+
+.answer-space {
+  border-bottom: 1px solid #cbd5e0;
+  min-height: 60px;
+  margin-top: 0.5rem;
+}
+
+.assessment-tracking {
+  margin-top: 2rem;
+  page-break-inside: avoid;
+}
+
+.tracking-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.tracking-item label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.tracking-box {
+  border: 2px solid #1a202c;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.page-break {
+  page-break-before: always;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-materials {
+    padding: 0;
+  }
+  
+  .printable-content {
+    max-width: 100%;
+    padding: 0.5in;
+  }
+  
+  .page-break {
+    page-break-before: always;
+  }
+  
+  .print-section {
+    page-break-inside: avoid;
+  }
+}
+</style>

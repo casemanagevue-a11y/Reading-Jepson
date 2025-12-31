@@ -1,0 +1,260 @@
+<template>
+  <div class="student-management">
+    <div class="container">
+      <div class="header">
+        <h1>Student Management</h1>
+        <button @click="showAddForm = true" class="btn btn-primary">Add Student</button>
+      </div>
+
+      <div v-if="showAddForm" class="add-form">
+        <h2>Add New Student</h2>
+        <form @submit.prevent="handleAddStudent">
+          <div class="form-group">
+            <label>Display Name</label>
+            <input v-model="newStudent.displayName" type="text" required class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input v-model="newStudent.studentEmail" type="email" required class="form-input" />
+          </div>
+          <div class="form-actions">
+            <button type="submit" :disabled="loading" class="btn btn-primary">Create Student</button>
+            <button type="button" @click="showAddForm = false" class="btn btn-secondary">Cancel</button>
+          </div>
+        </form>
+        <div v-if="error" class="error-message">{{ error }}</div>
+      </div>
+
+      <div v-if="loading && students.length === 0" class="loading">Loading students...</div>
+      <div v-else-if="students.length === 0" class="empty-state">
+        <p>No students yet. Add your first student to get started.</p>
+      </div>
+      <div v-else class="student-list">
+        <div v-for="student in students" :key="student.id" class="student-card">
+          <div class="student-info">
+            <h3>{{ student.displayName }}</h3>
+            <p class="email">{{ student.studentEmail }}</p>
+            <p class="status">
+              Status: 
+              <span :class="{ 'claimed': student.studentUid, 'unclaimed': !student.studentUid }">
+                {{ student.studentUid ? 'Claimed' : 'Unclaimed' }}
+              </span>
+            </p>
+          </div>
+          <div class="student-actions">
+            <router-link :to="`/teacher/students/${student.id}`" class="btn btn-secondary">View Details</router-link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
+import { useFunctions } from '@/composables/useFunctions'
+import { getStudentsByTeacher } from '@/services/firestoreServices'
+import type { StudentDocument } from '@/types/firestore'
+
+const { user } = useAuth()
+const { createStudent } = useFunctions()
+const students = ref<Array<StudentDocument & { id: string }>>([])
+const loading = ref(true)
+const showAddForm = ref(false)
+const error = ref<string | null>(null)
+
+const newStudent = ref({
+  displayName: '',
+  studentEmail: '',
+})
+
+const loadStudents = async () => {
+  if (!user.value) return
+  try {
+    loading.value = true
+    const studentList = await getStudentsByTeacher(user.value.uid)
+    students.value = studentList.map(s => ({ ...s, id: s.id || '' }))
+  } catch (err: any) {
+    error.value = err.message || 'Failed to load students'
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleAddStudent = async () => {
+  if (!user.value) return
+  try {
+    error.value = null
+    await createStudent({
+      displayName: newStudent.value.displayName,
+      studentEmail: newStudent.value.studentEmail,
+    })
+    newStudent.value = { displayName: '', studentEmail: '' }
+    showAddForm.value = false
+    await loadStudents()
+  } catch (err: any) {
+    error.value = err.message || 'Failed to create student'
+  }
+}
+
+onMounted(() => {
+  loadStudents()
+})
+</script>
+
+<style scoped>
+.student-management {
+  padding: 2rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  color: #333;
+  margin: 0;
+}
+
+.add-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.add-form h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.error-message {
+  background-color: #fee;
+  color: #c33;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.loading, .empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.student-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.student-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.student-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.email {
+  color: #666;
+  margin: 0.25rem 0;
+}
+
+.status {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+.claimed {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.unclaimed {
+  color: #ffc107;
+  font-weight: 500;
+}
+
+.student-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #357abd;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+</style>

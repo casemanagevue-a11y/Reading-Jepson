@@ -1,0 +1,612 @@
+<template>
+  <div class="assessment-entry">
+    <div class="container">
+      <div class="header">
+        <h1>Enter Assessment Data</h1>
+        <p class="subtitle">Friday fluency & comprehension assessment</p>
+      </div>
+
+      <div v-if="loading" class="loading">Loading...</div>
+      <div v-else-if="error" class="error-message">{{ error }}</div>
+
+      <div v-else class="assessment-form">
+        <div class="student-info-card">
+          <h3>{{ studentName }}</h3>
+          <p>{{ templateName }}</p>
+          <p class="date-range">{{ formatDateRange() }}</p>
+        </div>
+
+        <!-- Passage Info -->
+        <div v-if="fridayPassage" class="passage-info-card">
+          <h3>Friday Passage: {{ fridayPassage.title }}</h3>
+          <p class="word-count">
+            <strong>{{ passageWordCount }} words</strong>
+          </p>
+        </div>
+
+        <!-- Fluency Assessment -->
+        <div class="form-section">
+          <h2>📊 Fluency Assessment</h2>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Time (seconds)</label>
+              <input 
+                v-model.number="assessmentData.timeSeconds" 
+                type="number" 
+                class="form-input"
+                min="1"
+                @input="calculateWPM"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Words Per Minute (WPM)</label>
+              <input 
+                v-model="calculatedWPM" 
+                type="text" 
+                class="form-input calculated"
+                readonly
+              />
+              <p class="field-note">Auto-calculated from passage length and time</p>
+            </div>
+          </div>
+
+          <h3>Reading Errors</h3>
+          <p class="section-note">Track all reading errors to calculate accuracy</p>
+
+          <div class="errors-grid">
+            <div class="form-group">
+              <label>
+                Omissions
+                <span class="help-text">Words skipped</span>
+              </label>
+              <input 
+                v-model.number="assessmentData.omissions" 
+                type="number" 
+                class="form-input"
+                min="0"
+                @input="calculateAccuracy"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                Insertions
+                <span class="help-text">Words added</span>
+              </label>
+              <input 
+                v-model.number="assessmentData.insertions" 
+                type="number" 
+                class="form-input"
+                min="0"
+                @input="calculateAccuracy"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                Substitutions
+                <span class="help-text">Words replaced</span>
+              </label>
+              <input 
+                v-model.number="assessmentData.substitutions" 
+                type="number" 
+                class="form-input"
+                min="0"
+                @input="calculateAccuracy"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                Mispronunciations
+                <span class="help-text">Words said wrong</span>
+              </label>
+              <input 
+                v-model.number="assessmentData.mispronunciations" 
+                type="number" 
+                class="form-input"
+                min="0"
+                @input="calculateAccuracy"
+              />
+            </div>
+          </div>
+
+          <div class="calculated-results">
+            <div class="result-box">
+              <label>Total Errors (Miscues)</label>
+              <div class="result-value">{{ totalMiscues }}</div>
+            </div>
+            <div class="result-box">
+              <label>Accuracy Percentage</label>
+              <div class="result-value accent">{{ accuracyPercent }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comprehension Assessment -->
+        <div class="form-section">
+          <h2>📝 Comprehension Assessment</h2>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Correct Answers</label>
+              <input 
+                v-model.number="assessmentData.comprehensionScore" 
+                type="number" 
+                class="form-input"
+                min="0"
+                :max="assessmentData.comprehensionTotal"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Total Questions</label>
+              <input 
+                v-model.number="assessmentData.comprehensionTotal" 
+                type="number" 
+                class="form-input"
+                min="1"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Comprehension Score</label>
+              <input 
+                v-model="comprehensionPercent" 
+                type="text" 
+                class="form-input calculated"
+                readonly
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Notes / Summary (Optional)</label>
+            <textarea 
+              v-model="assessmentData.compSummary" 
+              class="form-input"
+              rows="3"
+              placeholder="Any notes about student performance, comprehension, or areas to focus on..."
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button @click="saveAssessment" :disabled="!canSave || saving" class="btn btn-primary btn-lg">
+            {{ saving ? 'Saving...' : 'Save Assessment' }}
+          </button>
+          <button @click="goBack" class="btn btn-secondary">Cancel</button>
+        </div>
+
+        <div v-if="saveError" class="error-message">{{ saveError }}</div>
+        <div v-if="saveSuccess" class="success-message">{{ saveSuccess }}</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { 
+  getWeekAssignmentsByStudent,
+  getPassagesByWeek,
+  getStudent,
+  createFluencyAssessment
+} from '@/services/firestoreServices'
+import { Timestamp } from 'firebase/firestore'
+import type { 
+  WeekAssignmentDocument,
+  PassageDocument
+} from '@/types/firestore'
+
+const route = useRoute()
+const router = useRouter()
+
+const assignment = ref<WeekAssignmentDocument & { id: string } | null>(null)
+const studentName = ref('')
+const templateName = ref('')
+const loading = ref(true)
+const saving = ref(false)
+const error = ref<string | null>(null)
+const saveError = ref<string | null>(null)
+const saveSuccess = ref<string | null>(null)
+
+const fridayPassage = ref<PassageDocument | null>(null)
+const passageWordCount = ref(0)
+
+const assessmentData = ref({
+  timeSeconds: 0,
+  omissions: 0,
+  insertions: 0,
+  substitutions: 0,
+  mispronunciations: 0,
+  comprehensionScore: 0,
+  comprehensionTotal: 0,
+  compSummary: ''
+})
+
+const calculatedWPM = computed(() => {
+  if (assessmentData.value.timeSeconds <= 0) return '0'
+  const wpm = (passageWordCount.value / assessmentData.value.timeSeconds) * 60
+  return wpm.toFixed(1)
+})
+
+const totalMiscues = computed(() => {
+  return assessmentData.value.omissions +
+         assessmentData.value.insertions +
+         assessmentData.value.substitutions +
+         assessmentData.value.mispronunciations
+})
+
+const accuracyPercent = computed(() => {
+  if (passageWordCount.value === 0) return '0'
+  const accuracy = ((passageWordCount.value - totalMiscues.value) / passageWordCount.value) * 100
+  return Math.max(0, accuracy).toFixed(1)
+})
+
+const comprehensionPercent = computed(() => {
+  if (assessmentData.value.comprehensionTotal === 0) return '0'
+  const percent = (assessmentData.value.comprehensionScore / assessmentData.value.comprehensionTotal) * 100
+  return percent.toFixed(1) + '%'
+})
+
+const canSave = computed(() => {
+  return assessmentData.value.timeSeconds > 0 &&
+         passageWordCount.value > 0
+})
+
+const calculateWPM = () => {
+  // Reactive computed property handles this
+}
+
+const calculateAccuracy = () => {
+  // Reactive computed property handles this
+}
+
+const formatDateRange = () => {
+  if (!assignment.value) return ''
+  const start = assignment.value.startDate.toDate()
+  const end = assignment.value.endDate.toDate()
+  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
+const goBack = () => {
+  router.back()
+}
+
+const saveAssessment = async () => {
+  if (!assignment.value || !canSave.value) return
+  
+  try {
+    saving.value = true
+    saveError.value = null
+    saveSuccess.value = null
+    
+    const studentDoc = await getStudent(assignment.value.studentId)
+    
+    await createFluencyAssessment({
+      weekId: assignment.value.weekTemplateId,
+      studentUid: studentDoc?.studentUid || '',
+      studentId: assignment.value.studentId,
+      teacherUid: assignment.value.teacherUid,
+      date: Timestamp.now(),
+      wordsRead: passageWordCount.value,
+      timeSeconds: assessmentData.value.timeSeconds,
+      wpm: parseFloat(calculatedWPM.value),
+      omissions: assessmentData.value.omissions,
+      insertions: assessmentData.value.insertions,
+      substitutions: assessmentData.value.substitutions,
+      mispronunciations: assessmentData.value.mispronunciations,
+      miscuesTotal: totalMiscues.value,
+      accuracyPercent: parseFloat(accuracyPercent.value),
+      comprehensionScore: assessmentData.value.comprehensionScore || undefined,
+      comprehensionTotal: assessmentData.value.comprehensionTotal || undefined,
+      compSummary: assessmentData.value.compSummary || undefined
+    })
+    
+    saveSuccess.value = 'Assessment saved successfully!'
+    
+    setTimeout(() => {
+      router.push('/teacher/assignments/calendar')
+    }, 1500)
+  } catch (err: any) {
+    console.error('Error saving assessment:', err)
+    saveError.value = err.message || 'Failed to save assessment'
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(async () => {
+  const assignmentId = route.query.assignmentId as string
+  const studentId = route.query.studentId as string
+  
+  if (!assignmentId) {
+    error.value = 'No assignment ID provided'
+    loading.value = false
+    return
+  }
+  
+  try {
+    if (studentId) {
+      const studentDoc = await getStudent(studentId)
+      studentName.value = studentDoc?.displayName || 'Student'
+      
+      const assignments = await getWeekAssignmentsByStudent(studentId)
+      assignment.value = assignments.find(a => a.id === assignmentId) || null
+      
+      if (assignment.value) {
+        const templateId = assignment.value.weekTemplateId
+        templateName.value = `Q${assignment.value.quarter} Week ${assignment.value.weekNumber}`
+        
+        const passages = await getPassagesByWeek(templateId)
+        fridayPassage.value = passages.find(p => p.type === 'friday') || null
+        
+        if (fridayPassage.value) {
+          passageWordCount.value = fridayPassage.value.text.split(/\s+/).filter(w => w.length > 0).length
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('Error loading assignment:', err)
+    error.value = err.message || 'Failed to load assignment'
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.assessment-entry {
+  padding: 2rem;
+  background: #f7fafc;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.student-info-card,
+.passage-info-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+.student-info-card h3,
+.passage-info-card h3 {
+  font-size: 1.25rem;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.date-range,
+.word-count {
+  color: #718096;
+  margin: 0.25rem 0;
+}
+
+.assessment-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.form-section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.form-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 1.5rem 0;
+}
+
+.form-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1.5rem 0 1rem 0;
+}
+
+.section-note {
+  color: #718096;
+  font-size: 0.9rem;
+  margin: -0.5rem 0 1rem 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.help-text {
+  display: block;
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-input.calculated {
+  background: #edf2f7;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.field-note {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.errors-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.calculated-results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.result-box {
+  text-align: center;
+}
+
+.result-box label {
+  display: block;
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.result-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.result-value.accent {
+  color: #4a90e2;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.error-message,
+.success-message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.error-message {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #4a90e2;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #718096;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4a5568;
+}
+
+.btn-lg {
+  padding: 1rem 3rem;
+  font-size: 1.125rem;
+}
+</style>
