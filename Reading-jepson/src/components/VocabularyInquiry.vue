@@ -10,46 +10,18 @@
       <p class="sentence">{{ vocab.exampleSentence }}</p>
     </div>
     
-    <div v-if="vocab.inquiryPrompts && vocab.inquiryPrompts.length > 0" class="inquiry-section">
-      <h3>Teacher Inquiry Prompts</h3>
-      <p class="instruction">Use one prompt at a time, slowly revealing more information.</p>
+    <div v-if="vocab.teacherPrompts" class="inquiry-section">
+      <h3>Teacher Guiding Questions</h3>
+      <p class="instruction">{{ vocab.teacherPrompts }}</p>
       
-      <div class="prompts-list">
-        <div 
-          v-for="(prompt, index) in vocab.inquiryPrompts" 
-          :key="index"
-          :class="['prompt-item', { revealed: currentPromptIndex >= index }]"
-        >
-          <div class="prompt-header">
-            <span class="prompt-number">Prompt {{ index + 1 }}</span>
-            <button 
-              v-if="currentPromptIndex === index - 1"
-              @click="revealNext"
-              class="btn-reveal"
-            >
-              Reveal
-            </button>
-          </div>
-          
-          <div v-if="currentPromptIndex >= index" class="prompt-content">
-            <p class="prompt-text">{{ prompt }}</p>
-            <p v-if="vocab.hints && vocab.hints[index]" class="hint">
-              <strong>Hint:</strong> {{ vocab.hints[index] }}
-            </p>
-          </div>
-        </div>
+      <div v-if="vocab.sentenceFrame" class="sentence-frame">
+        <p><strong>Sentence Frame:</strong></p>
+        <p class="frame-text">{{ vocab.sentenceFrame }}</p>
       </div>
       
-      <div v-if="currentPromptIndex >= vocab.inquiryPrompts.length - 1 && vocab.inferenceQuestion" class="inference-section">
-        <h4>Final Inference Question</h4>
-        <p class="inference-question">{{ vocab.inferenceQuestion }}</p>
-        <textarea 
-          v-model="studentInference"
-          placeholder="Your inference..."
-          class="inference-input"
-          rows="3"
-        ></textarea>
-        <button @click="checkInference" class="btn btn-primary">Check Inference</button>
+      <div v-if="vocab.pictureGuidance" class="picture-section">
+        <p><strong>Picture Guidance:</strong></p>
+        <p class="guidance-text">{{ vocab.pictureGuidance }}</p>
       </div>
     </div>
     
@@ -61,7 +33,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { VocabDocument } from '@/types/firestore'
 
 interface Props {
@@ -69,24 +40,9 @@ interface Props {
   showDefinition?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   showDefinition: false
 })
-
-const currentPromptIndex = ref(-1)
-const studentInference = ref('')
-
-const revealNext = () => {
-  if (currentPromptIndex.value < (props.vocab.inquiryPrompts?.length || 0) - 1) {
-    currentPromptIndex.value++
-  }
-}
-
-const checkInference = () => {
-  // TODO: Compare student inference with definition
-  // For now, show definition
-  alert(`Your inference: "${studentInference.value}"\n\nDefinition: ${props.vocab.definition}`)
-}
 </script>
 
 <style scoped>

@@ -69,32 +69,18 @@ Include all paragraphs from the passage.]`,
       definition: '[clear definition]',
       exampleSentence: '[context sentence from passage]',
       tags: ['tier3', 'content'],
-      inquiryPrompts: [
-        '[Teacher prompt 1]',
-        '[Teacher prompt 2]',
-        '[Teacher prompt 3]',
-      ],
-      hints: [
-        '[Truth-bite 1: small piece of supporting info]',
-        '[Truth-bite 2]',
-        '[Truth-bite 3]',
-      ],
-      inferenceQuestion: '[Final student inference question]',
+      teacherPrompts: '[Guiding questions: Is this a kind of...? What would NOT be an example?]',
+      sentenceFrame: '[Optional: A ___ is ___.]',
+      pictureGuidance: '[What to draw]',
     },
     {
       word: '[vocabulary word 2]',
       definition: '[clear definition]',
       exampleSentence: '[context sentence from passage]',
       tags: ['tier3', 'content'],
-      inquiryPrompts: [
-        '[Teacher prompt 1]',
-        '[Teacher prompt 2]',
-      ],
-      hints: [
-        '[Truth-bite 1]',
-        '[Truth-bite 2]',
-      ],
-      inferenceQuestion: '[Final inference question]',
+      teacherPrompts: '[Guiding questions]',
+      sentenceFrame: '[Optional sentence frame]',
+      pictureGuidance: '[What to draw]',
     },
     // Add 3 more vocabulary words (total of 5)
     // Copy the structure above for words 3, 4, and 5
@@ -130,46 +116,46 @@ Include all paragraphs from the passage.]`,
     });
   }
 
-  // 6. Create Day 2 comprehension questions
-  const day2Questions: Array<Omit<ComprehensionQuestionDocument, 'weekId' | 'createdAt' | 'updatedAt'>> = [
+  // 6. Create Day 3 inference organizer questions
+  const day3Questions: Array<Omit<ComprehensionQuestionDocument, 'weekId' | 'createdAt' | 'updatedAt'>> = [
     {
-      day: 2,
+      day: 3,
       type: 'literal',
       prompt: '[Literal question 1]',
       orderIndex: 1,
       rubric: '[Expected answer/key concepts]',
     },
     {
-      day: 2,
+      day: 3,
       type: 'literal',
       prompt: '[Literal question 2]',
       orderIndex: 2,
       rubric: '[Expected answer]',
     },
     {
-      day: 2,
+      day: 3,
       type: 'literal',
       prompt: '[Literal question 3]',
       orderIndex: 3,
       rubric: '[Expected answer]',
     },
     {
-      day: 2,
-      type: 'literal',
-      prompt: '[Literal question 4]',
+      day: 3,
+      type: 'inferential',
+      prompt: '[Inferential question 1]',
       orderIndex: 4,
       rubric: '[Expected answer]',
     },
     {
-      day: 2,
+      day: 3,
       type: 'inferential',
-      prompt: '[Inferential question]',
+      prompt: '[Inferential question 2]',
       orderIndex: 5,
       rubric: '[Expected reasoning/answer]',
     },
   ];
 
-  for (const question of day2Questions) {
+  for (const question of day3Questions) {
     await createQuestion({
       weekId: templateId,
       ...question,

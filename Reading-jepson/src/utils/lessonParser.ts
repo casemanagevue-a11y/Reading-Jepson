@@ -29,19 +29,9 @@ export function parseVocabulary(_data: any, weekId: string): VocabDocument[] {
       definition: 'A series of rulers from the same family',
       exampleSentence: 'For thousands of years, China was ruled by a dynasty that controlled the government and passed power to the next ruler.',
       tags: ['tier2', 'content'],
-      inquiryPrompts: [
-        'Who is ruling here — one ruler or rulers over time?',
-        'The sentence says they "passed power to the next ruler." What does that show?',
-        'Does this sound like random rulers or a connected line of rulers?',
-        'If rulers follow one another in an ordered line, what might dynasty mean?'
-      ],
-      hints: [
-        'Dynasty lasts across multiple rulers.',
-        'Power moves from one ruler to another in order.',
-        'Rulers are connected across time.',
-        'Dynasty means a connected line of rulers.'
-      ],
-      inferenceQuestion: 'So what might dynasty mean?',
+      teacherPrompts: 'Who is ruling here — one ruler or rulers over time? Does this sound like random rulers or a connected line?',
+      sentenceFrame: 'A dynasty is ___.',
+      pictureGuidance: 'Draw a line of rulers from the same family',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     },
@@ -51,19 +41,9 @@ export function parseVocabulary(_data: any, weekId: string): VocabDocument[] {
       definition: 'System of many government officials who carry out government rules & regulations',
       exampleSentence: 'The emperor relied on a bureaucracy that helped organize the government and keep it running.',
       tags: ['tier2', 'content'],
-      inquiryPrompts: [
-        'Is this describing one helper or a group that helps?',
-        'What does this group help with — government laws or farming?',
-        'Does the emperor do everything by himself, or does this group assist?',
-        'So, if a bureaucracy is a group that helps the government run, what might it mean?'
-      ],
-      hints: [
-        'Bureaucracy is a group, not a single person.',
-        'They organize and support government functions.',
-        'Bureaucracy assists leadership.',
-        'Bureaucracy is a group that helps the government run.'
-      ],
-      inferenceQuestion: 'So what might bureaucracy mean?',
+      teacherPrompts: 'Is this describing one helper or a group? Does the emperor do everything by himself?',
+      sentenceFrame: 'A bureaucracy is ___.',
+      pictureGuidance: 'Draw many government officials helping run things',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     }
@@ -71,6 +51,83 @@ export function parseVocabulary(_data: any, weekId: string): VocabDocument[] {
   ]
   
   return vocab
+}
+
+/**
+ * Extract all sentences from a passage that contain a specific word
+ * Returns array of sentences with the word highlighted
+ */
+export function extractSentencesContainingWord(
+  passageText: string,
+  word: string
+): string[] {
+  if (!passageText || !word) return []
+  
+  // Normalize word for case-insensitive matching
+  const normalizedWord = word.toLowerCase().trim()
+  const wordRegex = new RegExp(`\\b${normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+  
+  // Split passage into sentences
+  // Handle common sentence endings: . ! ? and also handle quotes, parentheses
+  const sentences = passageText
+    .split(/(?<=[.!?])\s+(?=[A-Z])/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+  
+  // Find sentences containing the word
+  const matchingSentences: string[] = []
+  
+  for (const sentence of sentences) {
+    if (wordRegex.test(sentence)) {
+      matchingSentences.push(sentence)
+    }
+  }
+  
+  return matchingSentences
+}
+
+/**
+ * Extract words from passage that contain a specific affix
+ */
+export function extractWordsContainingAffix(
+  passageText: string,
+  affix: string,
+  kind: 'prefix' | 'suffix' | 'root' = 'prefix'
+): string[] {
+  if (!passageText || !affix) return []
+  
+  // Clean affix - remove hyphens and special chars
+  const cleanAffix = affix.replace(/[-.*+?^${}()|[\]\\]/g, match => {
+    return match === '-' ? '' : '\\' + match
+  }).trim()
+  
+  if (!cleanAffix) return []
+  
+  // Create regex based on affix kind
+  let affixRegex: RegExp
+  
+  if (kind === 'prefix') {
+    // Prefix: word must START with the affix
+    affixRegex = new RegExp(`\\b${cleanAffix}\\w+\\b`, 'gi')
+  } else if (kind === 'suffix') {
+    // Suffix: word must END with the affix
+    affixRegex = new RegExp(`\\b\\w+${cleanAffix}\\b`, 'gi')
+  } else {
+    // Root: can be anywhere in the word (but not standalone)
+    affixRegex = new RegExp(`\\b\\w*${cleanAffix}\\w+\\b`, 'gi')
+  }
+  
+  // Extract all words from passage
+  const words = passageText.match(/\b\w+\b/gi) || []
+  
+  // Find words matching the affix pattern
+  const matchingWords = words.filter(word => {
+    affixRegex.lastIndex = 0 // Reset regex
+    return affixRegex.test(word)
+  })
+  
+  // Remove duplicates and return
+  return [...new Set(matchingWords.map(w => w.toLowerCase()))]
 }
 
 /**
@@ -92,7 +149,7 @@ export function parsePassage(title: string, text: string, type: 'weekly' | 'frid
 export function parseQuestions(
   literalQuestions: Array<{ prompt: string; sentenceFrame?: string }>,
   inferentialQuestions: Array<{ prompt: string; sentenceFrame?: string }>,
-  day: 2 | 4 | 5
+  day: 3 | 4 | 5
 ): ComprehensionQuestionDocument[] {
   const questions: ComprehensionQuestionDocument[] = []
   
@@ -127,18 +184,9 @@ export function parseImperialChinaLesson(weekId: string): ParsedLesson {
       definition: 'A series of rulers from the same family',
       exampleSentence: 'For thousands of years, China was ruled by a dynasty that controlled the government and passed power to the next ruler.',
       tags: ['tier2', 'content'],
-      inquiryPrompts: [
-        'Who is ruling here — one ruler or rulers over time?',
-        'The sentence says they "passed power to the next ruler." What does that show?',
-        'Does this sound like random rulers or a connected line of rulers?',
-        'If rulers follow one another in an ordered line, what might dynasty mean?'
-      ],
-      hints: [
-        'Dynasty lasts across multiple rulers.',
-        'Power moves from one ruler to another in order.',
-        'Rulers are connected across time.'
-      ],
-      inferenceQuestion: 'So what might dynasty mean?'
+      teacherPrompts: 'Who is ruling here — one ruler or rulers over time? Does this sound like random rulers or a connected line?',
+      sentenceFrame: 'A dynasty is ___.',
+      pictureGuidance: 'Draw a line of rulers from the same family'
     },
     // Add other 8 words...
   ].map(v => ({ 
@@ -169,17 +217,17 @@ Through changing dynasties, rulers, and ideas, China built government systems an
   const now = Timestamp.now()
   const questions: ComprehensionQuestionDocument[] = [
     // Literal questions
-    { weekId, day: 2, type: 'literal', prompt: 'What is a dynasty?', orderIndex: 1, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'literal', prompt: 'What does Confucianism teach about government?', orderIndex: 2, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'literal', prompt: 'What is a bureaucracy?', orderIndex: 3, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'literal', prompt: 'Why were scholar-officials important in China?', orderIndex: 4, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'literal', prompt: 'What is urbanization?', orderIndex: 5, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'literal', prompt: 'Who were the khans?', orderIndex: 6, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'What is a dynasty?', orderIndex: 1, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'What does Confucianism teach about government?', orderIndex: 2, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'What is a bureaucracy?', orderIndex: 3, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'Why were scholar-officials important in China?', orderIndex: 4, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'What is urbanization?', orderIndex: 5, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'literal', prompt: 'Who were the khans?', orderIndex: 6, createdAt: now, updatedAt: now },
     // Inferential questions
-    { weekId, day: 2, type: 'inferential', prompt: 'Why might the merit system have made China\'s government stronger?', orderIndex: 7, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'inferential', prompt: 'Why would some areas feel pressure to send tribute to Mongol rulers?', orderIndex: 8, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'inferential', prompt: 'How might life change for a farmer who moves to a city during urbanization?', orderIndex: 9, createdAt: now, updatedAt: now },
-    { weekId, day: 2, type: 'inferential', prompt: 'Why could a despot be dangerous for the people of China?', orderIndex: 10, createdAt: now, updatedAt: now }
+    { weekId, day: 3, type: 'inferential', prompt: 'Why might the merit system have made China\'s government stronger?', orderIndex: 7, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'inferential', prompt: 'Why would some areas feel pressure to send tribute to Mongol rulers?', orderIndex: 8, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'inferential', prompt: 'How might life change for a farmer who moves to a city during urbanization?', orderIndex: 9, createdAt: now, updatedAt: now },
+    { weekId, day: 3, type: 'inferential', prompt: 'Why could a despot be dangerous for the people of China?', orderIndex: 10, createdAt: now, updatedAt: now }
   ] as ComprehensionQuestionDocument[]
   
   const affixes: AffixDocument[] = [

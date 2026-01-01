@@ -24,9 +24,19 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" v-if="importType !== 'affix'">
             <label class="required">Subject</label>
             <select v-model="metadata.subject" class="form-select">
+              <option value="ELA">ELA</option>
+              <option value="Science">Science</option>
+              <option value="History">History</option>
+              <option value="Math">Math</option>
+            </select>
+          </div>
+          <div class="form-group" v-else>
+            <label>Subject (optional for affixes)</label>
+            <select v-model="metadata.subject" class="form-select">
+              <option value="">None</option>
               <option value="ELA">ELA</option>
               <option value="Science">Science</option>
               <option value="History">History</option>
@@ -466,6 +476,10 @@ const successMessage = ref('')
 
 // Computed
 const isMetadataValid = computed(() => {
+  // For affixes, subject is optional
+  if (importType.value === 'affix') {
+    return metadata.value.grade && metadata.value.unit
+  }
   return metadata.value.subject && metadata.value.grade && metadata.value.unit
 })
 
@@ -489,7 +503,7 @@ function getPlaceholder(): string {
   if (importType.value === 'vocab') {
     return 'Dynasty - A series of rulers from the same family\nBureaucracy - A system of government officials\nKhan - A Mongol ruler'
   } else if (importType.value === 'affix') {
-    return 'un- - prefix - not, opposite of - unhappy, undo\ncom- - prefix - together, with - combine, community'
+    return 'un- - prefix - not, opposite of - unhappy, undo\ncom- - prefix - together, with - combine, community\n-tion - suffix - the act of or process of - education, action'
   } else {
     return 'Paste your passage text here...'
   }
@@ -504,29 +518,127 @@ function parseImportedList() {
     ? rawText.value.split(/\r?\n/).filter(line => line.trim())
     : rawText.value.split(';').filter(chunk => chunk.trim())
 
+  // Normalize separator - handle em dash, en dash, and regular dash
+  let separator = currentSeparator.value
+  if (separatorType.value === ' - ') {
+    // Try to detect which dash type is actually used in the text
+    const sampleLine = lines[0] || ''
+    if (sampleLine.includes('–')) {
+      separator = ' – ' // em dash with spaces
+    } else if (sampleLine.includes('—')) {
+      separator = ' — ' // em dash (longer) with spaces
+    } else if (sampleLine.includes(' - ')) {
+      separator = ' - ' // regular dash with spaces
+    } else if (sampleLine.includes('-')) {
+      // Try without spaces
+      separator = '-'
+    }
+  }
+
   lines.forEach((line, index) => {
     // Remove leading numbers like "1. " or "1) "
     const cleaned = line.replace(/^\s*\d+[\.)]\s*/, '').trim()
     
+    if (!cleaned) return // Skip empty lines
+    
     if (importType.value === 'affix') {
       // For affixes: affix - type - meaning - examples
-      const parts = cleaned.split(currentSeparator.value)
-      if (parts.length >= 3) {
+      // Try multiple separators
+      let parts: string[] = []
+      const separatorsToTry = [separator, ' – ', ' — ', ' - ', '-', ':', ' : ']
+      
+      for (const sep of separatorsToTry) {
+        if (cleaned.includes(sep)) {
+          parts = cleaned.split(sep)
+          break
+        }
+      }
+      
+      // If no separator found, try splitting on first dash or colon
+      if (parts.length < 2) {
+        const dashMatch = cleaned.match(/^(.+?)\s*[–—\-:]\s*(.+)$/)
+        if (dashMatch) {
+          parts = [dashMatch[1], dashMatch[2]]
+        }
+      }
+      
+      // Parse affix format: affix - type - meaning - examples
+      if (parts.length >= 2) {
+        const affixPart = parts[0].trim()
+        const rest = parts.slice(1).join(separator).trim()
+        
+        // Try to extract type (prefix, suffix, root) from second part
+        const typeMatch = rest.match(/^(prefix|suffix|root)\s*[–—\-:]\s*(.+)$/i)
+        let kind: AffixKind = 'prefix'
+        let meaning = ''
+        let examplesStr = ''
+        
+        if (typeMatch) {
+          kind = (typeMatch[1].toLowerCase() as AffixKind) || 'prefix'
+          const meaningAndExamples = typeMatch[2].trim()
+          // Split meaning and examples (examples usually come after last dash/colon)
+          const meaningParts = meaningAndExamples.split(/[–—\-:]/)
+          meaning = meaningParts[0]?.trim() || meaningAndExamples
+          examplesStr = meaningParts.slice(1).join(',').trim()
+        } else {
+          // No type specified, assume it's all meaning, or meaning - examples
+          const meaningParts = rest.split(/[–—\-:]/)
+          meaning = meaningParts[0]?.trim() || rest
+          examplesStr = meaningParts.slice(1).join(',').trim()
+        }
+        
+        if (affixPart && meaning) {
+          items.push({
+            term: affixPart,
+            kind: kind,
+            definition: meaning,
+            examples: examplesStr || '',
+            lineNumber: index + 1
+          })
+        }
+      } else {
+        // If parsing failed, add as invalid item so user can fix it
         items.push({
-          term: parts[0].trim(),
-          kind: (parts[1].trim().toLowerCase() as AffixKind) || 'prefix',
-          definition: parts[2].trim(),
-          examples: parts[3]?.trim() || '',
+          term: cleaned,
+          definition: '',
+          examples: '',
+          kind: 'prefix',
           lineNumber: index + 1
         })
       }
     } else {
       // For vocab: word - definition
-      const parts = cleaned.split(currentSeparator.value)
+      // Try multiple separators (em dash, en dash, regular dash, colon)
+      let parts: string[] = []
+      const separatorsToTry = [separator, ' – ', ' — ', ' - ', '-', ':', ' : ']
+      
+      for (const sep of separatorsToTry) {
+        if (cleaned.includes(sep)) {
+          parts = cleaned.split(sep)
+          break
+        }
+      }
+      
+      // If no separator found, try splitting on first dash or colon
+      if (parts.length < 2) {
+        const dashMatch = cleaned.match(/^(.+?)\s*[–—\-:]\s*(.+)$/)
+        if (dashMatch) {
+          parts = [dashMatch[1], dashMatch[2]]
+        }
+      }
+      
       if (parts.length >= 2) {
         items.push({
           term: parts[0].trim(),
-          definition: parts.slice(1).join(currentSeparator.value).trim(),
+          definition: parts.slice(1).join(separator).trim(),
+          exampleSentence: '',
+          lineNumber: index + 1
+        })
+      } else {
+        // If parsing failed, add as invalid item so user can fix it
+        items.push({
+          term: cleaned,
+          definition: '',
           exampleSentence: '',
           lineNumber: index + 1
         })
@@ -621,25 +733,39 @@ async function saveToLibrary() {
   isSaving.value = true
   try {
     const teacherUid = user.value.uid
-    const baseData = {
+    const baseData: any = {
       teacherUid,
-      grade: metadata.value.grade,
-      unit: metadata.value.unit,
-      subject: metadata.value.subject,
-      readingLevel: metadata.value.readingLevel ? parseFloat(metadata.value.readingLevel) : undefined
+      grade: metadata.value.grade || undefined,
+      unit: metadata.value.unit || undefined
+    }
+    
+    // Only include subject for vocab and passages (not affixes)
+    if (importType.value !== 'affix' && metadata.value.subject) {
+      baseData.subject = metadata.value.subject
+    }
+    
+    // Only include readingLevel if it has a value (Firestore doesn't allow undefined)
+    if (metadata.value.readingLevel) {
+      baseData.readingLevel = parseFloat(metadata.value.readingLevel)
     }
 
     if (importType.value === 'vocab') {
-      const vocabItems = parsedItems.value.map(item => ({
-        ...baseData,
-        word: item.term,
-        definition: item.definition,
-        exampleSentence: item.exampleSentence || '',
-        tags: [],
-        inquiryPrompts: (item as any).inquiryPrompts,
-        truthBites: (item as any).truthBites,
-        inferenceQuestion: (item as any).inferenceQuestion
-      }))
+      const vocabItems = parsedItems.value.map(item => {
+        const vocabData: any = {
+          ...baseData,
+          word: item.term,
+          definition: item.definition,
+          exampleSentence: item.exampleSentence || '',
+          tags: []
+        }
+        
+        // Only include optional fields if they have values
+        if ((item as any).inquiryPrompts) vocabData.inquiryPrompts = (item as any).inquiryPrompts
+        if ((item as any).truthBites) vocabData.truthBites = (item as any).truthBites
+        if ((item as any).inferenceQuestion) vocabData.inferenceQuestion = (item as any).inferenceQuestion
+        
+        return vocabData
+      })
 
       const result = await libraryServices.batchCreateVocabLibrary(vocabItems)
       successMessage.value = `Successfully saved ${result.successCount} vocabulary terms!`
@@ -653,7 +779,7 @@ async function saveToLibrary() {
         affix: item.term,
         kind: item.kind || 'prefix' as AffixKind,
         meaning: item.definition,
-        examples: item.examples ? item.examples.split(',').map(e => e.trim()) : []
+        examples: item.examples ? item.examples.split(',').map(e => e.trim()).filter(e => e) : []
       }))
 
       const result = await libraryServices.batchCreateAffixLibrary(affixItems)
@@ -664,13 +790,19 @@ async function saveToLibrary() {
       }
     } else {
       // Passage
-      await libraryServices.createPassageLibrary({
+      const passageDataToSave: any = {
         ...baseData,
         title: passageData.value.title,
         text: passageData.value.text,
-        subjectTag: passageData.value.subjectTag || undefined,
         wordCount: wordCount.value
-      })
+      }
+      
+      // Only include optional fields if they have values
+      if (passageData.value.subjectTag) {
+        passageDataToSave.subjectTag = passageData.value.subjectTag
+      }
+      
+      await libraryServices.createPassageLibrary(passageDataToSave)
 
       successMessage.value = `Successfully saved passage "${passageData.value.title}"!`
     }

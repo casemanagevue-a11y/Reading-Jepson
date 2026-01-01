@@ -67,6 +67,9 @@
             <router-link :to="`/teacher/week-templates/edit/${template.id}`" class="btn btn-secondary btn-sm">
               View/Edit
             </router-link>
+            <button @click="handleDeleteTemplate(template.id, template.templateName)" class="btn btn-danger btn-sm">
+              Delete
+            </button>
           </div>
         </div>
       </div>
@@ -77,7 +80,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
-import { getWeekTemplatesByTeacher } from '@/services/firestoreServices'
+import { getWeekTemplatesByTeacher, deleteWeekTemplate } from '@/services/firestoreServices'
 import { HARDCODED_TEMPLATES, getAllTemplates } from '@/utils/hardcodedTemplates'
 import type { WeekTemplateDocument } from '@/types/firestore'
 
@@ -130,6 +133,30 @@ const useHardcodedTemplate = async (template: any) => {
   } catch (err: any) {
     console.error('Error creating hardcoded template:', err)
     error.value = err.message || 'Failed to create template'
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleDeleteTemplate = async (templateId: string, templateName: string) => {
+  const confirmed = confirm(`Are you sure you want to delete "${templateName}"?\n\nThis will permanently delete the template and all associated content (passages, vocab, affixes, questions). This action cannot be undone.`)
+  
+  if (!confirmed) return
+  
+  try {
+    loading.value = true
+    error.value = null
+    
+    await deleteWeekTemplate(templateId)
+    
+    // Reload templates
+    await loadTemplates()
+    
+    alert(`Template "${templateName}" deleted successfully.`)
+  } catch (err: any) {
+    console.error('Error deleting template:', err)
+    error.value = err.message || 'Failed to delete template'
+    alert(`Error deleting template: ${err.message || 'Please try again'}`)
   } finally {
     loading.value = false
   }
@@ -362,5 +389,16 @@ watch([authLoading, user], ([isLoading, currentUser]) => {
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+}
+
+.btn-danger {
+  background: #e53e3e;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c53030;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
 }
 </style>

@@ -41,51 +41,53 @@ import { ref } from 'vue'
 const routineDays = ref([
   {
     day: 1,
-    title: 'Vocabulary + Affixes',
+    title: 'Vocabulary Script + Affixes',
     activities: [
-      'Teach 4-6 weekly vocabulary words',
-      'Student infers meaning using context clues',
-      'Teacher provides definitions',
+      'Teach 3-6 weekly vocabulary words',
+      'Student-friendly definitions',
+      '4-corner worksheet completion',
       'Teach 2 high-frequency affixes',
       'Student adds to vocabulary binder'
     ]
   },
   {
     day: 2,
-    title: 'First Student Read + Comprehension',
+    title: 'Words Working Together',
     activities: [
-      'Student oral read (no teacher model first)',
-      'Corrective feedback',
-      'Answer 6 comprehension questions',
-      'Quick vocab/affix review'
+      'Sentence structure analysis',
+      'Sort word/phrase cards into 4-column table',
+      'Who/What, Is/Was Doing, Which/What Kind, Where/Relationship',
+      'Teacher-guided practice with fading support'
     ]
   },
   {
     day: 3,
-    title: 'Teacher Model + Student Reread',
+    title: 'Teacher Read + Student Read + Inference',
     activities: [
       'Teacher reads passage aloud',
       'Student rereads aloud',
+      'Inference organizer (literal/inference assessment)',
       'Deep vocabulary review'
     ]
   },
   {
     day: 4,
-    title: 'Reread + Main Idea/Details',
+    title: 'Student Read + Cause/Effect',
     activities: [
       'Student rereads passage',
-      'Determine main idea + details',
+      'Cause/Effect organizer',
+      'Main idea + details practice',
       'Quick vocabulary/affix review'
     ]
   },
   {
     day: 5,
-    title: 'Cold Read + Assessment',
+    title: 'Reading Assessment + Vocab Spiral',
     activities: [
-      'Student cold read of new passage',
+      'Reading assessment with new passage',
       'WPM, accuracy, miscues recorded',
-      'Vocabulary & affix check',
-      'Main idea + inference items'
+      'Multiple choice spiral vocabulary assessment',
+      'Cumulative vocabulary review'
     ]
   }
 ])

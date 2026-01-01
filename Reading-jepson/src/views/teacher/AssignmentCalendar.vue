@@ -103,7 +103,7 @@
                 </div>
                 <div class="day-content">
                   <div v-if="day.number === 1" class="activity">
-                    <h4>📚 Vocabulary & Affixes</h4>
+                    <h4>📚 Vocabulary Script + Affixes</h4>
                     <p v-if="weekContent.vocab.length > 0">
                       {{ weekContent.vocab.length }} words: 
                       {{ weekContent.vocab.map(v => v.word).join(', ') }}
@@ -112,39 +112,44 @@
                       {{ weekContent.affixes.length }} affixes: 
                       {{ weekContent.affixes.map(a => a.affix).join(', ') }}
                     </p>
+                    <p class="activity-note">4-corner worksheet</p>
                   </div>
 
                   <div v-if="day.number === 2" class="activity">
-                    <h4>📖 First Read</h4>
-                    <p v-if="weekContent.weeklyPassage">
-                      Passage: <strong>{{ weekContent.weeklyPassage.title }}</strong>
+                    <h4>🔤 Words Working Together</h4>
+                    <p v-if="weekContent.vocab.length > 0">
+                      Sentence structure analysis for {{ weekContent.vocab.length }} words
                     </p>
-                    <p v-if="weekContent.day2Questions.length > 0">
-                      {{ weekContent.day2Questions.length }} literal comprehension questions
-                    </p>
+                    <p class="activity-note">4-column sorting: Who/What, Is/Was Doing, Which/What Kind, Where/Relationship</p>
                   </div>
 
                   <div v-if="day.number === 3" class="activity">
-                    <h4>🔄 Reread & Practice</h4>
-                    <p>Vocabulary review & passage rereading</p>
-                  </div>
-
-                  <div v-if="day.number === 4" class="activity">
-                    <h4>💡 Main Idea & Details</h4>
-                    <p v-if="weekContent.day4Questions.length > 0">
-                      {{ weekContent.day4Questions.length }} main idea questions
+                    <h4>📖 Teacher Read + Student Read + Inference</h4>
+                    <p v-if="weekContent.weeklyPassage">
+                      Passage: <strong>{{ weekContent.weeklyPassage.title }}</strong>
+                    </p>
+                    <p v-if="weekContent.day3Questions.length > 0">
+                      {{ weekContent.day3Questions.length }} inference organizer questions
                     </p>
                   </div>
 
+                  <div v-if="day.number === 4" class="activity">
+                    <h4>🔗 Student Read + Cause/Effect</h4>
+                    <p v-if="weekContent.day4Questions.length > 0">
+                      {{ weekContent.day4Questions.length }} cause/effect organizer questions
+                    </p>
+                    <p class="activity-note">Main idea + details practice</p>
+                  </div>
+
                   <div v-if="day.number === 5" class="activity">
-                    <h4>✅ Friday Assessment</h4>
+                    <h4>✅ Reading Assessment + Vocab Spiral</h4>
                     <p v-if="weekContent.fridayPassage">
                       Passage: <strong>{{ weekContent.fridayPassage.title }}</strong>
                     </p>
                     <p v-if="weekContent.day5Questions.length > 0">
-                      {{ weekContent.day5Questions.length }} assessment questions
+                      {{ weekContent.day5Questions.length }} reading comprehension questions
                     </p>
-                    <p class="assessment-note">📊 WPM & Accuracy tracking</p>
+                    <p class="assessment-note">📊 WPM & Accuracy tracking + MC vocab spiral</p>
                   </div>
                 </div>
               </div>
@@ -212,7 +217,7 @@ const weekContent = ref<{
   affixes: AffixDocument[]
   weeklyPassage: PassageDocument | null
   fridayPassage: PassageDocument | null
-  day2Questions: ComprehensionQuestionDocument[]
+  day3Questions: ComprehensionQuestionDocument[]
   day4Questions: ComprehensionQuestionDocument[]
   day5Questions: ComprehensionQuestionDocument[]
 }>({
@@ -220,7 +225,7 @@ const weekContent = ref<{
   affixes: [],
   weeklyPassage: null,
   fridayPassage: null,
-  day2Questions: [],
+  day3Questions: [],
   day4Questions: [],
   day5Questions: []
 })
@@ -425,7 +430,7 @@ const loadWeekContent = async () => {
       affixes,
       weeklyPassage: passages.find(p => p.type === 'weekly') || null,
       fridayPassage: passages.find(p => p.type === 'friday') || null,
-      day2Questions: questions.filter(q => q.day === 2),
+      day3Questions: questions.filter(q => q.day === 3),
       day4Questions: questions.filter(q => q.day === 4),
       day5Questions: questions.filter(q => q.day === 5)
     }

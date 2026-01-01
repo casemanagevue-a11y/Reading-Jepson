@@ -69,12 +69,40 @@ export interface WeekTemplateDocument {
 
 export type PassageType = 'weekly' | 'friday';
 
+// Vocab item embedded in passage (with passage-specific sentence)
+export interface PassageVocabItem {
+  word: string;
+  definition: string;
+  exampleSentence: string; // Sentence extracted from this passage
+  tags?: string[];
+  teacherPrompts?: string;
+  sentenceFrame?: string;
+  pictureGuidance?: string;
+  wordPhraseCards?: string[];
+  sortingKey?: {
+    whoWhat?: string[];
+    isWasDoing?: string[];
+    whichWhatKind?: string[];
+    whereRelationship?: string[];
+  };
+}
+
+// Affix item embedded in passage (with passage-specific examples)
+export interface PassageAffixItem {
+  affix: string;
+  kind: AffixKind;
+  meaning: string;
+  examples: string[]; // Examples found in this passage
+}
+
 export interface PassageDocument {
   weekId: string; // Document ID from weeks collection
   type: PassageType;
   title: string;
   text: string;
   subjectTag?: string; // Optional categorization tag
+  vocabItems?: PassageVocabItem[]; // Vocab words assigned to this passage with sentences
+  affixItems?: PassageAffixItem[]; // Affixes assigned to this passage with examples
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -83,11 +111,11 @@ export interface PassageDocument {
 // 5. comprehensionQuestions Collection
 // ============================================================================
 
-export type QuestionType = 'literal' | 'inferential' | 'mainIdea';
+export type QuestionType = 'literal' | 'inferential' | 'mainIdea' | 'causeEffect';
 
 export interface ComprehensionQuestionDocument {
   weekId: string; // Document ID from weeks collection
-  day: 2 | 4 | 5; // Day 2: First read comprehension, Day 4: Main idea/details, Day 5: Friday assessment
+  day: 3 | 4 | 5; // Day 3: Inference organizer, Day 4: Cause/Effect organizer, Day 5: Assessment
   type: QuestionType;
   prompt: string;
   rubric?: string; // Optional grading details
@@ -104,12 +132,20 @@ export interface VocabDocument {
   weekId: string; // Document ID from weeks collection
   word: string;
   definition: string;
-  exampleSentence: string; // Context sentence (not definitional)
+  exampleSentence: string; // Sentence from the text where word appears
   tags: string[]; // e.g., ["tier2", "content", "affixRelated"]
-  // Inquiry vocabulary routine fields (for Day 1 progressive reveal)
-  inquiryPrompts?: string[]; // Teacher prompts guiding student toward meaning
-  hints?: string[]; // Small hints that increase clarity without revealing definition
-  inferenceQuestion?: string; // Final student inference question
+  // Day 1: Semantic Mapping / 4-corner worksheet fields
+  teacherPrompts?: string; // Guiding questions for building meaning (e.g., "Is this a kind of...?")
+  sentenceFrame?: string; // Optional sentence frame to support student writing
+  pictureGuidance?: string; // Guidance for what students should draw
+  // Day 2: Words Working Together fields (sentence structure analysis)
+  wordPhraseCards?: string[]; // Cut-apart cards for sorting (exact text on each card)
+  sortingKey?: {
+    whoWhat?: string[]; // Cards that answer "Who or what?"
+    isWasDoing?: string[]; // Cards that answer "Is/was doing?"
+    whichWhatKind?: string[]; // Cards that answer "Which one/what kind/how many?"
+    whereRelationship?: string[]; // Cards that answer "Where/relationship?"
+  };
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

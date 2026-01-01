@@ -65,7 +65,7 @@
 
         <div class="questions-section">
           <h3>Literal Comprehension Questions</h3>
-          <div v-for="(q, index) in content.day2Questions" :key="index" class="question-item">
+          <div v-for="(q, index) in content.day3Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
             <div class="answer-space"></div>
           </div>
@@ -175,7 +175,7 @@ const content = ref<{
   affixes: AffixDocument[]
   weeklyPassage: PassageDocument | null
   fridayPassage: PassageDocument | null
-  day2Questions: ComprehensionQuestionDocument[]
+  day3Questions: ComprehensionQuestionDocument[]
   day4Questions: ComprehensionQuestionDocument[]
   day5Questions: ComprehensionQuestionDocument[]
 }>({
@@ -183,7 +183,7 @@ const content = ref<{
   affixes: [],
   weeklyPassage: null,
   fridayPassage: null,
-  day2Questions: [],
+  day3Questions: [],
   day4Questions: [],
   day5Questions: []
 })
@@ -243,7 +243,7 @@ onMounted(async () => {
           affixes,
           weeklyPassage: passages.find(p => p.type === 'weekly') || null,
           fridayPassage: passages.find(p => p.type === 'friday') || null,
-          day2Questions: questions.filter(q => q.day === 2),
+          day3Questions: questions.filter(q => q.day === 3),
           day4Questions: questions.filter(q => q.day === 4),
           day5Questions: questions.filter(q => q.day === 5)
         }

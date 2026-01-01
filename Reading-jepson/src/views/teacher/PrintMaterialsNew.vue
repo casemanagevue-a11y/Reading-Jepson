@@ -1,6 +1,6 @@
 <template>
   <div class="print-materials">
-    <div class="print-header no-print">
+    <div class="print-header no-print print-hide">
       <div class="container">
         <div class="header-content">
           <h1>{{ isTeacherVersion ? 'Teacher Materials' : 'Student Workbook' }}</h1>
@@ -16,79 +16,192 @@
     <div v-else-if="error" class="error no-print">{{ error }}</div>
 
     <div v-else class="printable-content container">
-      <!-- Header for printed page -->
+      <!-- Header for printed page - single line -->
       <div class="print-page-header">
-        <h1>{{ studentName }}</h1>
-        <div class="week-info">
-          <p><strong>Week:</strong> {{ formatDateRange() }}</p>
-          <p v-if="isTeacherVersion" class="teacher-badge">TEACHER COPY</p>
-          <p v-else class="student-badge">STUDENT WORKBOOK</p>
-        </div>
+        {{ studentName }} | {{ formatDateRange() }} | <span v-if="isTeacherVersion" class="version-badge">TEACHER COPY</span><span v-else class="version-badge">STUDENT WORKBOOK</span>
       </div>
 
       <!-- DAY 1: Vocabulary & Affixes -->
       <div class="print-section">
-        <h2>Day 1: Vocabulary & Affixes</h2>
+        <h2>Day 1 Lesson Template</h2>
         
-        <!-- Student Version: Words with blanks -->
-        <div v-if="!isTeacherVersion" class="student-vocab-section">
-          <h3>Student Directions:</h3>
-          <p class="directions">
-            Read each sentence from the passage. Use clues in the sentence and word structure 
-            to infer the meaning. Write your best guess for what the word means.
-          </p>
+        <!-- Teacher Version Only -->
+        <div v-if="isTeacherVersion" class="day-one-teacher-content">
           
-          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
-            <p class="vocab-number"><strong>{{ index + 1 }}. {{ word.word }}</strong></p>
-            <p class="context-sentence">"{{ word.exampleSentence }}"</p>
-            <p class="student-inference">{{ word.word }} is: <span class="blank-line">_________________</span></p>
-          </div>
-        </div>
-
-        <!-- Teacher Version: Full inquiry routine -->
-        <div v-if="isTeacherVersion" class="teacher-vocab-section">
-          <h3>Teacher Inquiry Vocabulary Routine With Progressive Reveal Supports</h3>
-          <p class="teacher-note">
-            Each word includes: (1) Context sentence, (2) Teacher prompts guiding toward meaning,
-            (3) Truth-bites that increase clarity, (4) Final student inference question.
-            Use one prompt at a time, slowly revealing more information.
-          </p>
-          
-          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-teacher">
-            <h4>{{ index + 1 }}. {{ word.word }} 
-              <span class="definition-badge">{{ word.definition }}</span>
-            </h4>
+          <!-- New Word Routine for Each Vocab Word -->
+          <div class="script-section new-word-section">
+            <h3>Day 1 Vocabulary Routine</h3>
             
-            <p class="context"><strong>Sentence:</strong> "{{ word.exampleSentence }}"</p>
-            
-            <div v-if="word.inquiryPrompts && word.inquiryPrompts.length > 0" class="inquiry-section">
-              <p><strong>Teacher Prompts With Hints</strong></p>
-              <div v-for="(prompt, pIndex) in word.inquiryPrompts" :key="pIndex" class="prompt-pair">
-                <p class="prompt">{{ pIndex + 1 }}. "{{ prompt }}"</p>
-                <p class="truth-bite" v-if="word.hints && word.hints[pIndex]">
-                  <em>Hint:</em> {{ word.hints[pIndex] }}
-                </p>
+            <div v-for="(word, index) in content.vocab" :key="index" class="word-script-block">
+              <h4>Word {{ index + 1 }}: {{ word.word }}</h4>
+              
+              <!-- Step 1: Say the Word -->
+              <div class="routine-step">
+                <h5>Step 1: Say the Word (Entry & Connection)</h5>
+                <p class="script-line">Teacher says the word clearly: <strong>"{{ word.word }}"</strong></p>
+                <p class="script-line">Teacher asks:</p>
+                <ul class="teacher-questions">
+                  <li>"How many syllables do you hear?"</li>
+                  <li>"Have you heard this word before, or is it new?"</li>
+                </ul>
+                <p class="script-note">(Oral only — no worksheet yet.)</p>
               </div>
-              <p v-if="word.inferenceQuestion" class="final-question">
-                <strong>Final:</strong> "{{ word.inferenceQuestion }}"
-              </p>
+
+              <!-- Step 2: Define the Word -->
+              <div class="routine-step">
+                <h5>Step 2: Define the Word (Teacher Model)</h5>
+                <p class="script-line">Teacher says:</p>
+                <p class="definition-line">"This word means: <em>{{ word.definition }}</em>"</p>
+                <p class="script-note">(One short, student-friendly sentence.)</p>
+              </div>
+
+              <!-- Step 3: Use in Sentence -->
+              <div class="routine-step">
+                <h5>Step 3: Use the Word in a Sentence (Teacher Model)</h5>
+                <p class="script-line">Teacher says:</p>
+                <p class="context-sentence-box">"Listen to how I use the word in a sentence: {{ word.exampleSentence || '[Sentence needed]' }}"</p>
+                <p class="script-note">(Literal meaning only.)</p>
+              </div>
+
+              <!-- Step 4: Part of Speech -->
+              <div class="routine-step">
+                <h5>Step 4: Identify Part of Speech Using Sentence Function</h5>
+                <p class="script-line">Teacher refers to the sentence chart and says:</p>
+                <p class="script-line">"I wonder what job this word is doing in the sentence. Let's ask some questions to figure it out."</p>
+                <p class="script-line">Teacher guides through function questions:</p>
+                <ul class="function-questions">
+                  <li><strong>Who or what?</strong> → Noun</li>
+                  <li><strong>Is / was doing?</strong> → Verb</li>
+                  <li><strong>Which one? What kind? How many?</strong> → Adjective</li>
+                  <li><strong>Where? When? How? Why?</strong> → Adverb or prepositional information</li>
+                </ul>
+                <p class="script-line">Teacher confirms explicitly:</p>
+                <p class="confirmation-line">"It answers the question ________, so this word is a ________."</p>
+                <p class="script-note">Student repeats or confirms.</p>
+              </div>
+
+              <!-- Step 5: Write the Word -->
+              <div class="routine-step">
+                <h5>Step 5: Teacher Writes the Word (Visual Anchor)</h5>
+                <p class="script-line">Teacher writes the word on the whiteboard.</p>
+                <p class="script-line">Teacher says: "Watch how the word looks."</p>
+              </div>
+
+              <!-- Step 6: Student Says Letters -->
+              <div class="routine-step">
+                <h5>Step 6: Student Says Letters & Reads the Word</h5>
+                <p class="script-line">Student:</p>
+                <ul>
+                  <li>Says each letter aloud.</li>
+                  <li>Reads the whole word aloud.</li>
+                </ul>
+              </div>
+
+              <!-- Step 7: Air Write -->
+              <div class="routine-step">
+                <h5>Step 7: Air Write (Multisensory Encoding)</h5>
+                <p class="script-line">Student:</p>
+                <ul>
+                  <li>Air writes the word.</li>
+                  <li>Says each letter while writing.</li>
+                </ul>
+              </div>
+
+              <!-- Step 8: Student Writes -->
+              <div class="routine-step">
+                <h5>Step 8: Student Writes the Word (Worksheet)</h5>
+                <p class="script-line">Student writes the word on the worksheet.</p>
+                <p class="script-line">Says each letter while writing.</p>
+              </div>
+
+              <!-- Step 9: Co-Construct Meaning -->
+              <div class="routine-step">
+                <h5>Step 9: Co-Construct Meaning (Teacher + Student)</h5>
+                <p class="script-line">On the worksheet, teacher and student work together to:</p>
+                <ul>
+                  <li>Write a simple definition in student language.</li>
+                  <li>Write one sentence using the word.</li>
+                </ul>
+              </div>
+
+              <!-- Step 10: Clarify Meaning -->
+              <div class="routine-step">
+                <h5>Step 10: Clarify Meaning (If Helpful)</h5>
+                <p class="script-line">Student records:</p>
+                <ul>
+                  <li>Part of speech</li>
+                  <li>What the word is</li>
+                  <li>What the word is not</li>
+                </ul>
+                <p class="script-note">(Only if it helps prevent confusion.)</p>
+              </div>
+
+              <!-- Step 11: Reflection -->
+              <div class="routine-step">
+                <h5>Step 11: Reflection (Exit)</h5>
+                <p class="script-line">Teacher asks: "Where are you now with this word?"</p>
+                <p class="script-line">Student marks:</p>
+                <ul class="reflection-options">
+                  <li>❓ Never</li>
+                  <li>👀 Heard</li>
+                  <li>🧠 Know</li>
+                  <li>⭐ Use / Explain</li>
+                </ul>
+                <p class="script-note">Optional follow-up: "What helped you move?"</p>
+              </div>
+              
+              <div class="word-divider"></div>
             </div>
           </div>
+
+          <!-- 4. Affix Instruction -->
+          <div class="script-section">
+            <h3>4. Affix Instruction (2 affixes)</h3>
+            <p class="script-line">"Now we're going to look at two word parts that help us understand new words."</p>
+            
+            <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="index" class="affix-script-block">
+              <h4>Affix {{ index + 1 }}: {{ affix.affix }}</h4>
+              <p class="script-line">"This word part is <strong>{{ affix.affix }}</strong>."</p>
+              <p class="script-line">"It means <em>{{ affix.meaning }}</em>."</p>
+              <p class="script-line">"Here are words that use this affix: <strong>{{ affix.examples.join(', ') }}</strong>."</p>
+              <p class="script-line">"Write the affix and its meaning on your affix page."</p>
+            </div>
+          </div>
+
+          <!-- Closing -->
+          <div class="script-section closing-section">
+            <h3>Closing</h3>
+            <p class="script-line">"Today you reviewed words you already know, learned new words, and learned word parts that help unlock meaning."</p>
+            <p class="script-line">"Tomorrow, we will look closely at sentences with these words and see how the words work together."</p>
+          </div>
         </div>
 
-        <!-- Affixes (same for both versions) -->
-        <div class="affix-section">
+        <!-- Student Version: Simple vocab list -->
+        <div v-else class="student-vocab-section">
+          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
+            <h4>{{ index + 1 }}. {{ word.word }}</h4>
+            <p class="definition-line">{{ word.definition }}</p>
+            <p class="context-sentence">"{{ word.exampleSentence || '' }}"</p>
+            <div class="student-work-space">
+              <p><strong>My Sentence:</strong></p>
+              <div class="write-lines"></div>
+              <p><strong>Picture:</strong></p>
+              <div class="picture-box"></div>
+            </div>
+          </div>
+          
           <h3>Affixes</h3>
-          <div v-for="(affix, index) in content.affixes" :key="index" class="affix-item">
-            <p><strong>{{ affix.affix }}</strong> {{ isTeacherVersion ? `(${affix.kind})` : '' }} = {{ affix.meaning }}</p>
-            <p class="affix-examples"><strong>Examples:</strong> {{ affix.examples.join(', ') }}</p>
+          <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="index" class="affix-item-student">
+            <p><strong>{{ affix.affix }}</strong> = {{ affix.meaning }}</p>
+            <p class="examples-line">Examples: {{ affix.examples.join(', ') }}</p>
           </div>
         </div>
       </div>
 
-      <!-- DAY 2: Weekly Passage & Comprehension -->
+      <!-- DAY 2: Words Working Together -->
       <div class="print-section page-break">
-        <h2>Day 2: First Read</h2>
+        <h2>Day 2: Words Working Together</h2>
+        <p class="section-note">Sentence structure analysis using vocabulary words</p>
         
         <div v-if="content.weeklyPassage" class="passage-section">
           <h3>{{ content.weeklyPassage.title }}</h3>
@@ -119,7 +232,7 @@
         <!-- Comprehension Questions -->
         <div class="questions-section">
           <h3>Comprehension Questions</h3>
-          <div v-for="(q, index) in content.day2Questions" :key="index" class="question-item">
+          <div v-for="(q, index) in content.day3Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
             <div class="answer-space">
               <div class="answer-line"></div>
@@ -137,16 +250,16 @@
           </div>
           
           <h4>Comprehension Sample Answers</h4>
-          <div v-for="(q, index) in content.day2Questions" :key="index" class="answer-sample">
+          <div v-for="(q, index) in content.day3Questions" :key="index" class="answer-sample">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
             <p class="sample-answer">(Student answers will vary - look for key concepts)</p>
           </div>
         </div>
       </div>
 
-      <!-- DAY 5: Friday Assessment -->
+      <!-- DAY 5: Reading Assessment + Vocab Spiral -->
       <div class="print-section page-break">
-        <h2>Day 5: Friday Assessment</h2>
+        <h2>Day 5: Reading Assessment + Vocab Spiral</h2>
         
         <div v-if="content.fridayPassage" class="passage-section">
           <h3>{{ content.fridayPassage.title }}</h3>
@@ -252,7 +365,7 @@ const content = ref<{
   affixes: AffixDocument[]
   weeklyPassage: PassageDocument | null
   fridayPassage: PassageDocument | null
-  day2Questions: ComprehensionQuestionDocument[]
+  day3Questions: ComprehensionQuestionDocument[]
   day4Questions: ComprehensionQuestionDocument[]
   day5Questions: ComprehensionQuestionDocument[]
 }>({
@@ -260,7 +373,7 @@ const content = ref<{
   affixes: [],
   weeklyPassage: null,
   fridayPassage: null,
-  day2Questions: [],
+  day3Questions: [],
   day4Questions: [],
   day5Questions: []
 })
@@ -312,12 +425,27 @@ onMounted(async () => {
         getQuestionsByWeek(templateId)
       ])
       
+      const weeklyPassage = passages.find(p => p.type === 'weekly') || null
+      const fridayPassage = passages.find(p => p.type === 'friday') || null
+      
+      // Use vocab from passage.vocabItems if available (has sentences from passage)
+      // Otherwise fall back to vocab collection
+      const vocabToUse = weeklyPassage?.vocabItems && weeklyPassage.vocabItems.length > 0 
+        ? weeklyPassage.vocabItems as any
+        : vocab
+      
+      // Use affixes from passage.affixItems if available (has passage-specific examples)
+      // Otherwise fall back to affixes collection
+      const affixesToUse = weeklyPassage?.affixItems && weeklyPassage.affixItems.length > 0
+        ? weeklyPassage.affixItems as any
+        : affixes
+      
       content.value = {
-        vocab,
-        affixes,
-        weeklyPassage: passages.find(p => p.type === 'weekly') || null,
-        fridayPassage: passages.find(p => p.type === 'friday') || null,
-        day2Questions: questions.filter(q => q.day === 2),
+        vocab: vocabToUse,
+        affixes: affixesToUse,
+        weeklyPassage,
+        fridayPassage,
+        day3Questions: questions.filter(q => q.day === 3),
         day4Questions: questions.filter(q => q.day === 4),
         day5Questions: questions.filter(q => q.day === 5)
       }
@@ -336,7 +464,17 @@ onMounted(async () => {
   background: white;
   min-height: 100vh;
 }
-
+ul {
+    margin-left: 28px;
+}
+h5{
+  text-decoration: underline;
+  margin-top: 10px;
+  font-size: 14px;
+}
+p.script-line {
+    
+}
 .print-header {
   background: #f7fafc;
   padding: 1.5rem 0;
@@ -373,41 +511,26 @@ onMounted(async () => {
 }
 
 .print-page-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 3px solid #1a202c;
-}
-
-.print-page-header h1 {
-  font-size: 2rem;
+  padding: 0.25rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #1a202c;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: #1a202c;
-  margin: 0 0 0.5rem 0;
+ 
+  page-break-inside: avoid !important;
 }
 
-.week-info p {
-  margin: 0.25rem 0;
-  color: #4a5568;
-}
-
-.teacher-badge {
+.version-badge {
   background: #4a90e2;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  display: inline-block;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.student-badge {
-  background: #48bb78;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  display: inline-block;
-  font-weight: 600;
-  margin-top: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 0.25rem;
 }
 
 .print-section {
@@ -751,6 +874,25 @@ onMounted(async () => {
   }
   
   .print-section {
+    page-break-inside: avoid;
+  }
+  
+  /* Prevent page breaks between review and new word sections */
+  .review-section-wrapper {
+    page-break-after: avoid !important;
+  }
+  
+  .new-word-section {
+    page-break-before: avoid !important;
+  }
+  
+  .script-section,
+  .word-script-block,
+  .review-block,
+  .affix-script-block,
+  .build-meaning-section,
+  .sentence-support-section,
+  .picture-support-section {
     page-break-inside: avoid;
   }
   
