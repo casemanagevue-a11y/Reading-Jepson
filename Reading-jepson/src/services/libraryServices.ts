@@ -77,10 +77,17 @@ export async function updateVocabLibrary(
   updates: Partial<Omit<VocabLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
 ): Promise<void> {
   try {
-    await updateDoc(doc(db, 'vocabLibrary', id), {
-      ...updates,
-      updatedAt: Timestamp.now()
+    // Remove undefined fields to prevent Firestore errors
+    const cleanUpdates: any = { updatedAt: Timestamp.now() }
+    
+    Object.keys(updates).forEach(key => {
+      const value = (updates as any)[key]
+      if (value !== undefined) {
+        cleanUpdates[key] = value
+      }
     })
+    
+    await updateDoc(doc(db, 'vocabLibrary', id), cleanUpdates)
   } catch (error) {
     console.error('Error updating vocab library item:', error)
     throw error
@@ -173,10 +180,17 @@ export async function updateAffixLibrary(
   updates: Partial<Omit<AffixLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
 ): Promise<void> {
   try {
-    await updateDoc(doc(db, 'affixLibrary', id), {
-      ...updates,
-      updatedAt: Timestamp.now()
+    // Remove undefined fields to prevent Firestore errors
+    const cleanUpdates: any = { updatedAt: Timestamp.now() }
+    
+    Object.keys(updates).forEach(key => {
+      const value = (updates as any)[key]
+      if (value !== undefined) {
+        cleanUpdates[key] = value
+      }
     })
+    
+    await updateDoc(doc(db, 'affixLibrary', id), cleanUpdates)
   } catch (error) {
     console.error('Error updating affix library item:', error)
     throw error
@@ -265,13 +279,22 @@ export async function updatePassageLibrary(
   updates: Partial<Omit<PassageLibraryDocument, 'id' | 'createdAt' | 'teacherUid'>>
 ): Promise<void> {
   try {
+    // Remove undefined fields to prevent Firestore errors
+    const cleanUpdates: any = { updatedAt: Timestamp.now() }
+    
+    Object.keys(updates).forEach(key => {
+      const value = (updates as any)[key]
+      if (value !== undefined) {
+        cleanUpdates[key] = value
+      }
+    })
+    
     // Recalculate word count if text is updated
-    const updateData: any = { ...updates, updatedAt: Timestamp.now() }
     if (updates.text) {
-      updateData.wordCount = updates.text.split(/\s+/).filter(w => w.length > 0).length
+      cleanUpdates.wordCount = updates.text.split(/\s+/).filter(w => w.length > 0).length
     }
 
-    await updateDoc(doc(db, 'passageLibrary', id), updateData)
+    await updateDoc(doc(db, 'passageLibrary', id), cleanUpdates)
   } catch (error) {
     console.error('Error updating passage library item:', error)
     throw error

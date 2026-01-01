@@ -2,8 +2,8 @@
   <div class="week-template-setup">
     <div class="container">
       <div class="header">
-        <h1>Create Week Template</h1>
-        <p class="subtitle">Create a reusable 5-day reading instruction plan</p>
+        <h1>{{ isEditMode ? 'Edit Week Template' : 'Create Week Template' }}</h1>
+        <p class="subtitle">{{ isEditMode ? 'Update your reusable 5-day reading instruction plan' : 'Create a reusable 5-day reading instruction plan' }}</p>
       </div>
       
       <div class="setup-wizard">
@@ -499,14 +499,24 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { 
   createWeekTemplate,
+  updateWeekTemplate,
+  getWeekTemplate,
+  getPassagesByWeek,
+  getVocabByWeek,
+  getAffixesByWeek,
+  getQuestionsByWeek,
   createPassage, 
+  deletePassage,
   createVocabWord, 
+  deleteVocabWord,
   createAffix,
-  createQuestion
+  deleteAffix,
+  createQuestion,
+  deleteQuestion
 } from '@/services/firestoreServices'
 import libraryServices from '@/services/libraryServices'
 import type { VocabLibraryWithId, AffixLibraryWithId } from '@/services/libraryServices'
@@ -514,7 +524,12 @@ import { extractSentencesContainingWord, extractWordsContainingAffix } from '@/u
 import type { SubjectFocus, AffixKind, PassageVocabItem, PassageAffixItem } from '@/types/firestore'
 
 const router = useRouter()
+const route = useRoute()
 const { user } = useAuth()
+
+// Check if we're in edit mode
+const isEditMode = computed(() => !!route.params.templateId)
+const templateId = computed(() => route.params.templateId as string)
 
 const currentStep = ref(1)
 const saving = ref(false)
@@ -541,6 +556,9 @@ const vocabWords = ref<Array<{
     whichWhatKind: string;
     whereRelationship: string;
   };
+  partOfSpeech?: string;
+  whatItIs?: string;
+  whatItIsNot?: string;
 }>>([
   { 
     word: '', 
@@ -690,6 +708,157 @@ async function loadAllLibraryItems() {
   }
 }
 
+// Load existing template data if in edit mode
+async function loadTemplateData() {
+  if (!isEditMode.value || !templateId.value) return
+  
+  try {
+    console.log('[WeekTemplateSetup] Loading template:', templateId.value)
+    saving.value = true
+    
+    // Load template
+    const template = await getWeekTemplate(templateId.value)
+    if (!template) {
+      alert('Template not found')
+      router.push('/teacher/week-templates')
+      return
+    }
+    
+    // Populate template data
+    templateData.value = {
+      templateName: template.templateName,
+      grade: template.grade || '',
+      unit: template.unit || '',
+      subjectFocus: template.subjectFocus,
+      description: template.description || ''
+    }
+    
+    // Load passages
+    const passages = await getPassagesByWeek(templateId.value)
+    const weeklyPassageDoc = passages.find(p => p.type === 'weekly')
+    const fridayPassageDoc = passages.find(p => p.type === 'friday')
+    
+    if (weeklyPassageDoc) {
+      weeklyPassage.value = {
+        title: weeklyPassageDoc.title,
+        text: weeklyPassageDoc.text
+      }
+      
+      // Load vocab items for weekly passage
+      if (weeklyPassageDoc.vocabItems) {
+        weeklyPassageDoc.vocabItems.forEach((item, index) => {
+          weeklyPassageVocab.value.set(index, item)
+        })
+      }
+      
+      // Load affix items for weekly passage
+      if (weeklyPassageDoc.affixItems) {
+        weeklyPassageDoc.affixItems.forEach((item, index) => {
+          weeklyPassageAffixes.value.set(index, item)
+        })
+      }
+    }
+    
+    if (fridayPassageDoc) {
+      fridayPassage.value = {
+        title: fridayPassageDoc.title,
+        text: fridayPassageDoc.text
+      }
+      
+      // Load vocab items for friday passage
+      if (fridayPassageDoc.vocabItems) {
+        fridayPassageDoc.vocabItems.forEach((item, index) => {
+          fridayPassageVocab.value.set(index, item)
+        })
+      }
+      
+      // Load affix items for friday passage
+      if (fridayPassageDoc.affixItems) {
+        fridayPassageDoc.affixItems.forEach((item, index) => {
+          fridayPassageAffixes.value.set(index, item)
+        })
+      }
+    }
+    
+    // Load vocab words
+    const vocabDocs = await getVocabByWeek(templateId.value)
+    if (vocabDocs.length > 0) {
+      vocabWords.value = vocabDocs.map(v => ({
+        word: v.word,
+        definition: v.definition,
+        exampleSentence: v.exampleSentence || '',
+        teacherPrompts: v.teacherPrompts || '',
+        sentenceFrame: v.sentenceFrame || '',
+        pictureGuidance: v.pictureGuidance || '',
+        wordPhraseCardsStr: v.wordPhraseCards?.join(', ') || '',
+        sortingKey: {
+          whoWhat: v.sortingKey?.whoWhat?.join(', ') || '',
+          isWasDoing: v.sortingKey?.isWasDoing?.join(', ') || '',
+          whichWhatKind: v.sortingKey?.whichWhatKind?.join(', ') || '',
+          whereRelationship: v.sortingKey?.whereRelationship?.join(', ') || ''
+        },
+        partOfSpeech: v.partOfSpeech,
+        whatItIs: v.whatItIs,
+        whatItIsNot: v.whatItIsNot
+      }))
+    }
+    
+    // Load affixes
+    const affixDocs = await getAffixesByWeek(templateId.value)
+    if (affixDocs.length > 0) {
+      affixes.value = affixDocs.map(a => ({
+        affix: a.affix,
+        kind: a.kind,
+        meaning: a.meaning,
+        examplesStr: a.examples?.join(', ') || ''
+      }))
+    }
+    
+    // Load questions
+    const questionDocs = await getQuestionsByWeek(templateId.value)
+    
+    // Sort and group questions by day
+    const day3Qs = questionDocs
+      .filter(q => q.day === 3)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+      .map(q => ({
+        type: q.type,
+        prompt: q.prompt,
+        orderIndex: q.orderIndex || 0
+      }))
+    
+    const day4Qs = questionDocs
+      .filter(q => q.day === 4)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+      .map(q => ({
+        type: q.type,
+        prompt: q.prompt,
+        orderIndex: q.orderIndex || 0
+      }))
+    
+    const day5Qs = questionDocs
+      .filter(q => q.day === 5)
+      .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+      .map(q => ({
+        type: q.type,
+        prompt: q.prompt,
+        orderIndex: q.orderIndex || 0
+      }))
+    
+    if (day3Qs.length > 0) day3Questions.value = day3Qs
+    if (day4Qs.length > 0) day4Questions.value = day4Qs
+    if (day5Qs.length > 0) day5Questions.value = day5Qs
+    
+    console.log('[WeekTemplateSetup] Template loaded successfully')
+  } catch (error) {
+    console.error('[WeekTemplateSetup] Error loading template:', error)
+    alert('Error loading template. Please try again.')
+    router.push('/teacher/week-templates')
+  } finally {
+    saving.value = false
+  }
+}
+
 // Import vocab from library
 function importVocabFromLibrary(item: VocabLibraryWithId) {
   vocabWords.value.push({
@@ -705,7 +874,10 @@ function importVocabFromLibrary(item: VocabLibraryWithId) {
       isWasDoing: '',
       whichWhatKind: '',
       whereRelationship: ''
-    }
+    },
+    partOfSpeech: item.partOfSpeech,
+    whatItIs: item.whatItIs,
+    whatItIsNot: item.whatItIsNot
   })
 }
 
@@ -758,7 +930,10 @@ function handleVocabAssignment(passageType: 'weekly' | 'friday', vocabIndex: num
         isWasDoing: vocab.sortingKey.isWasDoing ? vocab.sortingKey.isWasDoing.split(',').map(s => s.trim()).filter(s => s) : undefined,
         whichWhatKind: vocab.sortingKey.whichWhatKind ? vocab.sortingKey.whichWhatKind.split(',').map(s => s.trim()).filter(s => s) : undefined,
         whereRelationship: vocab.sortingKey.whereRelationship ? vocab.sortingKey.whereRelationship.split(',').map(s => s.trim()).filter(s => s) : undefined
-      } : undefined
+      } : undefined,
+      partOfSpeech: vocab.partOfSpeech || undefined,
+      whatItIs: vocab.whatItIs || undefined,
+      whatItIsNot: vocab.whatItIsNot || undefined
     }
     
     vocabMap.value.set(vocabIndex, vocabItem)
@@ -869,25 +1044,78 @@ const saveTemplate = async () => {
   try {
     saving.value = true
     
-    // Create week template (only include optional fields if they have values)
-    const templatePayload: any = {
-      teacherUid: user.value.uid,
-      templateName: templateData.value.templateName,
-      weekLength: 5, // Default to 5-day week
-      subjectFocus: templateData.value.subjectFocus
-    }
+    let finalTemplateId: string
     
-    if (templateData.value.grade) {
-      templatePayload.grade = templateData.value.grade
+    if (isEditMode.value && templateId.value) {
+      // UPDATE MODE: Delete existing related documents and update template
+      console.log('[WeekTemplateSetup] Update mode - deleting existing documents')
+      finalTemplateId = templateId.value
+      
+      // Delete existing passages
+      const existingPassages = await getPassagesByWeek(finalTemplateId)
+      for (const passage of existingPassages) {
+        await deletePassage(passage.id)
+      }
+      
+      // Delete existing vocab words
+      const existingVocab = await getVocabByWeek(finalTemplateId)
+      for (const vocab of existingVocab) {
+        await deleteVocabWord(vocab.id)
+      }
+      
+      // Delete existing affixes
+      const existingAffixes = await getAffixesByWeek(finalTemplateId)
+      for (const affix of existingAffixes) {
+        await deleteAffix(affix.id)
+      }
+      
+      // Delete existing questions
+      const existingQuestions = await getQuestionsByWeek(finalTemplateId)
+      for (const question of existingQuestions) {
+        await deleteQuestion(question.id)
+      }
+      
+      // Update template
+      const templateUpdatePayload: any = {
+        templateName: templateData.value.templateName,
+        weekLength: 5,
+        subjectFocus: templateData.value.subjectFocus
+      }
+      
+      if (templateData.value.grade) {
+        templateUpdatePayload.grade = templateData.value.grade
+      }
+      if (templateData.value.unit) {
+        templateUpdatePayload.unit = templateData.value.unit
+      }
+      if (templateData.value.description) {
+        templateUpdatePayload.description = templateData.value.description
+      }
+      
+      await updateWeekTemplate(finalTemplateId, templateUpdatePayload)
+      console.log('[WeekTemplateSetup] Template updated, recreating content...')
+    } else {
+      // CREATE MODE: Create new template
+      const templatePayload: any = {
+        teacherUid: user.value.uid,
+        templateName: templateData.value.templateName,
+        weekLength: 5, // Default to 5-day week
+        subjectFocus: templateData.value.subjectFocus
+      }
+      
+      if (templateData.value.grade) {
+        templatePayload.grade = templateData.value.grade
+      }
+      if (templateData.value.unit) {
+        templatePayload.unit = templateData.value.unit
+      }
+      if (templateData.value.description) {
+        templatePayload.description = templateData.value.description
+      }
+      
+      finalTemplateId = await createWeekTemplate(templatePayload)
+      console.log('[WeekTemplateSetup] New template created:', finalTemplateId)
     }
-    if (templateData.value.unit) {
-      templatePayload.unit = templateData.value.unit
-    }
-    if (templateData.value.description) {
-      templatePayload.description = templateData.value.description
-    }
-    
-    const templateId = await createWeekTemplate(templatePayload)
     
     // Create passages with vocab and affix items (reference templateId as weekId for now)
     const weeklyVocabItems: PassageVocabItem[] = Array.from(weeklyPassageVocab.value.values())
@@ -906,11 +1134,15 @@ const saveTemplate = async () => {
       if (item.pictureGuidance) cleaned.pictureGuidance = item.pictureGuidance
       if (item.wordPhraseCards && item.wordPhraseCards.length > 0) cleaned.wordPhraseCards = item.wordPhraseCards
       if (item.sortingKey) cleaned.sortingKey = item.sortingKey
+      // AI-generated clarification fields
+      if (item.partOfSpeech) cleaned.partOfSpeech = item.partOfSpeech
+      if (item.whatItIs) cleaned.whatItIs = item.whatItIs
+      if (item.whatItIsNot) cleaned.whatItIsNot = item.whatItIsNot
       return cleaned as PassageVocabItem
     })
     
     const weeklyPassagePayload: any = {
-      weekId: templateId,
+      weekId: finalTemplateId,
       type: 'weekly',
       title: weeklyPassage.value.title,
       text: weeklyPassage.value.text
@@ -936,11 +1168,15 @@ const saveTemplate = async () => {
       if (item.pictureGuidance) cleaned.pictureGuidance = item.pictureGuidance
       if (item.wordPhraseCards && item.wordPhraseCards.length > 0) cleaned.wordPhraseCards = item.wordPhraseCards
       if (item.sortingKey) cleaned.sortingKey = item.sortingKey
+      // AI-generated clarification fields
+      if (item.partOfSpeech) cleaned.partOfSpeech = item.partOfSpeech
+      if (item.whatItIs) cleaned.whatItIs = item.whatItIs
+      if (item.whatItIsNot) cleaned.whatItIsNot = item.whatItIsNot
       return cleaned as PassageVocabItem
     })
     
     const fridayPassagePayload: any = {
-      weekId: templateId,
+      weekId: finalTemplateId,
       type: 'friday',
       title: fridayPassage.value.title,
       text: fridayPassage.value.text
@@ -954,7 +1190,7 @@ const saveTemplate = async () => {
     for (const vocab of vocabWords.value) {
       if (vocab.word && vocab.definition) {
         const vocabPayload: any = {
-          weekId: templateId,
+          weekId: finalTemplateId,
           word: vocab.word,
           definition: vocab.definition,
           exampleSentence: vocab.exampleSentence || '',
@@ -1009,7 +1245,7 @@ const saveTemplate = async () => {
     for (const affix of affixes.value) {
       if (affix.affix && affix.meaning) {
         await createAffix({
-          weekId: templateId,
+          weekId: finalTemplateId,
           affix: affix.affix,
           kind: affix.kind,
           meaning: affix.meaning,
@@ -1022,7 +1258,7 @@ const saveTemplate = async () => {
     for (const q of day3Questions.value) {
       if (q.prompt) {
         await createQuestion({
-          weekId: templateId,
+          weekId: finalTemplateId,
           day: 3,
           type: q.type as any,
           prompt: q.prompt,
@@ -1035,7 +1271,7 @@ const saveTemplate = async () => {
     for (const q of day4Questions.value) {
       if (q.prompt) {
         await createQuestion({
-          weekId: templateId,
+          weekId: finalTemplateId,
           day: 4,
           type: q.type as any,
           prompt: q.prompt,
@@ -1048,7 +1284,7 @@ const saveTemplate = async () => {
     for (const q of day5Questions.value) {
       if (q.prompt) {
         await createQuestion({
-          weekId: templateId,
+          weekId: finalTemplateId,
           day: 5,
           type: q.type as any,
           prompt: q.prompt,
@@ -1057,10 +1293,11 @@ const saveTemplate = async () => {
       }
     }
     
+    alert(`Template ${isEditMode.value ? 'updated' : 'created'} successfully!`)
     router.push('/teacher/week-templates')
   } catch (error) {
     console.error('Error saving template:', error)
-    alert('Failed to save template. Please try again.')
+    alert(`Failed to ${isEditMode.value ? 'update' : 'create'} template. Please try again.`)
   } finally {
     saving.value = false
   }
@@ -1069,6 +1306,9 @@ const saveTemplate = async () => {
 // Load library items when component mounts
 onMounted(() => {
   loadAllLibraryItems()
+  if (isEditMode.value) {
+    loadTemplateData()
+  }
 })
 </script>
 

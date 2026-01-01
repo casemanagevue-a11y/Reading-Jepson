@@ -85,6 +85,10 @@ export interface PassageVocabItem {
     whichWhatKind?: string[];
     whereRelationship?: string[];
   };
+  // AI-generated clarification fields
+  whatItIs?: string; // Examples, synonyms
+  whatItIsNot?: string; // Non-examples, antonyms
+  partOfSpeech?: string; // noun, verb, adjective, etc.
 }
 
 // Affix item embedded in passage (with passage-specific examples)
@@ -146,6 +150,10 @@ export interface VocabDocument {
     whichWhatKind?: string[]; // Cards that answer "Which one/what kind/how many?"
     whereRelationship?: string[]; // Cards that answer "Where/relationship?"
   };
+  // AI-generated clarification fields
+  partOfSpeech?: string; // noun, verb, adjective, etc.
+  whatItIs?: string; // Examples, synonyms
+  whatItIsNot?: string; // Non-examples, antonyms
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -345,6 +353,11 @@ export interface VocabLibraryDocument {
   grade?: string;
   unit?: string;
   subject?: SubjectFocus;
+  // Clarification fields
+  whatItIs?: string; // Examples, synonyms
+  whatItIsNot?: string; // Non-examples, antonyms
+  partOfSpeech?: string; // noun, verb, adjective, etc.
+  // Legacy fields (deprecated - use whatItIs/whatItIsNot instead)
   inquiryPrompts?: string[];
   hints?: string[];
   inferenceQuestion?: string;

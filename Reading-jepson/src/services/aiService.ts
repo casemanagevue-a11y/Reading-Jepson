@@ -16,9 +16,8 @@ import type {
 // Configuration
 // ============================================================================
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const MODEL = 'gpt-4o-mini' // Cost-effective model, can upgrade to gpt-4o for better quality
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || ''
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 // ============================================================================
 // Types
@@ -68,32 +67,49 @@ export interface PassageAdjustmentResult {
 // Helper Functions
 // ============================================================================
 
-async function callOpenAI(messages: any[], temperature = 0.7, responseFormat?: { type: 'json_object' }): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+async function callGemini(messages: any[], temperature = 0.7, _responseFormat?: { type: 'json_object' }): Promise<string> {
+  if (!GOOGLE_API_KEY) {
+    throw new Error('Google API key not configured. Please add VITE_GOOGLE_API_KEY to your .env file.')
   }
 
-  const response = await fetch(OPENAI_API_URL, {
+  // Convert OpenAI message format to Gemini format
+  const systemMessage = messages.find((m: any) => m.role === 'system')
+  const userMessage = messages.find((m: any) => m.role === 'user')
+  
+  const combinedPrompt = systemMessage 
+    ? `${systemMessage.content}\n\n${userMessage.content}`
+    : userMessage.content
+
+  const response = await fetch(`${GEMINI_API_URL}?key=${GOOGLE_API_KEY}`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: MODEL,
-      messages,
-      temperature,
-      ...(responseFormat && { response_format: responseFormat })
+      contents: [{
+        parts: [{
+          text: combinedPrompt
+        }]
+      }],
+      generationConfig: {
+        temperature: temperature,
+        maxOutputTokens: 2048
+      }
     })
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`)
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(`Gemini API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`)
   }
 
   const data = await response.json()
-  return data.choices[0].message.content
+  let text = data.candidates[0].content.parts[0].text
+  
+  // Strip markdown code fences if present (Gemini often wraps JSON in ```json ... ```)
+  text = text.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim()
+  
+  return text
 }
 
 // ============================================================================
@@ -134,7 +150,7 @@ Respond with a JSON object containing:
     }
   ]
 
-  const response = await callOpenAI(messages, 0.3, { type: 'json_object' })
+  const response = await callGemini(messages, 0.3, { type: 'json_object' })
   return JSON.parse(response)
 }
 
@@ -188,7 +204,7 @@ Respond with a JSON object:
     }
   ]
 
-  const response = await callOpenAI(messages, 0.7, { type: 'json_object' })
+  const response = await callGemini(messages, 0.7, { type: 'json_object' })
   return JSON.parse(response)
 }
 
@@ -254,7 +270,7 @@ Respond with a JSON object:
     }
   ]
 
-  const response = await callOpenAI(messages, 0.7, { type: 'json_object' })
+  const response = await callGemini(messages, 0.7, { type: 'json_object' })
   const result = JSON.parse(response)
   return result.questions
 }
@@ -329,7 +345,7 @@ Respond with JSON matching this exact format.`
     }
   ]
 
-  const response = await callOpenAI(messages, 0.8, { type: 'json_object' })
+  const response = await callGemini(messages, 0.8, { type: 'json_object' })
   return JSON.parse(response)
 }
 
@@ -401,13 +417,68 @@ function countSyllables(text: string): number {
   return count
 }
 
+// ============================================================================
+// Vocabulary Clarifications (Part of Speech, Examples, Non-Examples)
+// ============================================================================
+
+export interface VocabClarificationResult {
+  exampleSentence: string
+  partOfSpeech: string
+  whatItIs: string
+  whatItIsNot: string
+}
+
+export async function generateVocabClarifications(
+  word: string,
+  definition: string
+): Promise<VocabClarificationResult> {
+  const prompt = `Generate vocabulary clarifications for teaching the word "${word}" to students with developmental language disorder.
+
+Word: ${word}
+Definition: ${definition}
+
+CRITICAL: The FIRST item in "What it IS" and "What it IS NOT" must be the clearest, most concise statement. This is what students will focus on.
+
+Please generate:
+1. A simple, clear example sentence using the word (one short sentence, literal meaning)
+2. Part of speech (noun, verb, adjective, adverb, etc.)
+3. What it IS: Start with ONE clear, simple sentence that captures the core meaning. Then add 2-3 supporting items (synonyms, examples, comparisons).
+4. What it IS NOT: Start with ONE clear, simple statement of what it's NOT. Then add 2-3 supporting items (opposites, differences, misconceptions).
+
+Example format:
+{
+  "exampleSentence": "The dynasty ruled China for hundreds of years.",
+  "partOfSpeech": "noun",
+  "whatItIs": "A family that rules a country for many years. Similar to: monarchy, royal family. Examples: Ming Dynasty, Tudor Dynasty. Power passes from parent to child",
+  "whatItIsNot": "Not just one king or queen ruling alone. Different from: elected presidents, democracy. Not a government where people vote for leaders"
+}
+
+REMEMBER: Make the FIRST item in each section the clearest and most direct - that's what students will read and remember.
+Respond with JSON matching this exact format.`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert vocabulary teacher specializing in supporting students with developmental language disorder. You use simple, concrete language and keep explanations brief and clear.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callGemini(messages, 0.7, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
 export default {
   estimateReadingLevel,
   adjustPassageWithVocab,
   generateComprehensionQuestions,
   generateInquiryQuestions,
   generateInquiryQuestionsForVocabList,
-  calculateFleschKincaidGrade
+  calculateFleschKincaidGrade,
+  generateVocabClarifications
 }
 
 

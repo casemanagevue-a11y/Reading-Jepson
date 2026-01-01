@@ -28,18 +28,45 @@
         <!-- Teacher Version Only -->
         <div v-if="isTeacherVersion" class="day-one-teacher-content">
           
+          <!-- Review Words Section -->
+          <div class="script-section review-words-section">
+            <h3>Review Words (2 words from previous weeks)</h3>
+            <p class="script-note">Start by reviewing two words students already know.</p>
+            
+            <div class="review-word-block">
+              <h4>Review Word 1: ________________</h4>
+              <p class="script-note">Teacher says:</p>
+              <p class="script-line">"Read the word."</p>
+              <p class="script-line">"Tell me what it means in your own words."</p>
+              <p class="script-note">Ask guiding questions as needed:</p>
+              <ul class="teacher-questions">
+                <li>"Is this a kind of ___ or a kind of ___?"</li>
+                <li>"Where would you see this?"</li>
+                <li>"Can you give an example?"</li>
+              </ul>
+              <p class="script-note">If needed, provide an example sentence using the word.</p>
+              <p class="script-line">"Check your vocabulary page and make sure your definition and picture still make sense."</p>
+            </div>
+            
+            <div class="review-word-block">
+              <h4>Review Word 2: ________________</h4>
+              <p class="script-note">(Repeat the same routine.)</p>
+            </div>
+          </div>
+          
           <!-- New Word Routine for Each Vocab Word -->
           <div class="script-section new-word-section">
-            <h3>Day 1 Vocabulary Routine</h3>
+            <h3>New Vocabulary Words</h3>
             
             <div v-for="(word, index) in content.vocab" :key="index" class="word-script-block">
-              <h4>Word {{ index + 1 }}: {{ word.word }}</h4>
+              <h3>Word {{ index + 1 }}: {{ word.word }}</h3>
               
               <!-- Step 1: Say the Word -->
               <div class="routine-step">
                 <h5>Step 1: Say the Word (Entry & Connection)</h5>
-                <p class="script-line">Teacher says the word clearly: <strong>"{{ word.word }}"</strong></p>
-                <p class="script-line">Teacher asks:</p>
+                <p class="script-note">Teacher says the word clearly:</p>
+                <p class="script-line">"{{ word.word }}"</p>
+                <p class="script-note">Teacher asks:</p>
                 <ul class="teacher-questions">
                   <li>"How many syllables do you hear?"</li>
                   <li>"Have you heard this word before, or is it new?"</li>
@@ -50,48 +77,49 @@
               <!-- Step 2: Define the Word -->
               <div class="routine-step">
                 <h5>Step 2: Define the Word (Teacher Model)</h5>
-                <p class="script-line">Teacher says:</p>
-                <p class="definition-line">"This word means: <em>{{ word.definition }}</em>"</p>
+                <p class="script-note">Teacher says:</p>
+                <p class="script-line">"This word means: {{ word.definition }}"</p>
                 <p class="script-note">(One short, student-friendly sentence.)</p>
               </div>
 
               <!-- Step 3: Use in Sentence -->
               <div class="routine-step">
                 <h5>Step 3: Use the Word in a Sentence (Teacher Model)</h5>
-                <p class="script-line">Teacher says:</p>
-                <p class="context-sentence-box">"Listen to how I use the word in a sentence: {{ word.exampleSentence || '[Sentence needed]' }}"</p>
+                <p class="script-note">Teacher says:</p>
+                <p class="script-line">"Listen to how I use the word in a sentence: {{ word.exampleSentence || '[Sentence needed]' }}"</p>
                 <p class="script-note">(Literal meaning only.)</p>
               </div>
 
               <!-- Step 4: Part of Speech -->
               <div class="routine-step">
                 <h5>Step 4: Identify Part of Speech Using Sentence Function</h5>
-                <p class="script-line">Teacher refers to the sentence chart and says:</p>
+                <p class="script-note">Teacher refers to the sentence chart and says:</p>
                 <p class="script-line">"I wonder what job this word is doing in the sentence. Let's ask some questions to figure it out."</p>
-                <p class="script-line">Teacher guides through function questions:</p>
+                <p class="script-note">Teacher guides the student through function questions:</p>
                 <ul class="function-questions">
                   <li><strong>Who or what?</strong> → Noun</li>
                   <li><strong>Is / was doing?</strong> → Verb</li>
                   <li><strong>Which one? What kind? How many?</strong> → Adjective</li>
                   <li><strong>Where? When? How? Why?</strong> → Adverb or prepositional information</li>
                 </ul>
-                <p class="script-line">Teacher confirms explicitly:</p>
-                <p class="confirmation-line">"It answers the question ________, so this word is a ________."</p>
+                <p class="script-note">Teacher confirms explicitly:</p>
+                <p class="script-line">"It answers the question ________, so this word is a ________."</p>
                 <p class="script-note">Student repeats or confirms.</p>
               </div>
 
               <!-- Step 5: Write the Word -->
               <div class="routine-step">
                 <h5>Step 5: Teacher Writes the Word (Visual Anchor)</h5>
-                <p class="script-line">Teacher writes the word on the whiteboard.</p>
-                <p class="script-line">Teacher says: "Watch how the word looks."</p>
+                <p class="script-note">Teacher writes the word on the whiteboard.</p>
+                <p class="script-note">Teacher says:</p>
+                <p class="script-line">"Watch how the word looks."</p>
               </div>
 
               <!-- Step 6: Student Says Letters -->
               <div class="routine-step">
                 <h5>Step 6: Student Says Letters & Reads the Word</h5>
-                <p class="script-line">Student:</p>
-                <ul>
+                <p class="script-note">Student:</p>
+                <ul class="action-list">
                   <li>Says each letter aloud.</li>
                   <li>Reads the whole word aloud.</li>
                 </ul>
@@ -100,8 +128,8 @@
               <!-- Step 7: Air Write -->
               <div class="routine-step">
                 <h5>Step 7: Air Write (Multisensory Encoding)</h5>
-                <p class="script-line">Student:</p>
-                <ul>
+                <p class="script-note">Student:</p>
+                <ul class="action-list">
                   <li>Air writes the word.</li>
                   <li>Says each letter while writing.</li>
                 </ul>
@@ -110,15 +138,15 @@
               <!-- Step 8: Student Writes -->
               <div class="routine-step">
                 <h5>Step 8: Student Writes the Word (Worksheet)</h5>
-                <p class="script-line">Student writes the word on the worksheet.</p>
-                <p class="script-line">Says each letter while writing.</p>
+                <p class="script-note">Student writes the word on the worksheet.</p>
+                <p class="script-note">Says each letter while writing.</p>
               </div>
 
               <!-- Step 9: Co-Construct Meaning -->
               <div class="routine-step">
                 <h5>Step 9: Co-Construct Meaning (Teacher + Student)</h5>
-                <p class="script-line">On the worksheet, teacher and student work together to:</p>
-                <ul>
+                <p class="script-note">On the worksheet, teacher and student work together to:</p>
+                <ul class="action-list">
                   <li>Write a simple definition in student language.</li>
                   <li>Write one sentence using the word.</li>
                 </ul>
@@ -127,8 +155,13 @@
               <!-- Step 10: Clarify Meaning -->
               <div class="routine-step">
                 <h5>Step 10: Clarify Meaning (If Helpful)</h5>
-                <p class="script-line">Student records:</p>
-                <ul>
+                <p class="script-note">Student records:</p>
+                <div v-if="word.partOfSpeech || word.whatItIs || word.whatItIsNot" style="margin-left: 1rem;">
+                  <p v-if="word.partOfSpeech" class="script-note"><strong>Part of speech:</strong> {{ word.partOfSpeech }}</p>
+                  <p v-if="word.whatItIs" class="script-note"><strong>What the word is:</strong> {{ word.whatItIs }}</p>
+                  <p v-if="word.whatItIsNot" class="script-note"><strong>What the word is not:</strong> {{ word.whatItIsNot }}</p>
+                </div>
+                <ul v-else class="action-list">
                   <li>Part of speech</li>
                   <li>What the word is</li>
                   <li>What the word is not</li>
@@ -139,15 +172,17 @@
               <!-- Step 11: Reflection -->
               <div class="routine-step">
                 <h5>Step 11: Reflection (Exit)</h5>
-                <p class="script-line">Teacher asks: "Where are you now with this word?"</p>
-                <p class="script-line">Student marks:</p>
+                <p class="script-note">Teacher asks:</p>
+                <p class="script-line">"Where are you now with this word?"</p>
+                <p class="script-note">Student marks:</p>
                 <ul class="reflection-options">
                   <li>❓ Never</li>
                   <li>👀 Heard</li>
                   <li>🧠 Know</li>
                   <li>⭐ Use / Explain</li>
                 </ul>
-                <p class="script-note">Optional follow-up: "What helped you move?"</p>
+                <p class="script-note">Optional follow-up:</p>
+                <p class="script-line">"What helped you move?"</p>
               </div>
               
               <div class="word-divider"></div>
@@ -347,7 +382,9 @@ import type {
   PassageDocument,
   VocabDocument,
   AffixDocument,
-  ComprehensionQuestionDocument
+  ComprehensionQuestionDocument,
+  PassageVocabItem,
+  PassageAffixItem
 } from '@/types/firestore'
 
 const route = useRoute()
@@ -361,8 +398,8 @@ const error = ref<string | null>(null)
 const isTeacherVersion = computed(() => route.query.version === 'teacher')
 
 const content = ref<{
-  vocab: VocabDocument[]
-  affixes: AffixDocument[]
+  vocab: (VocabDocument | PassageVocabItem)[]
+  affixes: (AffixDocument | PassageAffixItem)[]
   weeklyPassage: PassageDocument | null
   fridayPassage: PassageDocument | null
   day3Questions: ComprehensionQuestionDocument[]
@@ -472,8 +509,22 @@ h5{
   margin-top: 10px;
   font-size: 14px;
 }
-p.script-line {
-    
+
+.script-line {
+  margin: 0.75rem 0 !important;
+  line-height: 1.8 !important;
+  color: #4a5d9e !important;
+  font-size: 0.95rem !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
+}
+
+.script-note {
+  font-style: normal;
+    color: #718096;
+    font-size: .9rem;
+    margin: .3rem 0;
+    line-height: 1.4;
 }
 .print-header {
   background: #f7fafc;
@@ -518,6 +569,7 @@ p.script-line {
   font-weight: 600;
   color: #1a202c;
  
+  page-break-after: avoid;
   page-break-inside: avoid !important;
 }
 
@@ -560,7 +612,13 @@ p.script-line {
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
-
+ul.teacher-questions {
+    line-height: 1.3 !important;
+    color: #4a5d9e !important;
+    font-size: .95rem !important;
+    font-style: italic !important;
+    font-weight: 500 !important;
+}
 .teacher-note {
   background: #fff5f5;
   padding: 1rem;
@@ -856,6 +914,8 @@ p.script-line {
 }
 
 @media print {
+  nav, .navbar{display: none !important;}
+ 
   .no-print {
     display: none !important;
   }

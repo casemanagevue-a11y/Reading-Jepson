@@ -96,55 +96,55 @@
           />
         </div>
 
-        <!-- Inquiry Questions Section -->
-        <div class="inquiry-section">
+        <!-- AI Generation Section -->
+        <div class="ai-generation-section">
           <div class="section-header">
-            <h4>Inquiry Questions (Optional)</h4>
+            <h4>AI-Powered Content</h4>
             <button 
-              v-if="!formData.inquiryPrompts || formData.inquiryPrompts.length === 0"
-              @click="generateInquiry" 
+              @click="generateAIContent" 
               class="btn btn-ai btn-sm"
               :disabled="isGenerating || !formData.word || !formData.definition"
             >
-              {{ isGenerating ? '⏳ Generating...' : '✨ Generate with AI' }}
+              {{ isGenerating ? '⏳ Generating...' : '✨ Generate Example Sentence & Clarifications' }}
             </button>
           </div>
+          <p class="ai-note">AI will generate: example sentence, part of speech, what it is (synonyms/examples), and what it is not (antonyms/non-examples)</p>
+        </div>
 
-          <div v-if="formData.inquiryPrompts && formData.inquiryPrompts.length > 0">
-            <div v-for="(_prompt, index) in formData.inquiryPrompts" :key="index" class="inquiry-item">
-              <label>Prompt {{ index + 1 }}</label>
-              <div class="inquiry-row">
-                <textarea 
-                  v-model="formData.inquiryPrompts[index]" 
-                  class="form-textarea"
-                  rows="2"
-                ></textarea>
-                <button @click="removeInquiryPrompt(index)" class="btn-remove">×</button>
-              </div>
-              
-              <div v-if="formData.truthBites && formData.truthBites[index] !== undefined">
-                <label>Truth-bite {{ index + 1 }}</label>
-                <input 
-                  v-model="formData.truthBites[index]" 
-                  type="text" 
-                  class="form-input"
-                  placeholder="Brief hint..."
-                />
-              </div>
-            </div>
+        <!-- Clarification Fields -->
+        <div class="clarification-section">
+          <h4>Clarification (Helps prevent confusion)</h4>
+          
+          <div class="form-group">
+            <label>Part of Speech</label>
+            <select v-model="formData.partOfSpeech" class="form-select">
+              <option value="">Not specified</option>
+              <option value="noun">Noun</option>
+              <option value="verb">Verb</option>
+              <option value="adjective">Adjective</option>
+              <option value="adverb">Adverb</option>
+              <option value="preposition">Preposition</option>
+            </select>
+          </div>
 
-            <div v-if="formData.inferenceQuestion !== undefined" class="form-group">
-              <label>Final Inference Question</label>
-              <textarea 
-                v-model="formData.inferenceQuestion" 
-                class="form-textarea"
-                rows="2"
-              ></textarea>
-            </div>
+          <div class="form-group">
+            <label>What It IS (Examples, Synonyms, Similar to...)</label>
+            <textarea 
+              v-model="formData.whatItIs" 
+              class="form-textarea"
+              placeholder="e.g., Similar to a family line, Like rulers connected by blood, Related to: dynasty"
+              rows="3"
+            ></textarea>
+          </div>
 
-            <button @click="addInquiryPrompt" class="btn btn-secondary btn-sm">
-              + Add Prompt
-            </button>
+          <div class="form-group">
+            <label>What It IS NOT (Non-examples, Antonyms, Different from...)</label>
+            <textarea 
+              v-model="formData.whatItIsNot" 
+              class="form-textarea"
+              placeholder="e.g., Not random rulers, Not elected leaders, Opposite of: republic, democracy"
+              rows="3"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -361,46 +361,26 @@ function initializeFormData() {
   }
 }
 
-function addInquiryPrompt() {
-  if (!formData.value.inquiryPrompts) {
-    formData.value.inquiryPrompts = []
-    formData.value.truthBites = []
-  }
-  formData.value.inquiryPrompts.push('')
-  formData.value.truthBites.push('')
-}
-
-function removeInquiryPrompt(index: number) {
-  if (formData.value.inquiryPrompts) {
-    formData.value.inquiryPrompts.splice(index, 1)
-  }
-  if (formData.value.truthBites) {
-    formData.value.truthBites.splice(index, 1)
-  }
-}
-
-async function generateInquiry() {
+async function generateAIContent() {
   if (!formData.value.word || !formData.value.definition) return
   
   isGenerating.value = true
   try {
-    const result = await aiService.generateInquiryQuestions(
+    // Generate example sentence, part of speech, and clarifications
+    const result = await aiService.generateVocabClarifications(
       formData.value.word,
-      formData.value.definition,
-      formData.value.exampleSentence || `This sentence uses the word ${formData.value.word}.`
+      formData.value.definition
     )
 
-    formData.value.inquiryPrompts = result.inquiryPrompts
-    formData.value.truthBites = result.truthBites
-    formData.value.inferenceQuestion = result.inferenceQuestion
-    if (result.exampleSentence && !formData.value.exampleSentence) {
-      formData.value.exampleSentence = result.exampleSentence
-    }
+    formData.value.exampleSentence = result.exampleSentence
+    formData.value.partOfSpeech = result.partOfSpeech
+    formData.value.whatItIs = result.whatItIs
+    formData.value.whatItIsNot = result.whatItIsNot
 
-    alert('✅ AI inquiry questions generated!')
+    alert('✅ AI content generated successfully!')
   } catch (error) {
-    console.error('Error generating inquiry:', error)
-    alert('❌ Error generating inquiry questions. Please check your API key.')
+    console.error('Error generating AI content:', error)
+    alert('❌ Error generating content. Please check your API key.')
   } finally {
     isGenerating.value = false
   }
@@ -443,15 +423,28 @@ async function save() {
         ? tagsString.value.split(',').map(t => t.trim()).filter(t => t)
         : []
 
-      const vocabData = {
+      const vocabData: any = {
         ...baseData,
         word: formData.value.word,
         definition: formData.value.definition,
         exampleSentence: formData.value.exampleSentence || '',
-        tags,
-        inquiryPrompts: formData.value.inquiryPrompts,
-        truthBites: formData.value.truthBites,
-        inferenceQuestion: formData.value.inferenceQuestion
+        tags
+      }
+      
+      // Only include optional fields if they have values
+      if (formData.value.partOfSpeech) vocabData.partOfSpeech = formData.value.partOfSpeech
+      if (formData.value.whatItIs) vocabData.whatItIs = formData.value.whatItIs
+      if (formData.value.whatItIsNot) vocabData.whatItIsNot = formData.value.whatItIsNot
+      
+      // Legacy inquiry fields (keep for backward compatibility)
+      if (formData.value.inquiryPrompts && formData.value.inquiryPrompts.length > 0) {
+        vocabData.inquiryPrompts = formData.value.inquiryPrompts
+      }
+      if (formData.value.truthBites && formData.value.truthBites.length > 0) {
+        vocabData.truthBites = formData.value.truthBites
+      }
+      if (formData.value.inferenceQuestion) {
+        vocabData.inferenceQuestion = formData.value.inferenceQuestion
       }
 
       if (isNew.value) {

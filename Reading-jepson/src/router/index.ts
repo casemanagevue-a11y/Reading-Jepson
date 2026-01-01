@@ -70,6 +70,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresRole: 'teacher' }
     },
     {
+      path: '/teacher/week-templates/edit/:templateId',
+      name: 'teacher-week-template-edit',
+      component: () => import('@/views/teacher/WeekTemplateSetup.vue'),
+      meta: { requiresAuth: true, requiresRole: 'teacher' }
+    },
+    {
       path: '/teacher/week-assignments',
       name: 'teacher-week-assignments',
       component: () => import('@/views/teacher/WeekAssignments.vue'),
