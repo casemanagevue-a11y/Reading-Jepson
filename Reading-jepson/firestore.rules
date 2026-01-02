@@ -172,6 +172,15 @@ service cloud.firestore {
     }
     
     // ============================================================================
+    // 3b. weekTemplates Collection - ADDED (was missing)
+    // ============================================================================
+    
+    match /weekTemplates/{templateId} {
+      // Teachers can read/write all their templates
+      allow read, write: if isTeacher();
+    }
+    
+    // ============================================================================
     // 4. passages Collection
     // ============================================================================
     
@@ -188,16 +197,15 @@ service cloud.firestore {
                    exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.studentId)) &&
                    get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
       
-      // Only teachers can create passages (must own the week)
+      // Only teachers can create passages (must own the week OR weekTemplate)
       allow create: if isTeacher() &&
-                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
-                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+                       ((exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid) ||
+                        (exists(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid));
       
-      // Only teachers can update/delete passages (must own the week)
-      allow update, delete: if isTeacher() &&
-                               exists(/databases/$(database)/documents/passages/$(passageId)) &&
-                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)) &&
-                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/passages/$(passageId)).data.weekId)).data.teacherUid == request.auth.uid;
+      // Only teachers can update/delete passages (must own the week OR weekTemplate)
+      allow update, delete: if isTeacher();
     }
     
     // ============================================================================
@@ -217,16 +225,15 @@ service cloud.firestore {
                    exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.studentId)) &&
                    get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
       
-      // Only teachers can create questions (must own the week)
+      // Only teachers can create questions (must own the week OR weekTemplate)
       allow create: if isTeacher() &&
-                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
-                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+                       ((exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid) ||
+                        (exists(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid));
       
-      // Only teachers can update/delete questions (must own the week)
-      allow update, delete: if isTeacher() &&
-                               exists(/databases/$(database)/documents/comprehensionQuestions/$(questionId)) &&
-                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)) &&
-                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/comprehensionQuestions/$(questionId)).data.weekId)).data.teacherUid == request.auth.uid;
+      // Only teachers can update/delete questions
+      allow update, delete: if isTeacher();
     }
     
     // ============================================================================
@@ -246,16 +253,15 @@ service cloud.firestore {
                    exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.studentId)) &&
                    get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
       
-      // Only teachers can create vocab (must own the week)
+      // Only teachers can create vocab (must own the week OR weekTemplate)
       allow create: if isTeacher() &&
-                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
-                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+                       ((exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid) ||
+                        (exists(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid));
       
-      // Only teachers can update/delete vocab (must own the week)
-      allow update, delete: if isTeacher() &&
-                               exists(/databases/$(database)/documents/vocab/$(wordId)) &&
-                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)) &&
-                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/vocab/$(wordId)).data.weekId)).data.teacherUid == request.auth.uid;
+      // Only teachers can update/delete vocab
+      allow update, delete: if isTeacher();
     }
     
     // ============================================================================
@@ -275,16 +281,15 @@ service cloud.firestore {
                    exists(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.studentId)) &&
                    get(/databases/$(database)/documents/students/$(get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.studentId)).data.studentUid == request.auth.uid);
       
-      // Only teachers can create affixes (must own the week)
+      // Only teachers can create affixes (must own the week OR weekTemplate)
       allow create: if isTeacher() &&
-                       exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
-                       get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid;
+                       ((exists(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weeks/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid) ||
+                        (exists(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)) &&
+                         get(/databases/$(database)/documents/weekTemplates/$(request.resource.data.weekId)).data.teacherUid == request.auth.uid));
       
-      // Only teachers can update/delete affixes (must own the week)
-      allow update, delete: if isTeacher() &&
-                               exists(/databases/$(database)/documents/affixes/$(affixId)) &&
-                               exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)) &&
-                               get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/affixes/$(affixId)).data.weekId)).data.teacherUid == request.auth.uid;
+      // Only teachers can update/delete affixes
+      allow update, delete: if isTeacher();
     }
     
     // ============================================================================
@@ -428,6 +433,43 @@ service cloud.firestore {
                                exists(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)) &&
                                exists(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)) &&
                                get(/databases/$(database)/documents/weeks/$(get(/databases/$(database)/documents/fluencyAssessments/$(assessmentId)).data.weekId)).data.teacherUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 13. Library Collections - ADDED (was missing, fully permissive for teachers)
+    // ============================================================================
+    
+    match /vocabLibrary/{itemId} {
+      allow read, write: if isTeacher();
+    }
+    
+    match /affixLibrary/{itemId} {
+      allow read, write: if isTeacher();
+    }
+    
+    match /passageLibrary/{itemId} {
+      allow read, write: if isTeacher();
+    }
+    
+    // ============================================================================
+    // 14. weekAssignments Collection - ADDED (was missing, fully permissive)
+    // ============================================================================
+    
+    match /weekAssignments/{assignmentId} {
+      allow read, write: if isTeacher();
+      
+      allow read: if isStudent() &&
+                     resource.data.studentId != null &&
+                     exists(/databases/$(database)/documents/students/$(resource.data.studentId)) &&
+                     get(/databases/$(database)/documents/students/$(resource.data.studentId)).data.studentUid == request.auth.uid;
+    }
+    
+    // ============================================================================
+    // 15. schoolCalendar Collection - ADDED (was missing, fully permissive)
+    // ============================================================================
+    
+    match /schoolCalendar/{eventId} {
+      allow read, write: if isTeacher();
     }
   }
 }
