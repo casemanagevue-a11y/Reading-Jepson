@@ -233,6 +233,15 @@
         </div>
       </div>
 
+      <!-- Vocabulary Semantic Maps (Student Version Only) -->
+      <div v-if="!isTeacherVersion" class="semantic-maps-wrapper">
+        <SemanticMap 
+          v-for="(word, index) in content.vocab" 
+          :key="'semantic-' + index"
+          :vocab-word="word"
+        />
+      </div>
+
       <!-- DAY 2: Words Working Together -->
       <div class="print-section page-break">
         <h2>Day 2: Words Working Together</h2>
@@ -369,6 +378,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SemanticMap from '@/components/SemanticMap.vue'
 import { 
   getWeekAssignmentsByStudent,
   getPassagesByWeek,
@@ -954,6 +964,11 @@ ul.teacher-questions {
   .sentence-support-section,
   .picture-support-section {
     page-break-inside: avoid;
+  }
+  
+  .semantic-maps-section,
+  .semantic-maps-wrapper {
+    page-break-before: always;
   }
   
   .formula {

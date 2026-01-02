@@ -221,6 +221,8 @@ export async function getAffixLibrary(id: string): Promise<AffixLibraryWithId | 
 
 export async function queryAffixLibrary(filters: LibraryFilters): Promise<AffixLibraryWithId[]> {
   try {
+    console.log('[queryAffixLibrary] Starting query with filters:', filters)
+    
     let q = query(
       collection(db, 'affixLibrary'),
       where('teacherUid', '==', filters.teacherUid)
@@ -238,13 +240,19 @@ export async function queryAffixLibrary(filters: LibraryFilters): Promise<AffixL
 
     q = query(q, orderBy('createdAt', 'desc'))
 
+    console.log('[queryAffixLibrary] Executing query...')
     const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => ({
+    console.log('[queryAffixLibrary] Query returned', snapshot.size, 'documents')
+    
+    const results = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as AffixLibraryWithId[]
+    
+    console.log('[queryAffixLibrary] Processed results:', results.length)
+    return results
   } catch (error) {
-    console.error('Error querying affix library:', error)
+    console.error('[queryAffixLibrary] Error querying affix library:', error)
     throw error
   }
 }
