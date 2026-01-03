@@ -484,6 +484,7 @@ export interface SentenceSortingResult {
     toWhatToWhom: string[] // To what? To whom? (Object of verb)
     whenWhereWhyHow: string[] // When, where, why, how? (Adverb)
   }
+  connectors?: string[] // Conjunctions like 'and', 'or', 'but' that don't fit the 5 questions
 }
 
 export async function generateSentenceSorting(
@@ -495,58 +496,69 @@ export async function generateSentenceSorting(
 Target Word: ${word}
 Sentence: "${sentence}"
 
-Break the sentence into word/phrase cards that students will sort into a 5-column table to help them understand sentence syntax for better comprehension.
+Break the sentence into word/phrase cards for a 5-column syntactic sorting activity to help students understand what the sentence is about.
 
-Column Headers (with function-based questions):
-A) Who or what? → Noun (usually the subject)
+CONSTRAINTS FOR ACCURACY:
+1. COLUMN C (Adjectives): MUST include ALL articles (the, a, an), demonstratives (this, that), possessives (his, her, their), and quantifiers (many, some, all).
+2. COLUMN D (Objects): Should be the direct or indirect object ONLY. Do NOT include prepositional phrases here unless they are truly receiving the action.
+3. COLUMN E (Adverbial): Include phrases that tell when, where, why, or how. Prepositional phrases acting as adverbs go here.
+4. CONNECTORS: If the sentence contains conjunctions (and, or, but, so), do NOT place them in the 5 columns. List them separately in a "connectors" array.
+5. NO OVERLAP: Every word in the sentence must be accounted for exactly once (either in a column or in connectors).
+6. KEEP PHRASES TOGETHER: Keep prepositional phrases together (e.g., "in West Africa", "for help", "about his achievements").
+
+COLUMN HEADERS (functional questions, not strict grammar labels):
+A) Who or what? → Subject/Noun
    👉 Names a person, place, thing, or idea
 B) Is/was doing or happening? → Verb
    👉 Shows action or state of being
-C) Which one, what kind, how many? → Adjective
+C) Which one, what kind, how many? → Adjective/Article/Determiner
    👉 Describes or limits a noun
-D) To what? To whom? → Object of a verb (direct or indirect object)
-   👉 Receives the action
-E) When, where, why, how? → Adverb
+D) To what? To whom? → Object
+   👉 Receives the action (direct or indirect object)
+E) When, where, why, how? → Adverb/Adverbial Phrase
    👉 Gives more information about the verb
 
-INSTRUCTIONS:
-1. Create word/phrase cards by breaking the sentence into meaningful chunks
-   - Keep phrases together that function as a unit
-   - Separate modifiers when they answer different questions
-   - Keep prepositional phrases together if they function as adverbs
-   
-2. Provide the sorting key showing which cards go in which column
+EXAMPLES:
 
-3. Cards should be sized to fit in table cells (not too long)
-
-4. GOAL: Help students identify the syntax to understand what the sentence is about
-
-EXAMPLE:
-Sentence: "Sundiata later returned when his people asked for help."
-Cards: ["Sundiata", "later", "returned", "when his people asked for help", "for help"]
+Example 1:
+Sentence: "The griots told many a tale about his achievements."
+Cards: ["The griots", "told", "many", "a", "tale", "about his achievements"]
 Sorting Key:
-- Who/What: ["Sundiata"]
-- Is/Was Doing: ["returned", "asked"]
-- Which/What Kind: []
-- To What/To Whom: ["for help"]
-- When/Where/Why/How: ["later", "when his people asked for help"]
+- Who/What: ["griots"]
+- Is/Was Doing: ["told"]
+- Which/What Kind: ["The", "many", "a", "his"]
+- To What/To Whom: ["tale"]
+- When/Where/Why/How: ["about his achievements"]
+- Connectors: []
+
+Example 2:
+Sentence: "This family connection shows his lineage, or the family he came from."
+Cards: ["This", "family", "connection", "shows", "his", "lineage", "the family he came from"]
+Sorting Key:
+- Who/What: ["family", "connection"]
+- Is/Was Doing: ["shows", "came"]
+- Which/What Kind: ["This", "his", "the"]
+- To What/To Whom: ["lineage", "family"]
+- When/Where/Why/How: ["he came from"]
+- Connectors: ["or"]
 
 Respond with JSON:
 {
-  "wordPhraseCards": [array of strings],
+  "wordPhraseCards": [array of all word/phrase chunks],
   "sortingKey": {
     "whoWhat": [array of strings],
     "isWasDoing": [array of strings],
     "whichWhatKind": [array of strings],
     "toWhatToWhom": [array of strings],
     "whenWhereWhyHow": [array of strings]
-  }
+  },
+  "connectors": [array of words like 'and', 'or', 'but' that don't fit the 5 questions]
 }`
 
   const messages = [
     {
-      role: 'system',
-      content: 'You are an expert in sentence structure analysis and the Nancy Hennessy Reading Comprehension Blueprint method. You help teachers create effective sentence sorting activities for students with language disorders.'
+      role: 'system',      content: 'You are an expert in sentence structure analysis and the Nancy Hennessy Reading Comprehension Blueprint method. You help teachers create effective sentence sorting activities.'
+
     },
     {
       role: 'user',

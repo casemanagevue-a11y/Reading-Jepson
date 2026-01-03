@@ -120,115 +120,15 @@
             <!-- Selected Vocabulary -->
             <div v-if="vocabWords.some(v => v.word)" class="selected-items">
               <h4>Selected Vocabulary ({{ vocabWords.filter(v => v.word).length }} words)</h4>
+              <p class="section-note">You'll configure Day 2 sentence sorting in Step 3 when you assign sentences from the passage.</p>
               <div class="selected-list">
                 <template v-for="(vocab, index) in vocabWords" :key="index">
-                  <div v-if="vocab.word" class="selected-item-expanded">
-                    <div class="item-header">
-                      <div class="item-info">
-                        <strong>{{ index + 1 }}. {{ vocab.word }}</strong>
-                        <p>{{ vocab.definition }}</p>
-                      </div>
-                      <div class="item-actions">
-                        <button @click="toggleDay2Config(index)" class="btn btn-secondary btn-sm">
-                          {{ showDay2Config[index] ? '▼ Hide' : '▶ Configure Day 2 Analysis' }}
-                        </button>
-                        <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
-                      </div>
+                  <div v-if="vocab.word" class="selected-item">
+                    <div class="item-info">
+                      <strong>{{ index + 1 }}. {{ vocab.word }}</strong>
+                      <p>{{ vocab.definition }}</p>
                     </div>
-                    
-                    <!-- Day 2 Configuration (Expandable) -->
-                    <div v-if="showDay2Config[index]" class="day2-config-section">
-                      <h5>Day 2: Words Working Together (Sentence Structure Analysis)</h5>
-                      
-                      <div class="form-group">
-                        <label>Sentence from the Text</label>
-                        <textarea 
-                          v-model="vocab.exampleSentence" 
-                          class="form-input" 
-                          rows="2" 
-                          placeholder="Enter the sentence where this word appears in the passage"
-                        ></textarea>
-                      </div>
-                      
-                      <div class="ai-generate-section">
-                        <button 
-                          @click="generateSortingWithAI(index)" 
-                          :disabled="!vocab.exampleSentence || generatingAI === index"
-                          class="btn btn-ai"
-                        >
-                          <span v-if="generatingAI === index">🤖 Generating...</span>
-                          <span v-else>✨ AI Generate Word Cards & Sorting Key</span>
-                        </button>
-                        <small class="form-hint">AI will analyze the sentence and create cards + answer key. You can edit after!</small>
-                      </div>
-                      
-                      <div class="form-group">
-                        <label>Word/Phrase Cards (comma-separated)</label>
-                        <input 
-                          v-model="vocab.wordPhraseCardsStr" 
-                          type="text" 
-                          class="form-input" 
-                          placeholder="e.g., One, important, type of land, in West Africa, is, the savanna"
-                        />
-                        <small class="form-hint">Cut-apart cards for sorting. Keep phrases together that go together.</small>
-                      </div>
-                      
-                      <div class="sorting-key-section">
-                        <p><strong>Sorting Key (Teacher Answer Guide):</strong></p>
-                        
-                        <div class="form-group">
-                          <label>Who/What (Noun-Subject)</label>
-                          <input 
-                            v-model="vocab.sortingKey.whoWhat" 
-                            type="text" 
-                            class="form-input" 
-                            placeholder="e.g., type of land"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label>Is/Was Doing (Verb-Predicate)</label>
-                          <input 
-                            v-model="vocab.sortingKey.isWasDoing" 
-                            type="text" 
-                            class="form-input" 
-                            placeholder="e.g., is"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label>Which/What Kind/How Many (Adjectives)</label>
-                          <input 
-                            v-model="vocab.sortingKey.whichWhatKind" 
-                            type="text" 
-                            class="form-input" 
-                            placeholder="e.g., One, important"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label>To What? To Whom? (Object of Verb)</label>
-                          <input 
-                            v-model="vocab.sortingKey.toWhatToWhom" 
-                            type="text" 
-                            class="form-input" 
-                            placeholder="e.g., for help, to the people"
-                          />
-                          <small class="form-hint">Receives the action</small>
-                        </div>
-                        
-                        <div class="form-group">
-                          <label>When, Where, Why, How? (Adverb)</label>
-                          <input 
-                            v-model="vocab.sortingKey.whenWhereWhyHow" 
-                            type="text" 
-                            class="form-input" 
-                            placeholder="e.g., later, when his people asked for help, in West Africa"
-                          />
-                          <small class="form-hint">Gives more information about the verb</small>
-                        </div>
-                      </div>
-                    </div>
+                    <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
                   </div>
                 </template>
               </div>
@@ -364,6 +264,50 @@
                       >
                         {{ generatingAI === index ? '🤖 Generating...' : (vocab.wordPhraseCardsStr ? '🔄 Regenerate with AI' : '✨ Generate Day 2 Cards with AI') }}
                       </button>
+                    </div>
+                    
+                    <!-- Show/Edit AI Results -->
+                    <div v-if="vocab.wordPhraseCardsStr || vocab.sortingKey.whoWhat || vocab.sortingKey.isWasDoing" class="ai-results-section" style="margin-top: 1rem;">
+                      <h5>Day 2 Sorting Results (Editable)</h5>
+                      
+                      <div class="form-group">
+                        <label>Word/Phrase Cards</label>
+                        <input 
+                          v-model="vocab.wordPhraseCardsStr" 
+                          type="text" 
+                          class="form-input" 
+                          placeholder="Comma-separated cards"
+                        />
+                      </div>
+                      
+                      <div class="sorting-preview">
+                        <p><strong>Sorting Key (Teacher Answers):</strong></p>
+                        
+                        <div class="form-group-compact">
+                          <label>1. Who/what? (Noun)</label>
+                          <input v-model="vocab.sortingKey.whoWhat" type="text" class="form-input-sm" />
+                        </div>
+                        
+                        <div class="form-group-compact">
+                          <label>2. Is/was doing? (Verb)</label>
+                          <input v-model="vocab.sortingKey.isWasDoing" type="text" class="form-input-sm" />
+                        </div>
+                        
+                        <div class="form-group-compact">
+                          <label>3. Which/what kind? (Adjective)</label>
+                          <input v-model="vocab.sortingKey.whichWhatKind" type="text" class="form-input-sm" />
+                        </div>
+                        
+                        <div class="form-group-compact">
+                          <label>4. To what/whom? (Object)</label>
+                          <input v-model="vocab.sortingKey.toWhatToWhom" type="text" class="form-input-sm" />
+                        </div>
+                        
+                        <div class="form-group-compact">
+                          <label>5. When/where/why/how? (Adverb)</label>
+                          <input v-model="vocab.sortingKey.whenWhereWhyHow" type="text" class="form-input-sm" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -625,7 +569,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { generateSentenceSorting } from '@/services/aiService'
@@ -661,7 +605,6 @@ const templateId = computed(() => route.params.templateId as string)
 
 const currentStep = ref(1)
 const saving = ref(false)
-const showDay2Config = reactive<Record<number, boolean>>({})
 const generatingAI = ref<number | null>(null)
 
 const templateData = ref({
@@ -1025,22 +968,7 @@ function importAffixFromLibrary(item: AffixLibraryWithId) {
   })
 }
 
-// Toggle Day 2 configuration section
-function toggleDay2Config(index: number) {
-  showDay2Config[index] = !showDay2Config[index]
-}
-
-// Generate sentence sorting with AI (manual trigger)
-async function generateSortingWithAI(index: number) {
-  const vocab = vocabWords.value[index]
-  
-  if (!vocab.exampleSentence) {
-    alert('Please enter a sentence first')
-    return
-  }
-  
-  await generateSortingForVocab(index, vocab.exampleSentence)
-}
+// No longer needed - Day 2 config is in Step 3 now
 
 const removeVocab = (index: number) => {
   vocabWords.value.splice(index, 1)
@@ -1226,11 +1154,13 @@ async function generateSortingForVocab(vocabIndex: number, sentence: string) {
       console.log('[WeekTemplateSetup] Updated fridayPassageVocab item:', { word: vocab.word, hasCards: !!fridayItem.wordPhraseCards, hasSortingKey: !!fridayItem.sortingKey })
     }
     
-    // Auto-expand Day 2 config so teacher can review
-    showDay2Config[vocabIndex] = true
+    console.log('[WeekTemplateSetup] AI generated sorting:', { word: vocab.word, cards: result.wordPhraseCards, sortingKey: result.sortingKey, connectors: result.connectors })
     
-    console.log('[WeekTemplateSetup] AI generated sorting:', { word: vocab.word, cards: result.wordPhraseCards, sortingKey: result.sortingKey })
-    alert(`✅ AI generated sorting for "${vocab.word}"!\n\nCards: ${result.wordPhraseCards.join(', ')}\n\nYou can edit if needed before saving.`)
+    const connectorsMsg = result.connectors && result.connectors.length > 0 
+      ? `\n\nConnectors (not in columns): ${result.connectors.join(', ')}`
+      : ''
+    
+    alert(`✅ AI generated sorting for "${vocab.word}"!\n\nCards: ${result.wordPhraseCards.join(', ')}${connectorsMsg}\n\nReview and edit the results below if needed.`)
     
   } catch (error: any) {
     console.error('Error generating with AI:', error)
@@ -2002,5 +1932,23 @@ onMounted(() => {
 
 .ai-prompt-text strong {
   color: #667eea;
+}
+
+.hint-text {
+  display: block;
+  color: #718096;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.connector-note {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fff5f5;
+  border-left: 3px solid #fc8181;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #742a2a;
 }
 </style>
