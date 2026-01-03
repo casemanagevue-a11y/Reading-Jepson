@@ -90,17 +90,19 @@
             
             <div class="sorting-table">
               <p class="table-instruction">Sort the words/phrases into the table:</p>
-              <table class="four-column-table">
+              <table class="five-column-table">
                 <thead>
                   <tr>
-                    <th>Who or what?<br><small>(Noun–Subject)</small></th>
-                    <th>Is/was doing?<br><small>(Verb–Predicate)</small></th>
-                    <th>Which one / what kind / how many?<br><small>(Adjectives)</small></th>
-                    <th>Where / relationship?<br><small>(Prepositional phrases)</small></th>
+                    <th>Who or what?<br><small>Noun (subject)</small></th>
+                    <th>Is/was doing or happening?<br><small>Verb</small></th>
+                    <th>Which one, what kind, how many?<br><small>Adjective</small></th>
+                    <th>To what? To whom?<br><small>Object of verb</small></th>
+                    <th>When, where, why, how?<br><small>Adverb</small></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
+                    <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
@@ -755,7 +757,7 @@ onMounted(async () => {
   margin: 0 0 1rem 0;
 }
 
-.four-column-table {
+.five-column-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
@@ -763,29 +765,29 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.four-column-table th {
+.five-column-table th {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 0.4rem;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.four-column-table th:last-child {
+.five-column-table th:last-child {
   border-right: none;
 }
 
-.four-column-table th small {
+.five-column-table th small {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 400;
   margin-top: 0.25rem;
   opacity: 0.9;
 }
 
-.four-column-table td {
+.five-column-table td {
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   vertical-align: top;
@@ -876,6 +878,7 @@ onMounted(async () => {
   font-size: 1rem;
 }
 </style>
+
 
 
 

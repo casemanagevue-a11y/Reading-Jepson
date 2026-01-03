@@ -83,7 +83,8 @@ export interface PassageVocabItem {
     whoWhat?: string[];
     isWasDoing?: string[];
     whichWhatKind?: string[];
-    whereRelationship?: string[];
+    toWhatToWhom?: string[];
+    whenWhereWhyHow?: string[];
   };
   // AI-generated clarification fields
   whatItIs?: string; // Examples, synonyms
@@ -145,10 +146,11 @@ export interface VocabDocument {
   // Day 2: Words Working Together fields (sentence structure analysis)
   wordPhraseCards?: string[]; // Cut-apart cards for sorting (exact text on each card)
   sortingKey?: {
-    whoWhat?: string[]; // Cards that answer "Who or what?"
-    isWasDoing?: string[]; // Cards that answer "Is/was doing?"
-    whichWhatKind?: string[]; // Cards that answer "Which one/what kind/how many?"
-    whereRelationship?: string[]; // Cards that answer "Where/relationship?"
+    whoWhat?: string[]; // Cards that answer "Who or what?" (Noun-Subject)
+    isWasDoing?: string[]; // Cards that answer "Is/was doing or happening?" (Verb)
+    whichWhatKind?: string[]; // Cards that answer "Which one, what kind, how many?" (Adjective)
+    toWhatToWhom?: string[]; // Cards that answer "To what? To whom?" (Object of verb)
+    whenWhereWhyHow?: string[]; // Cards that answer "When, where, why, how?" (Adverb)
   };
   // AI-generated clarification fields
   partOfSpeech?: string; // noun, verb, adjective, etc.
@@ -353,11 +355,22 @@ export interface VocabLibraryDocument {
   grade?: string;
   unit?: string;
   subject?: SubjectFocus;
+  teacherPrompts?: string;
+  sentenceFrame?: string;
+  pictureGuidance?: string;
+  wordPhraseCards?: string[];
+  sortingKey?: {
+    whoWhat?: string[];
+    isWasDoing?: string[];
+    whichWhatKind?: string[];
+    toWhatToWhom?: string[];
+    whenWhereWhyHow?: string[];
+  };
   // Clarification fields
-  whatItIs?: string; // Examples, synonyms
-  whatItIsNot?: string; // Non-examples, antonyms
-  partOfSpeech?: string; // noun, verb, adjective, etc.
-  // Legacy fields (deprecated - use whatItIs/whatItIsNot instead)
+  whatItIs?: string;
+  whatItIsNot?: string;
+  partOfSpeech?: string;
+  // Legacy fields (deprecated)
   inquiryPrompts?: string[];
   hints?: string[];
   inferenceQuestion?: string;

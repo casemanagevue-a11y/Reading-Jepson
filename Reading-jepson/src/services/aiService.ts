@@ -471,6 +471,93 @@ Respond with JSON matching this exact format.`
   return JSON.parse(response)
 }
 
+// ============================================================================
+// Sentence Structure Analysis (Day 2: Words Working Together)
+// ============================================================================
+
+export interface SentenceSortingResult {
+  wordPhraseCards: string[] // Cut-apart cards
+  sortingKey: {
+    whoWhat: string[] // Who or what? (Noun-Subject)
+    isWasDoing: string[] // Is/was doing or happening? (Verb)
+    whichWhatKind: string[] // Which one, what kind, how many? (Adjective)
+    toWhatToWhom: string[] // To what? To whom? (Object of verb)
+    whenWhereWhyHow: string[] // When, where, why, how? (Adverb)
+  }
+}
+
+export async function generateSentenceSorting(
+  word: string,
+  sentence: string
+): Promise<SentenceSortingResult> {
+  const prompt = `Analyze this sentence for a Day 2 "Words Working Together" lesson (Nancy Hennessy / Reading Comprehension Blueprint style).
+
+Target Word: ${word}
+Sentence: "${sentence}"
+
+Break the sentence into word/phrase cards that students will sort into a 5-column table to help them understand sentence syntax for better comprehension.
+
+Column Headers (with function-based questions):
+A) Who or what? → Noun (usually the subject)
+   👉 Names a person, place, thing, or idea
+B) Is/was doing or happening? → Verb
+   👉 Shows action or state of being
+C) Which one, what kind, how many? → Adjective
+   👉 Describes or limits a noun
+D) To what? To whom? → Object of a verb (direct or indirect object)
+   👉 Receives the action
+E) When, where, why, how? → Adverb
+   👉 Gives more information about the verb
+
+INSTRUCTIONS:
+1. Create word/phrase cards by breaking the sentence into meaningful chunks
+   - Keep phrases together that function as a unit
+   - Separate modifiers when they answer different questions
+   - Keep prepositional phrases together if they function as adverbs
+   
+2. Provide the sorting key showing which cards go in which column
+
+3. Cards should be sized to fit in table cells (not too long)
+
+4. GOAL: Help students identify the syntax to understand what the sentence is about
+
+EXAMPLE:
+Sentence: "Sundiata later returned when his people asked for help."
+Cards: ["Sundiata", "later", "returned", "when his people asked for help", "for help"]
+Sorting Key:
+- Who/What: ["Sundiata"]
+- Is/Was Doing: ["returned", "asked"]
+- Which/What Kind: []
+- To What/To Whom: ["for help"]
+- When/Where/Why/How: ["later", "when his people asked for help"]
+
+Respond with JSON:
+{
+  "wordPhraseCards": [array of strings],
+  "sortingKey": {
+    "whoWhat": [array of strings],
+    "isWasDoing": [array of strings],
+    "whichWhatKind": [array of strings],
+    "toWhatToWhom": [array of strings],
+    "whenWhereWhyHow": [array of strings]
+  }
+}`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert in sentence structure analysis and the Nancy Hennessy Reading Comprehension Blueprint method. You help teachers create effective sentence sorting activities for students with language disorders.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callGemini(messages, 0.3, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
 export default {
   estimateReadingLevel,
   adjustPassageWithVocab,
@@ -478,7 +565,8 @@ export default {
   generateInquiryQuestions,
   generateInquiryQuestionsForVocabList,
   calculateFleschKincaidGrade,
-  generateVocabClarifications
+  generateVocabClarifications,
+  generateSentenceSorting
 }
 
 

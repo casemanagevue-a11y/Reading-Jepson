@@ -122,12 +122,113 @@
               <h4>Selected Vocabulary ({{ vocabWords.filter(v => v.word).length }} words)</h4>
               <div class="selected-list">
                 <template v-for="(vocab, index) in vocabWords" :key="index">
-                  <div v-if="vocab.word" class="selected-item">
-                    <div class="item-info">
-                      <strong>{{ index + 1 }}. {{ vocab.word }}</strong>
-                      <p>{{ vocab.definition }}</p>
+                  <div v-if="vocab.word" class="selected-item-expanded">
+                    <div class="item-header">
+                      <div class="item-info">
+                        <strong>{{ index + 1 }}. {{ vocab.word }}</strong>
+                        <p>{{ vocab.definition }}</p>
+                      </div>
+                      <div class="item-actions">
+                        <button @click="toggleDay2Config(index)" class="btn btn-secondary btn-sm">
+                          {{ showDay2Config[index] ? '▼ Hide' : '▶ Configure Day 2 Analysis' }}
+                        </button>
+                        <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
+                      </div>
                     </div>
-                    <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
+                    
+                    <!-- Day 2 Configuration (Expandable) -->
+                    <div v-if="showDay2Config[index]" class="day2-config-section">
+                      <h5>Day 2: Words Working Together (Sentence Structure Analysis)</h5>
+                      
+                      <div class="form-group">
+                        <label>Sentence from the Text</label>
+                        <textarea 
+                          v-model="vocab.exampleSentence" 
+                          class="form-input" 
+                          rows="2" 
+                          placeholder="Enter the sentence where this word appears in the passage"
+                        ></textarea>
+                      </div>
+                      
+                      <div class="ai-generate-section">
+                        <button 
+                          @click="generateSortingWithAI(index)" 
+                          :disabled="!vocab.exampleSentence || generatingAI === index"
+                          class="btn btn-ai"
+                        >
+                          <span v-if="generatingAI === index">🤖 Generating...</span>
+                          <span v-else>✨ AI Generate Word Cards & Sorting Key</span>
+                        </button>
+                        <small class="form-hint">AI will analyze the sentence and create cards + answer key. You can edit after!</small>
+                      </div>
+                      
+                      <div class="form-group">
+                        <label>Word/Phrase Cards (comma-separated)</label>
+                        <input 
+                          v-model="vocab.wordPhraseCardsStr" 
+                          type="text" 
+                          class="form-input" 
+                          placeholder="e.g., One, important, type of land, in West Africa, is, the savanna"
+                        />
+                        <small class="form-hint">Cut-apart cards for sorting. Keep phrases together that go together.</small>
+                      </div>
+                      
+                      <div class="sorting-key-section">
+                        <p><strong>Sorting Key (Teacher Answer Guide):</strong></p>
+                        
+                        <div class="form-group">
+                          <label>Who/What (Noun-Subject)</label>
+                          <input 
+                            v-model="vocab.sortingKey.whoWhat" 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="e.g., type of land"
+                          />
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>Is/Was Doing (Verb-Predicate)</label>
+                          <input 
+                            v-model="vocab.sortingKey.isWasDoing" 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="e.g., is"
+                          />
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>Which/What Kind/How Many (Adjectives)</label>
+                          <input 
+                            v-model="vocab.sortingKey.whichWhatKind" 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="e.g., One, important"
+                          />
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>To What? To Whom? (Object of Verb)</label>
+                          <input 
+                            v-model="vocab.sortingKey.toWhatToWhom" 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="e.g., for help, to the people"
+                          />
+                          <small class="form-hint">Receives the action</small>
+                        </div>
+                        
+                        <div class="form-group">
+                          <label>When, Where, Why, How? (Adverb)</label>
+                          <input 
+                            v-model="vocab.sortingKey.whenWhereWhyHow" 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="e.g., later, when his people asked for help, in West Africa"
+                          />
+                          <small class="form-hint">Gives more information about the verb</small>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </template>
               </div>
@@ -251,6 +352,19 @@
                       rows="2"
                       placeholder="Enter sentence from passage..."
                     ></textarea>
+                    <div v-if="weeklyPassageVocab.get(index)?.exampleSentence" class="ai-action-box" style="margin-top: 0.75rem;">
+                      <p class="ai-prompt-text">
+                        <strong>Day 2 Sentence Sorting:</strong> 
+                        {{ vocab.wordPhraseCardsStr ? '✓ Cards generated' : 'Not yet generated' }}
+                      </p>
+                      <button 
+                        @click="generateSortingForVocab(index, weeklyPassageVocab.get(index)!.exampleSentence)"
+                        :disabled="generatingAI === index"
+                        class="btn btn-ai btn-sm"
+                      >
+                        {{ generatingAI === index ? '🤖 Generating...' : (vocab.wordPhraseCardsStr ? '🔄 Regenerate with AI' : '✨ Generate Day 2 Cards with AI') }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -396,6 +510,19 @@
                       rows="2"
                       placeholder="Enter sentence from passage..."
                     ></textarea>
+                    <div v-if="fridayPassageVocab.get(index)?.exampleSentence" class="ai-action-box" style="margin-top: 0.75rem;">
+                      <p class="ai-prompt-text">
+                        <strong>Day 2 Sentence Sorting:</strong> 
+                        {{ vocab.wordPhraseCardsStr ? '✓ Cards generated' : 'Not yet generated' }}
+                      </p>
+                      <button 
+                        @click="generateSortingForVocab(index, fridayPassageVocab.get(index)!.exampleSentence)"
+                        :disabled="generatingAI === index"
+                        class="btn btn-ai btn-sm"
+                      >
+                        {{ generatingAI === index ? '🤖 Generating...' : (vocab.wordPhraseCardsStr ? '🔄 Regenerate with AI' : '✨ Generate Day 2 Cards with AI') }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -498,9 +625,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { generateSentenceSorting } from '@/services/aiService'
 import { 
   createWeekTemplate,
   updateWeekTemplate,
@@ -533,6 +661,8 @@ const templateId = computed(() => route.params.templateId as string)
 
 const currentStep = ref(1)
 const saving = ref(false)
+const showDay2Config = reactive<Record<number, boolean>>({})
+const generatingAI = ref<number | null>(null)
 
 const templateData = ref({
   templateName: '',
@@ -554,7 +684,8 @@ const vocabWords = ref<Array<{
     whoWhat: string;
     isWasDoing: string;
     whichWhatKind: string;
-    whereRelationship: string;
+    toWhatToWhom: string;
+    whenWhereWhyHow: string;
   };
   partOfSpeech?: string;
   whatItIs?: string;
@@ -572,7 +703,8 @@ const vocabWords = ref<Array<{
       whoWhat: '',
       isWasDoing: '',
       whichWhatKind: '',
-      whereRelationship: ''
+      toWhatToWhom: '',
+      whenWhereWhyHow: ''
     }
   }
 ])
@@ -792,10 +924,11 @@ async function loadTemplateData() {
         pictureGuidance: v.pictureGuidance || '',
         wordPhraseCardsStr: v.wordPhraseCards?.join(', ') || '',
         sortingKey: {
-          whoWhat: v.sortingKey?.whoWhat?.join(', ') || '',
-          isWasDoing: v.sortingKey?.isWasDoing?.join(', ') || '',
-          whichWhatKind: v.sortingKey?.whichWhatKind?.join(', ') || '',
-          whereRelationship: v.sortingKey?.whereRelationship?.join(', ') || ''
+        whoWhat: v.sortingKey?.whoWhat?.join(', ') || '',
+        isWasDoing: v.sortingKey?.isWasDoing?.join(', ') || '',
+        whichWhatKind: v.sortingKey?.whichWhatKind?.join(', ') || '',
+        toWhatToWhom: v.sortingKey?.toWhatToWhom?.join(', ') || '',
+        whenWhereWhyHow: v.sortingKey?.whenWhereWhyHow?.join(', ') || ''
         },
         partOfSpeech: v.partOfSpeech,
         whatItIs: v.whatItIs,
@@ -873,7 +1006,8 @@ function importVocabFromLibrary(item: VocabLibraryWithId) {
       whoWhat: '',
       isWasDoing: '',
       whichWhatKind: '',
-      whereRelationship: ''
+      toWhatToWhom: '',
+      whenWhereWhyHow: ''
     },
     partOfSpeech: item.partOfSpeech,
     whatItIs: item.whatItIs,
@@ -889,6 +1023,23 @@ function importAffixFromLibrary(item: AffixLibraryWithId) {
     meaning: item.meaning,
     examplesStr: item.examples.join(', ')
   })
+}
+
+// Toggle Day 2 configuration section
+function toggleDay2Config(index: number) {
+  showDay2Config[index] = !showDay2Config[index]
+}
+
+// Generate sentence sorting with AI (manual trigger)
+async function generateSortingWithAI(index: number) {
+  const vocab = vocabWords.value[index]
+  
+  if (!vocab.exampleSentence) {
+    alert('Please enter a sentence first')
+    return
+  }
+  
+  await generateSortingForVocab(index, vocab.exampleSentence)
 }
 
 const removeVocab = (index: number) => {
@@ -925,11 +1076,12 @@ function handleVocabAssignment(passageType: 'weekly' | 'friday', vocabIndex: num
         ? vocab.wordPhraseCardsStr.split(',').map(c => c.trim()).filter(c => c)
         : undefined,
       sortingKey: (vocab.sortingKey.whoWhat || vocab.sortingKey.isWasDoing || 
-                   vocab.sortingKey.whichWhatKind || vocab.sortingKey.whereRelationship) ? {
+                   vocab.sortingKey.whichWhatKind || vocab.sortingKey.toWhatToWhom || vocab.sortingKey.whenWhereWhyHow) ? {
         whoWhat: vocab.sortingKey.whoWhat ? vocab.sortingKey.whoWhat.split(',').map(s => s.trim()).filter(s => s) : undefined,
         isWasDoing: vocab.sortingKey.isWasDoing ? vocab.sortingKey.isWasDoing.split(',').map(s => s.trim()).filter(s => s) : undefined,
         whichWhatKind: vocab.sortingKey.whichWhatKind ? vocab.sortingKey.whichWhatKind.split(',').map(s => s.trim()).filter(s => s) : undefined,
-        whereRelationship: vocab.sortingKey.whereRelationship ? vocab.sortingKey.whereRelationship.split(',').map(s => s.trim()).filter(s => s) : undefined
+        toWhatToWhom: vocab.sortingKey.toWhatToWhom ? vocab.sortingKey.toWhatToWhom.split(',').map(s => s.trim()).filter(s => s) : undefined,
+        whenWhereWhyHow: vocab.sortingKey.whenWhereWhyHow ? vocab.sortingKey.whenWhereWhyHow.split(',').map(s => s.trim()).filter(s => s) : undefined
       } : undefined,
       partOfSpeech: vocab.partOfSpeech || undefined,
       whatItIs: vocab.whatItIs || undefined,
@@ -1014,13 +1166,77 @@ function toggleAffixWord(passageType: 'weekly' | 'friday', affixIndex: number, w
 }
 
 // Update selected sentence when radio button changes
-function updateVocabSentence(passageType: 'weekly' | 'friday', vocabIndex: number, sentence: string) {
+async function updateVocabSentence(passageType: 'weekly' | 'friday', vocabIndex: number, sentence: string) {
   const key = `${passageType}-${vocabIndex}`
   selectedVocabSentences.value.set(key, sentence)
   const vocabMap = passageType === 'weekly' ? weeklyPassageVocab : fridayPassageVocab
   const vocabItem = vocabMap.value.get(vocabIndex)
   if (vocabItem) {
     vocabItem.exampleSentence = sentence
+    
+    // Update the main vocab word's exampleSentence
+    const vocab = vocabWords.value[vocabIndex]
+    if (vocab) {
+      vocab.exampleSentence = sentence
+    }
+  }
+  
+  // Auto-generate sentence sorting with AI when sentence is assigned
+  const vocab = vocabWords.value[vocabIndex]
+  if (vocab && sentence && !vocab.wordPhraseCardsStr) {
+    // Only auto-generate if cards haven't been filled yet
+    const shouldGenerate = confirm(`AI can automatically create word cards and sorting key for "${vocab.word}".\n\nGenerate now? (You can edit after)`)
+    
+    if (shouldGenerate) {
+      await generateSortingForVocab(vocabIndex, sentence)
+    }
+  }
+}
+
+// Helper function to generate sorting for a specific vocab word
+async function generateSortingForVocab(vocabIndex: number, sentence: string) {
+  const vocab = vocabWords.value[vocabIndex]
+  if (!vocab) return
+  
+  try {
+    generatingAI.value = vocabIndex
+    
+    const result = await generateSentenceSorting(vocab.word, sentence)
+    
+    // Populate the fields with AI results in vocabWords array
+    vocab.wordPhraseCardsStr = result.wordPhraseCards.join(', ')
+    vocab.sortingKey.whoWhat = result.sortingKey.whoWhat.join(', ')
+    vocab.sortingKey.isWasDoing = result.sortingKey.isWasDoing.join(', ')
+    vocab.sortingKey.whichWhatKind = result.sortingKey.whichWhatKind.join(', ')
+    vocab.sortingKey.toWhatToWhom = result.sortingKey.toWhatToWhom.join(', ')
+    vocab.sortingKey.whenWhereWhyHow = result.sortingKey.whenWhereWhyHow.join(', ')
+    
+    // ALSO update the passage vocab items (both weekly and friday if assigned)
+    const weeklyItem = weeklyPassageVocab.value.get(vocabIndex)
+    if (weeklyItem) {
+      weeklyItem.wordPhraseCards = result.wordPhraseCards
+      weeklyItem.sortingKey = result.sortingKey
+      console.log('[WeekTemplateSetup] Updated weeklyPassageVocab item:', { word: vocab.word, hasCards: !!weeklyItem.wordPhraseCards, hasSortingKey: !!weeklyItem.sortingKey })
+    }
+    
+    const fridayItem = fridayPassageVocab.value.get(vocabIndex)
+    if (fridayItem) {
+      fridayItem.wordPhraseCards = result.wordPhraseCards
+      fridayItem.sortingKey = result.sortingKey
+      console.log('[WeekTemplateSetup] Updated fridayPassageVocab item:', { word: vocab.word, hasCards: !!fridayItem.wordPhraseCards, hasSortingKey: !!fridayItem.sortingKey })
+    }
+    
+    // Auto-expand Day 2 config so teacher can review
+    showDay2Config[vocabIndex] = true
+    
+    console.log('[WeekTemplateSetup] AI generated sorting:', { word: vocab.word, cards: result.wordPhraseCards, sortingKey: result.sortingKey })
+    alert(`✅ AI generated sorting for "${vocab.word}"!\n\nCards: ${result.wordPhraseCards.join(', ')}\n\nYou can edit if needed before saving.`)
+    
+  } catch (error: any) {
+    console.error('Error generating with AI:', error)
+    alert('Failed to generate with AI. You can try again using the "Configure Day 2 Analysis" button.')
+  } finally {
+    generatingAI.value = null
   }
 }
 
@@ -1138,6 +1354,14 @@ const saveTemplate = async () => {
       if (item.partOfSpeech) cleaned.partOfSpeech = item.partOfSpeech
       if (item.whatItIs) cleaned.whatItIs = item.whatItIs
       if (item.whatItIsNot) cleaned.whatItIsNot = item.whatItIsNot
+      
+      console.log('[WeekTemplateSetup] Saving vocab item:', { 
+        word: item.word, 
+        hasCards: !!item.wordPhraseCards, 
+        cardCount: item.wordPhraseCards?.length || 0,
+        hasSortingKey: !!item.sortingKey 
+      })
+      
       return cleaned as PassageVocabItem
     })
     
@@ -1224,9 +1448,14 @@ const saveTemplate = async () => {
           sortingKey.whichWhatKind = vocab.sortingKey.whichWhatKind.split(',').map(s => s.trim()).filter(s => s)
           if (sortingKey.whichWhatKind.length > 0) hasSortingKey = true
         }
-        if (vocab.sortingKey.whereRelationship) {
-          sortingKey.whereRelationship = vocab.sortingKey.whereRelationship.split(',').map(s => s.trim()).filter(s => s)
-          if (sortingKey.whereRelationship.length > 0) hasSortingKey = true
+        if (vocab.sortingKey.toWhatToWhom) {
+          sortingKey.toWhatToWhom = vocab.sortingKey.toWhatToWhom.split(',').map(s => s.trim()).filter(s => s)
+          if (sortingKey.toWhatToWhom.length > 0) hasSortingKey = true
+        }
+        
+        if (vocab.sortingKey.whenWhereWhyHow) {
+          sortingKey.whenWhereWhyHow = vocab.sortingKey.whenWhereWhyHow.split(',').map(s => s.trim()).filter(s => s)
+          if (sortingKey.whenWhereWhyHow.length > 0) hasSortingKey = true
         }
         
         if (hasSortingKey) vocabPayload.sortingKey = sortingKey
@@ -1664,5 +1893,114 @@ onMounted(() => {
   font-size: 0.85rem;
   margin-bottom: 0.75rem;
   font-style: italic;
+}
+
+/* Day 2 Configuration Styles */
+.selected-item-expanded {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.day2-config-section {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+}
+
+.day2-config-section h5 {
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.ai-generate-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 8px;
+  border: 2px dashed #667eea;
+  text-align: center;
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-ai:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-ai:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sorting-key-section {
+  background: #edf2f7;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.sorting-key-section p {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.sorting-key-section .form-group {
+  margin-bottom: 0.75rem;
+}
+
+.sorting-key-section label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.ai-action-box {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.ai-prompt-text {
+  margin: 0 0 0.75rem 0;
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.ai-prompt-text strong {
+  color: #667eea;
 }
 </style>

@@ -245,58 +245,344 @@
       <!-- DAY 2: Words Working Together -->
       <div class="print-section page-break">
         <h2>Day 2: Words Working Together</h2>
-        <p class="section-note">Sentence structure analysis using vocabulary words</p>
+        <p class="section-note">Sentence Structure Analysis (Nancy Hennessy / Reading Comprehension Blueprint style)</p>
         
-        <div v-if="content.weeklyPassage" class="passage-section">
-          <h3>{{ content.weeklyPassage.title }}</h3>
-          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
+        <!-- Teacher Script -->
+        <div v-if="isTeacherVersion" class="day-two-teacher-content">
+          <div class="script-section">
+            <h3>Day 2 Teacher Script</h3>
+            <p class="script-note"><strong>Opening Routine:</strong></p>
+            <p class="script-line">"Today we will look closely at sentences with our vocabulary words and see how the words work together."</p>
+            <p class="script-line">"Each word has a job; words answer questions that build meaning."</p>
+            
+            <p class="script-note"><strong>Instructional Note:</strong> During the initial 2–3 weeks, the teacher models and provides guided practice for all components. As students demonstrate understanding of expectations and procedures, responsibility gradually shifts to guided practice, with continued teacher feedback and support as needed.</p>
+          </div>
           
-          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
-          
-          <!-- Vocabulary Practice (matching) -->
-          <div class="vocab-practice">
-            <h4>Vocabulary Practice</h4>
-            <p>Match each word to the correct meaning.</p>
-            <div class="matching-section">
-              <div class="matching-column">
-                <div v-for="(word, index) in content.vocab.slice(0, 9)" :key="index">
-                  {{ index + 1 }}. {{ word.word }}
-                </div>
+          <!-- Sentence Analysis for Each Vocab Word -->
+          <div v-for="(word, index) in content.vocab.slice(0, 3)" :key="index" class="word-sentence-analysis">
+            <h4>Word {{ index + 1 }}: {{ word.word }}</h4>
+            
+            <div class="routine-step">
+              <p class="script-note"><strong>Student-friendly definition:</strong></p>
+              <p class="definition-display">{{ word.definition }}</p>
+            </div>
+            
+            <div class="routine-step">
+              <p class="script-note"><strong>Sentence from the text:</strong></p>
+              <p class="sentence-display">"{{ word.exampleSentence || '[Sentence needed]' }}"</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Sentence Sorting Routine:</h5>
+              <p class="script-line">1) "Read the sentence aloud."</p>
+              <p class="script-line">2) "Let's ask the 5 questions in order and place the matching word or phrase under the correct column."</p>
+              <p class="script-note"><em>Goal: Help students identify the syntax to understand what the sentence is about.</em></p>
+              
+              <div class="sorting-questions">
+                <p class="script-line"><strong>Question 1: Who or what?</strong> → Noun (usually the subject)</p>
+                <p class="explanation">👉 Names a person, place, thing, or idea</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.whoWhat">Teacher Answer: {{ Array.isArray(word.sortingKey.whoWhat) ? word.sortingKey.whoWhat.join(', ') : word.sortingKey.whoWhat }}</p>
+                
+                <p class="script-line"><strong>Question 2: Is/was doing or happening?</strong> → Verb</p>
+                <p class="explanation">👉 Shows action or state of being</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.isWasDoing">Teacher Answer: {{ Array.isArray(word.sortingKey.isWasDoing) ? word.sortingKey.isWasDoing.join(', ') : word.sortingKey.isWasDoing }}</p>
+                
+                <p class="script-line"><strong>Question 3: Which one, what kind, how many?</strong> → Adjective</p>
+                <p class="explanation">👉 Describes or limits a noun</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.whichWhatKind">Teacher Answer: {{ Array.isArray(word.sortingKey.whichWhatKind) ? word.sortingKey.whichWhatKind.join(', ') : word.sortingKey.whichWhatKind }}</p>
+                
+                <p class="script-line"><strong>Question 4: To what? To whom?</strong> → Object of verb</p>
+                <p class="explanation">👉 Receives the action</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.toWhatToWhom">Teacher Answer: {{ Array.isArray(word.sortingKey.toWhatToWhom) ? word.sortingKey.toWhatToWhom.join(', ') : word.sortingKey.toWhatToWhom }}</p>
+                
+                <p class="script-line"><strong>Question 5: When, where, why, how?</strong> → Adverb</p>
+                <p class="explanation">👉 Gives more information about the verb</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.whenWhereWhyHow">Teacher Answer: {{ Array.isArray(word.sortingKey.whenWhereWhyHow) ? word.sortingKey.whenWhereWhyHow.join(', ') : word.sortingKey.whenWhereWhyHow }}</p>
               </div>
-              <div class="matching-column">
-                <p><strong>Word Bank</strong></p>
-                <div v-for="(word, index) in content.vocab.slice(0, 9)" :key="index">
-                  {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
+              
+              <p class="script-line">3) "Direct students to place the matching word/phrase card under the correct column."</p>
+              <p class="script-line">4) Quick check: "Show me the card for [specific word/phrase]."</p>
+              <p class="script-line">5) Final comprehension: "Now tell me - what is this sentence about?" (Student breaks it apart using the columns)</p>
+            </div>
+            
+            <div v-if="word.wordPhraseCards && word.wordPhraseCards.length > 0" class="word-cards-section">
+              <p class="script-note"><strong>Word/Phrase Cards for cutting:</strong></p>
+              <div class="cards-display">
+                <span v-for="(card, cardIdx) in word.wordPhraseCards" :key="cardIdx" class="card-item">{{ card }}</span>
+              </div>
+            </div>
+            
+            <div class="word-divider"></div>
+          </div>
+        </div>
+        
+        <!-- Student Version: 4-Column Sorting Tables -->
+        <div v-else class="student-day2-content">
+          <p class="directions"><strong>Directions:</strong> Sort the word/phrase cards into the correct columns. Each word has a job!</p>
+          
+          <div v-for="(word, index) in content.vocab.slice(0, 3)" :key="index" class="student-sorting-activity">
+            <h4>{{ index + 1 }}. {{ word.word }}</h4>
+            <p class="definition-line">{{ word.definition }}</p>
+            <p class="sentence-line"><strong>Sentence from the text:</strong> "{{ word.exampleSentence || '' }}"</p>
+            
+            <!-- 4-Column Sorting Table -->
+            <table class="sorting-table">
+              <thead>
+                <tr>
+                  <th>Who or what?<br><small>Noun (subject)</small></th>
+                  <th>Is/was doing or happening?<br><small>Verb</small></th>
+                  <th>Which one, what kind, how many?<br><small>Adjective</small></th>
+                  <th>To what? To whom?<br><small>Object of verb</small></th>
+                  <th>When, where, why, how?<br><small>Adverb</small></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="sort-cell"></td>
+                  <td class="sort-cell"></td>
+                  <td class="sort-cell"></td>
+                  <td class="sort-cell"></td>
+                  <td class="sort-cell"></td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <!-- Word Cards to Cut Out -->
+            <div v-if="word.wordPhraseCards && word.wordPhraseCards.length > 0" class="cut-cards-section">
+              <p><strong>Cut out these word/phrase cards:</strong></p>
+              <div class="cut-cards-grid">
+                <div v-for="(card, cardIdx) in word.wordPhraseCards" :key="cardIdx" class="cut-card">
+                  {{ card }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Comprehension Questions -->
+      </div>
+      
+      <!-- DAY 3: Teacher Read + Student Read + Inference Organizer -->
+      <div class="print-section page-break">
+        <h2>Day 3: Teacher Read + Student Read + Inference Organizer</h2>
+        
+        <!-- Teacher Script -->
+        <div v-if="isTeacherVersion" class="day-three-teacher-content">
+          <div class="script-section">
+            <h3>Day 3 Teacher Script</h3>
+            
+            <div class="routine-step">
+              <h5>Step 1: Vocabulary Review</h5>
+              <p class="script-line">"Let's review our vocabulary words from Day 1."</p>
+              
+              <!-- Vocabulary Matching Practice -->
+              <div class="vocab-practice">
+                <h4>Vocabulary Matching (Review)</h4>
+                <p class="script-note">Students match words to definitions as warm-up.</p>
+                <div class="matching-section">
+                  <div class="matching-column">
+                    <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                      {{ index + 1 }}. {{ word.word }}
+                    </div>
+                  </div>
+                  <div class="matching-column">
+                    <p><strong>Word Bank</strong></p>
+                    <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                      {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
+                    </div>
+                  </div>
+                </div>
+                <p class="teacher-answer"><strong>Answer Key:</strong> 1-A, 2-B, 3-C, 4-D, 5-E, 6-F</p>
+              </div>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 2: Teacher Models Reading</h5>
+              <p class="script-line">"Now I'm going to read the passage aloud. Follow along and listen to how I read."</p>
+              <p class="script-note">Teacher reads the passage with expression and appropriate pacing.</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 3: Student Rereads</h5>
+              <p class="script-line">"Now you will read the passage aloud."</p>
+              <p class="script-note">Provide corrective feedback as needed during student reading.</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 4: Inference Organizer</h5>
+              <p class="script-line">"Let's answer some questions about the passage. Some answers are right in the text (literal). Some we need to figure out using clues (inferential)."</p>
+              <p class="script-note">Guide students through the inference organizer questions below.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Passage Section (both versions) -->
+        <div v-if="content.weeklyPassage" class="passage-section">
+          <h3>{{ content.weeklyPassage.title }}</h3>
+          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
+          
+          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+        </div>
+        
+        <!-- Vocabulary Matching (Student Version) -->
+        <div v-if="!isTeacherVersion" class="vocab-practice">
+          <h4>Vocabulary Review - Match the Words</h4>
+          <div class="matching-section">
+            <div class="matching-column">
+              <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                {{ index + 1 }}. {{ word.word }} _____
+              </div>
+            </div>
+            <div class="matching-column">
+              <p><strong>Word Bank</strong></p>
+              <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Inference Organizer Questions -->
         <div class="questions-section">
-          <h3>Comprehension Questions</h3>
+          <h3>Inference Organizer</h3>
+          <p v-if="!isTeacherVersion" class="directions">Answer these literal and inferential questions about the passage.</p>
           <div v-for="(q, index) in content.day3Questions" :key="index" class="question-item">
-            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span class="question-type-badge">{{ q.type }}</span></p>
             <div class="answer-space">
               <div class="answer-line"></div>
               <div class="answer-line"></div>
             </div>
           </div>
         </div>
-
-        <!-- Teacher Answer Key -->
-        <div v-if="isTeacherVersion" class="teacher-answer-key page-break">
-          <h3>TEACHER ANSWER KEY</h3>
-          <h4>Vocabulary Matching Answers</h4>
-          <div v-for="(_word, index) in content.vocab.slice(0, 9)" :key="index">
-            {{ index + 1 }} - {{ String.fromCharCode(65 + index) }}
+      </div>
+      
+      <!-- DAY 4: Student Read + Cause/Effect + Main Idea -->
+      <div class="print-section page-break">
+        <h2>Day 4: Student Read + Cause/Effect Organizer</h2>
+        
+        <!-- Teacher Script -->
+        <div v-if="isTeacherVersion" class="day-four-teacher-content">
+          <div class="script-section">
+            <h3>Day 4 Teacher Script</h3>
+            
+            <div class="routine-step">
+              <h5>Step 1: Student Rereads Passage</h5>
+              <p class="script-line">"Read the passage aloud one more time."</p>
+              <p class="script-note">Student reads; teacher provides feedback.</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 2: Quick Vocabulary Review</h5>
+              <p class="script-line">"Let's quickly review our vocabulary words."</p>
+              <p class="script-note">Rapid oral review: Teacher says word, student gives definition or vice versa.</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 3: Cause/Effect Organizer</h5>
+              <p class="script-line">"Today we're looking at cause and effect. A cause is WHY something happens. An effect is WHAT happens."</p>
+              <p class="script-note">Guide students through the cause/effect questions.</p>
+            </div>
+            
+            <div class="routine-step">
+              <h5>Step 4: Main Idea with Evidence</h5>
+              <p class="script-line">"What is the main idea of this passage? Give me 2-3 details from the text that prove it."</p>
+              
+              <div class="assessment-scale">
+                <h4>Main Idea Assessment Scale</h4>
+                
+                <p class="script-note"><strong>INDEPENDENT (Student responds without support):</strong></p>
+                <ul class="scale-list">
+                  <li>⭐⭐⭐ Main idea + 2 or more details</li>
+                  <li>⭐⭐ Main idea + 1 detail</li>
+                  <li>⭐ Partial understanding (main idea vague or incomplete)</li>
+                  <li>❌ Did not know / No response</li>
+                </ul>
+                
+                <p class="script-note"><strong>WITH TEACHER SUPPORT (if student struggles):</strong></p>
+                <p class="script-line">Support prompt: "Let's look back at the passage. What is this mostly about? Can you find a sentence or detail that shows that?"</p>
+                
+                <ul class="scale-list">
+                  <li>⭐⭐⭐ Main idea + 2 or more details (with support)</li>
+                  <li>⭐⭐ Main idea + 1 detail (with support)</li>
+                  <li>⭐ Partial understanding (with support)</li>
+                  <li>❌ Did not know (even with support)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Passage Reference (Student Version) -->
+        <div v-if="!isTeacherVersion && content.weeklyPassage" class="passage-reference">
+          <h3>Reread: {{ content.weeklyPassage.title }}</h3>
+          <p class="directions">Read the passage aloud again.</p>
+        </div>
+        
+        <!-- Cause/Effect Questions -->
+        <div class="questions-section">
+          <h3>Cause/Effect Organizer</h3>
+          <p v-if="!isTeacherVersion" class="directions">Answer these cause/effect and main idea questions.</p>
+          <div v-for="(q, index) in content.day4Questions" :key="index" class="question-item">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span class="question-type-badge">{{ q.type }}</span></p>
+            <div class="answer-space">
+              <div class="answer-line"></div>
+              <div class="answer-line"></div>
+              <div v-if="q.type === 'mainIdea'" class="answer-line"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Main Idea Question -->
+        <div class="main-idea-section">
+          <h3>Main Idea + Evidence</h3>
+          <p class="main-idea-prompt"><strong>What is the main idea of this passage? Provide 2-3 details that prove it.</strong></p>
+          <div class="main-idea-answer-space">
+            <p><strong>Main Idea:</strong></p>
+            <div class="answer-line"></div>
+            <div class="answer-line"></div>
+            
+            <p><strong>Detail 1:</strong></p>
+            <div class="answer-line"></div>
+            
+            <p><strong>Detail 2:</strong></p>
+            <div class="answer-line"></div>
+            
+            <p><strong>Detail 3 (optional):</strong></p>
+            <div class="answer-line"></div>
           </div>
           
-          <h4>Comprehension Sample Answers</h4>
-          <div v-for="(q, index) in content.day3Questions" :key="index" class="answer-sample">
-            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
-            <p class="sample-answer">(Student answers will vary - look for key concepts)</p>
+          <!-- Teacher Assessment Grid -->
+          <div v-if="isTeacherVersion" class="teacher-assessment-grid">
+            <h4>Teacher Assessment</h4>
+            <table class="assessment-table">
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th>Independent</th>
+                  <th>With Support</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Main idea + 2+ details</td>
+                  <td class="checkbox-cell">☐</td>
+                  <td class="checkbox-cell">☐</td>
+                </tr>
+                <tr>
+                  <td>Main idea + 1 detail</td>
+                  <td class="checkbox-cell">☐</td>
+                  <td class="checkbox-cell">☐</td>
+                </tr>
+                <tr>
+                  <td>Partial understanding</td>
+                  <td class="checkbox-cell">☐</td>
+                  <td class="checkbox-cell">☐</td>
+                </tr>
+                <tr>
+                  <td>Did not know</td>
+                  <td class="checkbox-cell">☐</td>
+                  <td class="checkbox-cell">☐</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -971,8 +1257,255 @@ ul.teacher-questions {
     page-break-before: always;
   }
   
+  .word-sentence-analysis,
+  .student-sorting-activity {
+    page-break-inside: avoid;
+  }
+  
   .formula {
     font-size: 8pt;
   }
 }
+
+/* Day 2: Words Working Together Styles */
+.word-sentence-analysis {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+}
+
+.definition-display {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: #edf2f7;
+  border-radius: 4px;
+}
+
+.sentence-display {
+  font-style: italic;
+  color: #4a5568;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #667eea;
+}
+
+.sorting-questions {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.teacher-answer {
+  color: #48bb78;
+  font-weight: 600;
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.explanation {
+  color: #718096;
+  font-size: 0.85rem;
+  margin-left: 1.5rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.cards-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.card-item {
+  padding: 0.25rem 0.75rem;
+  background: #fff5f5;
+  border: 2px dashed #cbd5e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Student Sorting Activity */
+.student-sorting-activity {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.sorting-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  background: white;
+}
+
+.sorting-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sorting-table th small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-top: 0.25rem;
+  opacity: 0.9;
+}
+
+.sorting-table .sort-cell {
+  height: 80px;
+  border: 2px solid #cbd5e0;
+  vertical-align: top;
+  padding: 0.5rem;
+}
+
+.cut-cards-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border: 2px dashed #cbd5e0;
+  border-radius: 6px;
+}
+
+.cut-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.cut-card {
+  padding: 0.5rem;
+  background: #f7fafc;
+  border: 2px dashed #cbd5e0;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Day 3 & 4 Styles */
+.question-type-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: #edf2f7;
+  color: #4a5568;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+.passage-reference {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #48bb78;
+}
+
+/* Day 4: Assessment Scale */
+.assessment-scale {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #fff5f5;
+  border-radius: 8px;
+  border: 2px solid #fc8181;
+}
+
+.assessment-scale h4 {
+  margin: 0 0 1rem 0;
+  color: #c53030;
+  font-size: 1.1rem;
+}
+
+.scale-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+}
+
+.scale-list li {
+  padding: 0.5rem 0;
+  margin-left: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.main-idea-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f0f4f8;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+}
+
+.main-idea-prompt {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 1rem;
+}
+
+.main-idea-answer-space {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+.main-idea-answer-space p {
+  font-weight: 600;
+  color: #2d3748;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.teacher-assessment-grid {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.assessment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+}
+
+.assessment-table th,
+.assessment-table td {
+  border: 1px solid #cbd5e0;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.assessment-table th {
+  background: #edf2f7;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.checkbox-cell {
+  text-align: center;
+  font-size: 1.2rem;
+  width: 100px;
+}
+
 </style>
