@@ -121,14 +121,36 @@
             <div v-if="vocabWords.some(v => v.word)" class="selected-items">
               <h4>Selected Vocabulary ({{ vocabWords.filter(v => v.word).length }} words)</h4>
               <p class="section-note">You'll configure Day 2 sentence sorting in Step 3 when you assign sentences from the passage.</p>
+              
+              <!-- AI Generate Clarifications for All -->
+              <div class="ai-generate-section" style="margin-bottom: 1rem;">
+                <button 
+                  @click="generateAllClarifications"
+                  :disabled="generatingClarifications || !vocabWords.some(v => v.word && v.definition)"
+                  class="btn btn-ai btn-sm"
+                >
+                  {{ generatingClarifications ? '🤖 Generating...' : '✨ AI Generate "It Is / It Is Not" for All Words' }}
+                </button>
+                <small class="form-hint">AI will create clarifications (what it is / what it is not) for each word</small>
+              </div>
+              
               <div class="selected-list">
                 <template v-for="(vocab, index) in vocabWords" :key="index">
-                  <div v-if="vocab.word" class="selected-item">
+                  <div v-if="vocab.word" class="selected-item-expanded">
                     <div class="item-info">
                       <strong>{{ index + 1 }}. {{ vocab.word }}</strong>
                       <p>{{ vocab.definition }}</p>
+                      <div v-if="vocab.whatItIs || vocab.whatItIsNot" class="clarifications-preview">
+                        <p v-if="vocab.whatItIs" class="clarif-item"><strong>It is:</strong> {{ vocab.whatItIs }}</p>
+                        <p v-if="vocab.whatItIsNot" class="clarif-item"><strong>It is not:</strong> {{ vocab.whatItIsNot }}</p>
+                      </div>
                     </div>
-                    <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
+                    <div class="item-actions">
+                      <button @click="generateSingleClarification(index)" :disabled="generatingClarifications" class="btn btn-secondary btn-sm">
+                        {{ vocab.whatItIs ? '🔄 Regenerate' : '✨ AI Generate' }}
+                      </button>
+                      <button @click="removeVocab(index)" class="btn btn-danger btn-sm">Remove</button>
+                    </div>
                   </div>
                 </template>
               </div>
@@ -643,7 +665,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer } from '@/services/aiService'
+import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer, generateVocabClarifications } from '@/services/aiService'
 import type { MainIdeaAnswerResult } from '@/services/aiService'
 import { 
   createWeekTemplate,
@@ -680,6 +702,7 @@ const saving = ref(false)
 const generatingAI = ref<number | null>(null)
 const generatingQuestions = ref<number | null>(null)
 const generatingMainIdea = ref(false)
+const generatingClarifications = ref(false)
 const mainIdeaAnswer = ref<MainIdeaAnswerResult | null>(null)
 
 const templateData = ref({
@@ -1333,6 +1356,74 @@ async function generateMainIdeaWithDetails() {
     alert('Failed to generate main idea. Please try again.')
   } finally {
     generatingMainIdea.value = false
+  }
+}
+
+// Generate clarifications for a single vocab word
+async function generateSingleClarification(vocabIndex: number) {
+  const vocab = vocabWords.value[vocabIndex]
+  if (!vocab.word || !vocab.definition) {
+    alert('Word and definition are required')
+    return
+  }
+  
+  try {
+    generatingClarifications.value = true
+    
+    const result = await generateVocabClarifications(vocab.word, vocab.definition)
+    
+    vocab.partOfSpeech = result.partOfSpeech
+    vocab.whatItIs = result.whatItIs
+    vocab.whatItIsNot = result.whatItIsNot
+    
+    console.log('[WeekTemplateSetup] Generated clarifications for', vocab.word, result)
+  } catch (error: any) {
+    console.error('Error generating clarifications:', error)
+    alert(`Failed to generate clarifications for "${vocab.word}". Try again or enter manually.`)
+  } finally {
+    generatingClarifications.value = false
+  }
+}
+
+// Generate clarifications for all vocab words
+async function generateAllClarifications() {
+  const wordsToGenerate = vocabWords.value.filter(v => v.word && v.definition && !v.whatItIs)
+  
+  if (wordsToGenerate.length === 0) {
+    alert('All words already have clarifications! Click individual "Regenerate" buttons to update specific words.')
+    return
+  }
+  
+  const confirmed = confirm(`Generate "It is / It is not" clarifications for ${wordsToGenerate.length} word(s)?\n\nThis may take a moment.`)
+  if (!confirmed) return
+  
+  try {
+    generatingClarifications.value = true
+    let successCount = 0
+    
+    for (const vocab of vocabWords.value) {
+      if (vocab.word && vocab.definition && !vocab.whatItIs) {
+        try {
+          const result = await generateVocabClarifications(vocab.word, vocab.definition)
+          vocab.partOfSpeech = result.partOfSpeech
+          vocab.whatItIs = result.whatItIs
+          vocab.whatItIsNot = result.whatItIsNot
+          successCount++
+          
+          // Small delay to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 500))
+        } catch (error) {
+          console.error(`Failed to generate for ${vocab.word}:`, error)
+        }
+      }
+    }
+    
+    alert(`✅ Generated clarifications for ${successCount} word(s)!\n\nReview and edit as needed in the list below.`)
+  } catch (error: any) {
+    console.error('Error generating clarifications:', error)
+    alert('Failed to generate some clarifications. Please try again.')
+  } finally {
+    generatingClarifications.value = false
   }
 }
 
