@@ -1,27 +1,7 @@
 <template>
-  <div class="semantic-map-sheet">
+  <div class="semantic-map-sheet" style="width: 100%; height: 950px; ">
     <div class="sheet-grid">
       <!-- Top Left: It is / It is NOT -->
-      <section class="quad quad-tl split-quad">
-        <div class="sub-box">
-          <div class="sub-label">It is:</div>
-          <ul class="field-content bullet-list">
-            <li v-for="(sentence, index) in whatItIsSentences" :key="'is-' + index">
-              {{ sentence }}
-            </li>
-          </ul>
-        </div>
-        <div class="sub-box not-box">
-          <div class="sub-label">It is NOT:</div>
-          <ul class="field-content bullet-list">
-            <li v-for="(sentence, index) in whatItIsNotSentences" :key="'not-' + index">
-              {{ sentence }}
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Top Right: Definition -->
       <section class="quad quad-tr">
         <div class="sub-box">
           <h2 class="quad-label">Definition:</h2>
@@ -44,6 +24,28 @@
           </div>
         </div>
       </section>
+
+      <section class="quad quad-tl split-quad">
+        <div class="sub-box">
+          <div class="sub-label">It is:</div>
+          <ul class="field-content bullet-list">
+            <li v-for="(sentence, index) in whatItIsSentences" :key="'is-' + index">
+              {{ sentence }}
+            </li>
+          </ul>
+        </div>
+        <div class="sub-box not-box">
+          <div class="sub-label">It is NOT:</div>
+          <ul class="field-content bullet-list">
+            <li v-for="(sentence, index) in whatItIsNotSentences" :key="'not-' + index">
+              {{ sentence }}
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Top Right: Definition -->
+ 
 
       <!-- Bottom Left: Use in a sentence -->
       <section class="quad">
@@ -185,6 +187,9 @@ const whatItIsNotSentences = computed(() => {
   nav, .navbar {
     display: none !important;
   }
+  .printable-content{
+  padding: 0 !important;
+}
 }
 </style>
 <style scoped>
@@ -263,9 +268,10 @@ const whatItIsNotSentences = computed(() => {
   border: 2px solid #333;
   border-radius: 15px;
   padding: 10px 15px;
-  height: 40%;
+  max-height: 180px;
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px;
 }
 
 .quad-tl .sub-box:first-child { background: var(--color-is); }
@@ -273,7 +279,7 @@ const whatItIsNotSentences = computed(() => {
 .quad-tr .sub-box:first-child { background: var(--color-definition); }
 
 .parts-of-speech-box {
-  margin-top: 10px;
+  
   background: var(--color-parts-speech);
   font-size: 14px;
   height: auto;
@@ -316,8 +322,8 @@ const whatItIsNotSentences = computed(() => {
   list-style: disc;
   padding-left: 20px;
   margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.2;
 }
 
 /* ===============================
@@ -333,8 +339,8 @@ const whatItIsNotSentences = computed(() => {
   position: absolute;
   left: 0;
   width: 100%;
-  line-height: 32px;
-  font-size: 18px;
+  line-height: 1.4;
+  font-size: 16px;
 
   background-image:
     linear-gradient(
@@ -345,7 +351,7 @@ const whatItIsNotSentences = computed(() => {
   background-size: 100% 32px;
 }
 
-.definition-part1 { top: 0; }
+.definition-part1 { top: 0;     display: contents !important;}
 .definition-part2 {
   padding-left: 140px;
   box-sizing: border-box;
@@ -416,7 +422,7 @@ const whatItIsNotSentences = computed(() => {
     size: letter;
     margin: 0;
   }
- 
+
   nav, .navbar {
     display: none !important;
   }
@@ -456,5 +462,6 @@ const whatItIsNotSentences = computed(() => {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
 }
 </style>

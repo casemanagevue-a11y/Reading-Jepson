@@ -741,7 +741,7 @@
 
         <!-- Assessment Questions -->
         <div class="questions-section">
-          <h3>Assessment Questions</h3>
+          <h3>Reading Comprehension Questions</h3>
           <div v-for="(q, index) in content.day5Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} 
               <span v-if="isTeacherVersion && !isCompactVersion" class="question-type-badge">{{ q.type }}</span>
@@ -754,6 +754,41 @@
               <p class="answer-label">Expected Answer:</p>
               <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
+          </div>
+        </div>
+        
+        <!-- Vocabulary & Affix Multiple Choice Quiz -->
+        <div class="vocab-quiz-section">
+          <h3>Spiral Vocabulary & Affix Assessment (Multiple Choice)</h3>
+          <p v-if="!isTeacherVersion && !isCompactVersion" class="directions">Circle the correct answer for each question.</p>
+          
+          <!-- Vocabulary Questions -->
+          <div v-for="(word, index) in content.vocab" :key="'vocab-q-' + index" class="quiz-item">
+            <p class="quiz-question"><strong>{{ index + 1 }}.</strong> What does <em>{{ word.word }}</em> mean?</p>
+            <div class="quiz-choices">
+              <p class="choice">A. {{ word.definition }}</p>
+              <p class="choice">B. {{ generateDistractor(word.word, 1) }}</p>
+              <p class="choice">C. {{ generateDistractor(word.word, 2) }}</p>
+              <p class="choice">D. {{ generateDistractor(word.word, 3) }}</p>
+            </div>
+            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
+          </div>
+          
+          <!-- Affix Questions -->
+          <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="'affix-q-' + index" class="quiz-item">
+            <p class="quiz-question"><strong>{{ content.vocab.length + index + 1 }}.</strong> What does the word part <em>{{ affix.affix }}</em> mean?</p>
+            <div class="quiz-choices">
+              <p class="choice">A. {{ affix.meaning }}</p>
+              <p class="choice">B. {{ generateAffixDistractor(affix.affix, 1) }}</p>
+              <p class="choice">C. {{ generateAffixDistractor(affix.affix, 2) }}</p>
+              <p class="choice">D. {{ generateAffixDistractor(affix.affix, 3) }}</p>
+            </div>
+            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
+          </div>
+          
+          <div v-if="isTeacherVersion && !isCompactVersion" class="quiz-note">
+            <p><strong>Scoring:</strong> {{ content.vocab.length + Math.min(content.affixes.length, 2) }} total questions</p>
+            <p>Student Score: _____ / {{ content.vocab.length + Math.min(content.affixes.length, 2) }}</p>
           </div>
         </div>
         
@@ -899,6 +934,40 @@ const handlePrint = () => {
 
 const goBack = () => {
   router.back()
+}
+
+// Generate simple distractors for vocabulary MC questions
+const generateDistractor = (word: string, num: number): string => {
+  const distractors = [
+    'A type of food or meal',
+    'A person who leads or rules',
+    'A place where people live',
+    'Something that is very old',
+    'A tool or instrument used for work',
+    'A group of people working together',
+    'An event or celebration',
+    'A building or structure',
+    'A natural feature like a river or mountain',
+    'A way of doing something'
+  ]
+  return distractors[(word.length + num) % distractors.length]
+}
+
+// Generate simple distractors for affix MC questions
+const generateAffixDistractor = (affix: string, num: number): string => {
+  const distractors = [
+    'before or first',
+    'after or last',
+    'together or with',
+    'against or opposite',
+    'under or below',
+    'over or above',
+    'again or back',
+    'not or without',
+    'small or tiny',
+    'big or large'
+  ]
+  return distractors[(affix.length + num) % distractors.length]
 }
 
 onMounted(async () => {
@@ -1890,5 +1959,73 @@ fieldset{
   color: #2d3748;
   margin: 0.5rem 0;
   line-height: 1.8;
+}
+
+/* Vocabulary Quiz Section */
+.vocab-quiz-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 3px solid #667eea;
+}
+
+.vocab-quiz-section h3 {
+  color: #2d3748;
+  margin: 0 0 1.5rem 0;
+}
+
+.quiz-item {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.quiz-question {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.quiz-question em {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.quiz-choices {
+  margin-left: 1.5rem;
+}
+
+.choice {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.quiz-answer {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #f0fff4;
+  border-left: 4px solid #48bb78;
+  color: #22543d;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+.quiz-note {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #fff5f5;
+  border-radius: 6px;
+  border-left: 3px solid #fc8181;
+}
+
+.quiz-note p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
 }
 </style>

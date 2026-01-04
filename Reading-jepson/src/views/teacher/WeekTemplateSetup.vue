@@ -1613,8 +1613,13 @@ const saveTemplate = async () => {
         word: item.word, 
         hasCards: !!item.wordPhraseCards, 
         cardCount: item.wordPhraseCards?.length || 0,
-        hasSortingKey: !!item.sortingKey 
+        hasSortingKey: !!item.sortingKey,
+        hasPartOfSpeech: !!item.partOfSpeech,
+        hasWhatItIs: !!item.whatItIs,
+        hasWhatItIsNot: !!item.whatItIsNot
       })
+      
+      console.log('[WeekTemplateSetup] Full cleaned item:', cleaned)
       
       return cleaned as PassageVocabItem
     })
@@ -1628,6 +1633,13 @@ const saveTemplate = async () => {
     if (cleanWeeklyVocabItems.length > 0) weeklyPassagePayload.vocabItems = cleanWeeklyVocabItems
     if (weeklyAffixItems.length > 0) weeklyPassagePayload.affixItems = weeklyAffixItems
     if (mainIdeaAnswer.value) weeklyPassagePayload.mainIdeaAnswer = mainIdeaAnswer.value
+    
+    console.log('[WeekTemplateSetup] Saving weekly passage with payload:', {
+      hasVocabItems: !!weeklyPassagePayload.vocabItems,
+      vocabItemsCount: weeklyPassagePayload.vocabItems?.length || 0,
+      firstVocabItem: weeklyPassagePayload.vocabItems?.[0],
+      hasMainIdeaAnswer: !!weeklyPassagePayload.mainIdeaAnswer
+    })
     
     await createPassage(weeklyPassagePayload)
     
