@@ -142,49 +142,37 @@
                 <p class="script-note">Says each letter while writing.</p>
               </div>
 
-              <!-- Step 9: Co-Construct Meaning -->
+              <!-- Step 9: Complete Worksheet (Combined) -->
               <div class="routine-step">
-                <h5>★ Step 9: Worksheet Instructions</h5>
-                <p class="script-note">On the worksheet, teacher and student work together to:</p>
-                <ul class="action-list">
-                  <li>Write the word.</li>
-                  <li>Write a simple definition in student language.</li>
-                  <li>Write one sentence using the word.</li>
-                  <li>Create a picture to go with the word.</li>
-                </ul>
-              </div>
-
-              <!-- Step 10: Clarify Meaning -->
-              <div class="routine-step">
-                <h5>★ Step 10: Clarify Meaning (What It Is / What It Is Not)</h5>
-                <p class="script-note">Student records:</p>
-                <div v-if="word.partOfSpeech || word.whatItIs || word.whatItIsNot" style="margin-left: 1rem;">
-                  <p v-if="word.partOfSpeech" class="script-note"><strong>Part of speech:</strong> {{ word.partOfSpeech }}</p>
-                  <p v-if="word.whatItIs" class="script-note"><strong>What the word is:</strong> {{ word.whatItIs }}</p>
-                  <p v-if="word.whatItIsNot" class="script-note"><strong>What the word is not:</strong> {{ word.whatItIsNot }}</p>
-                </div>
-                <ul v-else class="action-list">
-                  <li>Part of speech</li>
-                  <li>What the word is</li>
-                  <li>What the word is not</li>
-                </ul>
-                <p class="script-note">(Only if it helps prevent confusion.)</p>
-              </div>
-
-              <!-- Step 11: Reflection -->
-              <div class="routine-step">
-                <h5>★ Step 11: Reflection (❓ 👀 🧠 ⭐ Scale)</h5>
-                <p class="script-note">Teacher asks:</p>
-                <p class="script-line">"Where are you now with this word?"</p>
-                <p class="script-note">Student marks:</p>
-                <ul class="reflection-options">
-                  <li>❓ Never</li>
-                  <li>👀 Heard</li>
-                  <li>🧠 Know</li>
-                  <li>⭐ Use / Explain</li>
-                </ul>
-                <p class="script-note">Optional follow-up:</p>
-                <p class="script-line">"What helped you move?"</p>
+                <h5>★ Step 9: Complete Worksheet (Follow This Order)</h5>
+                <p class="script-note">Teacher and student work together on the vocabulary worksheet:</p>
+                <ol class="worksheet-order-list">
+                  <li><strong>Say and/or write vocabulary word</strong>
+                    <p class="sub-note">Student writes "{{ word.word }}" on the worksheet</p>
+                  </li>
+                  <li><strong>Review and/or create student-friendly definition</strong>
+                    <p class="sub-note">Co-construct: "{{ word.definition }}"</p>
+                  </li>
+                  <li><strong>Part of Speech</strong>
+                    <p class="sub-note" v-if="word.partOfSpeech">{{ word.partOfSpeech }}</p>
+                    <p class="sub-note" v-else>Teacher and student identify together</p>
+                  </li>
+                  <li><strong>It is / It is not</strong>
+                    <div v-if="word.whatItIs || word.whatItIsNot" style="margin-left: 1rem;">
+                      <p v-if="word.whatItIs" class="sub-note"><em>It is:</em> {{ word.whatItIs }}</p>
+                      <p v-if="word.whatItIsNot" class="sub-note"><em>It is not:</em> {{ word.whatItIsNot }}</p>
+                    </div>
+                    <p class="sub-note" v-else>(Only if it helps prevent confusion)</p>
+                  </li>
+                  <li><strong>Use in a sentence (teacher support if needed)</strong>
+                    <p class="sub-note">Student creates sentence or uses teacher frame</p>
+                  </li>
+                  <li><strong>Student draws a picture</strong>
+                    <p class="sub-note">Visual representation to remember the word</p>
+                  </li>
+                </ol>
+                <p class="script-note"><strong>Reflection:</strong> Teacher asks: "Where are you now with this word?"</p>
+                <p class="script-note">Student marks: ❓ Never | 👀 Heard | 🧠 Know | ⭐ Use/Explain</p>
               </div>
               
               <div class="word-divider"></div>
@@ -1553,4 +1541,28 @@ fieldset{
   width: 100px;
 }
 
+/* Worksheet Order List */
+.worksheet-order-list {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.worksheet-order-list li {
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+  line-height: 1.6;
+}
+
+.worksheet-order-list li strong {
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.sub-note {
+  margin: 0.25rem 0 0 0.5rem;
+  color: #718096;
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.5;
+}
 </style>
