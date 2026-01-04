@@ -452,9 +452,13 @@
           <p v-if="!isTeacherVersion" class="directions">Answer these literal and inferential questions about the passage.</p>
           <div v-for="(q, index) in content.day3Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span class="question-type-badge">{{ q.type }}</span></p>
-            <div class="answer-space">
+            <div v-if="!isTeacherVersion" class="answer-space">
               <div class="answer-line"></div>
               <div class="answer-line"></div>
+            </div>
+            <div v-else class="teacher-answer-box">
+              <p class="answer-label">Expected Answer:</p>
+              <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
           </div>
         </div>
@@ -544,10 +548,14 @@
           <p v-if="!isTeacherVersion" class="directions">Answer these cause/effect and main idea questions.</p>
           <div v-for="(q, index) in content.day4Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span class="question-type-badge">{{ q.type }}</span></p>
-            <div class="answer-space">
+            <div v-if="!isTeacherVersion" class="answer-space">
               <div class="answer-line"></div>
               <div class="answer-line"></div>
               <div v-if="q.type === 'mainIdea'" class="answer-line"></div>
+            </div>
+            <div v-else class="teacher-answer-box">
+              <p class="answer-label">Expected Answer:</p>
+              <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
           </div>
         </div>
@@ -624,10 +632,14 @@
         <div class="questions-section">
           <h3>Assessment Questions</h3>
           <div v-for="(q, index) in content.day5Questions" :key="index" class="question-item">
-            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }}</p>
-            <div class="answer-space">
+            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span v-if="isTeacherVersion" class="question-type-badge">{{ q.type }}</span></p>
+            <div v-if="!isTeacherVersion" class="answer-space">
               <div class="answer-line"></div>
               <div class="answer-line"></div>
+            </div>
+            <div v-else class="teacher-answer-box">
+              <p class="answer-label">Expected Answer:</p>
+              <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
           </div>
         </div>

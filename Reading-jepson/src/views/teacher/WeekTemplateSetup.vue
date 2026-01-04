@@ -377,10 +377,10 @@
               <small class="form-hint">AI will analyze the passage and create questions with teacher answer keys</small>
             </div>
             
-            <div v-for="(question, index) in day3Questions" :key="index">
+            <div v-for="(question, index) in day3Questions" :key="index" class="question-editor">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
-                <textarea v-model="question.prompt" class="form-input" rows="2"></textarea>
+                <textarea v-model="question.prompt" class="form-input" rows="2" placeholder="Enter the question"></textarea>
               </div>
               <div class="form-group">
                 <label>Question Type</label>
@@ -389,9 +389,13 @@
                   <option value="inferential">Inferential</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label>Expected Answer (Teacher Key)</label>
+                <textarea v-model="question.rubric" class="form-input" rows="2" placeholder="Expected answer or key points to look for"></textarea>
+              </div>
               <button v-if="index > 0" @click="day3Questions.splice(index, 1)" class="btn btn-danger btn-sm">Remove</button>
             </div>
-            <button @click="day3Questions.push({ type: 'literal', prompt: '', orderIndex: day3Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
+            <button @click="day3Questions.push({ type: 'literal', prompt: '', rubric: '', orderIndex: day3Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
           </div>
         </div>
         
@@ -423,10 +427,10 @@
               </div>
             </div>
             
-            <div v-for="(question, index) in day4Questions" :key="index">
+            <div v-for="(question, index) in day4Questions" :key="index" class="question-editor">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
-                <textarea v-model="question.prompt" class="form-input" rows="2"></textarea>
+                <textarea v-model="question.prompt" class="form-input" rows="2" placeholder="Enter the question"></textarea>
               </div>
               <div class="form-group">
                 <label>Question Type</label>
@@ -435,9 +439,13 @@
                   <option value="causeEffect">Cause/Effect</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label>Expected Answer (Teacher Key)</label>
+                <textarea v-model="question.rubric" class="form-input" rows="2" placeholder="Expected answer or key points to look for"></textarea>
+              </div>
               <button v-if="index > 0" @click="day4Questions.splice(index, 1)" class="btn btn-danger btn-sm">Remove</button>
             </div>
-            <button @click="day4Questions.push({ type: 'causeEffect', prompt: '', orderIndex: day4Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
+            <button @click="day4Questions.push({ type: 'causeEffect', prompt: '', rubric: '', orderIndex: day4Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
           </div>
         </div>
         
@@ -570,10 +578,10 @@
               <small class="form-hint">AI will analyze the passage and create questions with teacher answer keys</small>
             </div>
             
-            <div v-for="(question, index) in day5Questions" :key="index">
+            <div v-for="(question, index) in day5Questions" :key="index" class="question-editor">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
-                <textarea v-model="question.prompt" class="form-input" rows="2"></textarea>
+                <textarea v-model="question.prompt" class="form-input" rows="2" placeholder="Enter the question"></textarea>
               </div>
               <div class="form-group">
                 <label>Question Type</label>
@@ -583,9 +591,13 @@
                   <option value="mainIdea">Main Idea</option>
                 </select>
               </div>
+              <div class="form-group">
+                <label>Expected Answer (Teacher Key)</label>
+                <textarea v-model="question.rubric" class="form-input" rows="2" placeholder="Expected answer or key points to look for"></textarea>
+              </div>
               <button v-if="index > 0" @click="day5Questions.splice(index, 1)" class="btn btn-danger btn-sm">Remove</button>
             </div>
-            <button @click="day5Questions.push({ type: 'literal', prompt: '', orderIndex: day5Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
+            <button @click="day5Questions.push({ type: 'literal', prompt: '', rubric: '', orderIndex: day5Questions.length + 1 })" class="btn btn-secondary">+ Add Question</button>
           </div>
           
           <div class="section">
@@ -753,16 +765,16 @@ const selectedVocabSentences = ref<Map<string, string>>(new Map()) // "passageTy
 // Track selected affix words
 const selectedAffixWords = ref<Map<string, Set<string>>>(new Map()) // "passageType-affixIndex" -> Set of selected words
 
-const day3Questions = ref<Array<{ type: string; prompt: string; orderIndex: number }>>([
-  { type: 'literal', prompt: '', orderIndex: 1 }
+const day3Questions = ref<Array<{ type: string; prompt: string; rubric?: string; orderIndex: number }>>([
+  { type: 'literal', prompt: '', rubric: '', orderIndex: 1 }
 ])
 
-const day4Questions = ref<Array<{ type: string; prompt: string; orderIndex: number }>>([
-  { type: 'causeEffect', prompt: '', orderIndex: 1 }
+const day4Questions = ref<Array<{ type: string; prompt: string; rubric?: string; orderIndex: number }>>([
+  { type: 'causeEffect', prompt: '', rubric: '', orderIndex: 1 }
 ])
 
-const day5Questions = ref<Array<{ type: string; prompt: string; orderIndex: number }>>([
-  { type: 'literal', prompt: '', orderIndex: 1 }
+const day5Questions = ref<Array<{ type: string; prompt: string; rubric?: string; orderIndex: number }>>([
+  { type: 'literal', prompt: '', rubric: '', orderIndex: 1 }
 ])
 
 // Computed filtered vocab items
@@ -2108,6 +2120,14 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 0.85rem;
   color: #742a2a;
+}
+
+.question-editor {
+  background: #f7fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 3px solid #667eea;
 }
 
 .main-idea-display {
