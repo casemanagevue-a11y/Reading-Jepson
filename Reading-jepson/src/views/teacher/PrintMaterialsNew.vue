@@ -18,15 +18,18 @@
     <div v-else class="printable-content container">
       <!-- Header for printed page - single line -->
       <div class="print-page-header">
-        {{ studentName }} | {{ formatDateRange() }} | <span v-if="isTeacherVersion" class="version-badge">TEACHER COPY</span><span v-else class="version-badge">STUDENT WORKBOOK</span>
+        {{ studentName }} | {{ formatDateRange() }} | 
+        <span v-if="isTeacherVersion" class="version-badge">TEACHER SCRIPT</span>
+        <span v-else-if="isCompactVersion" class="version-badge">TEACHER REFERENCE</span>
+        <span v-else class="version-badge">STUDENT WORKBOOK</span>
       </div>
 
       <!-- DAY 1: Vocabulary & Affixes -->
       <div class="print-section">
-        <h2>Day 1 Lesson Template</h2>
+        <h2>Day 1: Vocabulary & Affixes</h2>
         
-        <!-- Teacher Version Only -->
-        <div v-if="isTeacherVersion" class="day-one-teacher-content">
+        <!-- Teacher Script Version -->
+        <div v-if="isTeacherVersion && !isCompactVersion" class="day-one-teacher-content">
           
           <!-- Review Words Section -->
           <div class="script-section review-words-section">
@@ -142,37 +145,49 @@
                 <p class="script-note">Says each letter while writing.</p>
               </div>
 
-              <!-- Step 9: Complete Worksheet (Combined) -->
+              <!-- Step 9: Complete Worksheet -->
               <div class="routine-step">
                 <h5>★ Step 9: Complete Worksheet (Follow This Order)</h5>
                 <p class="script-note">Teacher and student work together on the vocabulary worksheet:</p>
-                <ol class="worksheet-order-list">
+                <ul class="action-list">
                   <li><strong>Say and/or write vocabulary word</strong>
-                    <p class="sub-note">Student writes "{{ word.word }}" on the worksheet</p>
+                    
                   </li>
                   <li><strong>Review and/or create student-friendly definition</strong>
-                    <p class="sub-note">Co-construct: "{{ word.definition }}"</p>
+                  
                   </li>
                   <li><strong>Part of Speech</strong>
-                    <p class="sub-note" v-if="word.partOfSpeech">{{ word.partOfSpeech }}</p>
-                    <p class="sub-note" v-else>Teacher and student identify together</p>
+                    
                   </li>
                   <li><strong>It is / It is not</strong>
                     <div v-if="word.whatItIs || word.whatItIsNot" style="margin-left: 1rem;">
                       <p v-if="word.whatItIs" class="sub-note"><em>It is:</em> {{ word.whatItIs }}</p>
                       <p v-if="word.whatItIsNot" class="sub-note"><em>It is not:</em> {{ word.whatItIsNot }}</p>
                     </div>
-                    <p class="sub-note" v-else>(Only if it helps prevent confusion)</p>
+                    
                   </li>
                   <li><strong>Use in a sentence (teacher support if needed)</strong>
-                    <p class="sub-note">Student creates sentence or uses teacher frame</p>
+                    <p class="sub-note">Student creates sentence or with teacher support/sentence frame</p>
                   </li>
                   <li><strong>Student draws a picture</strong>
-                    <p class="sub-note">Visual representation to remember the word</p>
                   </li>
-                </ol>
-                <p class="script-note"><strong>Reflection:</strong> Teacher asks: "Where are you now with this word?"</p>
-                <p class="script-note">Student marks: ❓ Never | 👀 Heard | 🧠 Know | ⭐ Use/Explain</p>
+                </ul>
+              </div>
+              
+              <!-- Step 10: Reflection (Separate Worksheet) -->
+              <div class="routine-step">
+                <h5>★ Step 10: Reflection (❓ 👀 🧠 ⭐ Scale)</h5>
+                <p class="script-note">Teacher asks:</p>
+                <p class="script-line">"Where are you now with this word?"</p>
+                <p class="script-note">Student marks on reflection worksheet:</p>
+                <ul class="reflection-options">
+                  <li>❓ Never heard it</li>
+                  <li>👀 Heard it before</li>
+                  <li>🧠 Know what it means</li>
+                  <li>⭐ Can use it / explain it</li>
+                </ul>
+                <p class="script-note">Optional follow-up:</p>
+                <p class="script-line">"What helped you move from where you were to where you are now?"</p>
               </div>
               
               <div class="word-divider"></div>
@@ -201,6 +216,25 @@
           </div>
         </div>
 
+        <!-- Compact Teacher Reference (No Script) -->
+        <div v-else-if="isCompactVersion" class="compact-teacher-version">
+          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-compact">
+            <h4>{{ index + 1 }}. {{ word.word }}</h4>
+            <p><strong>Definition:</strong> {{ word.definition }}</p>
+            <p><strong>Sentence:</strong> "{{ word.exampleSentence || '' }}"</p>
+            <div v-if="word.whatItIs || word.whatItIsNot" class="clarification-compact">
+              <p v-if="word.whatItIs"><strong>It is:</strong> {{ word.whatItIs }}</p>
+              <p v-if="word.whatItIsNot"><strong>It is not:</strong> {{ word.whatItIsNot }}</p>
+            </div>
+          </div>
+          
+          <h3 style="margin-top: 2rem;">Affixes</h3>
+          <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="index" class="affix-compact">
+            <p><strong>{{ affix.affix }}</strong> ({{ affix.kind }}) = {{ affix.meaning }}</p>
+            <p class="examples-compact">Examples: {{ affix.examples.join(', ') }}</p>
+          </div>
+        </div>
+        
         <!-- Student Version: Simple vocab list -->
         <div v-else class="student-vocab-section">
           <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
@@ -238,7 +272,7 @@
         <p class="section-note">Sentence Structure Analysis (Nancy Hennessy / Reading Comprehension Blueprint style)</p>
         
         <!-- Teacher Script -->
-        <div v-if="isTeacherVersion" class="day-two-teacher-content">
+        <div v-if="isTeacherVersion && !isCompactVersion" class="day-two-teacher-content">
           <div class="script-section">
             <h3>Day 2 Teacher Script</h3>
             <p class="script-note"><strong>Opening Routine:</strong></p>
@@ -310,6 +344,25 @@
           </div>
         </div>
         
+        <!-- Compact Teacher Reference for Day 2 -->
+        <div v-else-if="isCompactVersion" class="compact-day2">
+          <div v-for="(word, index) in content.vocab.slice(0, 3)" :key="index" class="sentence-compact">
+            <h4>{{ index + 1 }}. {{ word.word }}</h4>
+            <p><strong>Sentence:</strong> "{{ word.exampleSentence || '' }}"</p>
+            <div v-if="word.wordPhraseCards && word.wordPhraseCards.length > 0">
+              <p><strong>Cards:</strong> {{ word.wordPhraseCards.join(', ') }}</p>
+            </div>
+            <div v-if="word.sortingKey" class="sorting-compact">
+              <p v-if="word.sortingKey.whoWhat"><strong>Who/what:</strong> {{ Array.isArray(word.sortingKey.whoWhat) ? word.sortingKey.whoWhat.join(', ') : word.sortingKey.whoWhat }}</p>
+              <p v-if="word.sortingKey.doingDid"><strong>Doing/did:</strong> {{ Array.isArray(word.sortingKey.doingDid) ? word.sortingKey.doingDid.join(', ') : word.sortingKey.doingDid }}</p>
+              <p v-if="word.sortingKey.whichWhatKind"><strong>Which/what kind:</strong> {{ Array.isArray(word.sortingKey.whichWhatKind) ? word.sortingKey.whichWhatKind.join(', ') : word.sortingKey.whichWhatKind }}</p>
+              <p v-if="word.sortingKey.whereWhenHowWhy"><strong>Where/when/how/why:</strong> {{ Array.isArray(word.sortingKey.whereWhenHowWhy) ? word.sortingKey.whereWhenHowWhy.join(', ') : word.sortingKey.whereWhenHowWhy }}</p>
+              <p v-if="word.sortingKey.relationship"><strong>Relationship:</strong> {{ Array.isArray(word.sortingKey.relationship) ? word.sortingKey.relationship.join(', ') : word.sortingKey.relationship }}</p>
+              <p v-if="word.sortingKey.glue"><strong>Connects:</strong> {{ Array.isArray(word.sortingKey.glue) ? word.sortingKey.glue.join(', ') : word.sortingKey.glue }}</p>
+            </div>
+          </div>
+        </div>
+        
         <!-- Student Version: 4-Column Sorting Tables -->
         <div v-else class="student-day2-content">
           <p class="directions"><strong>Directions:</strong> Sort the word/phrase cards into the correct columns. Each word has a job!</p>
@@ -361,7 +414,7 @@
         <h2>Day 3: Teacher Read + Student Read + Inference Organizer</h2>
         
         <!-- Teacher Script -->
-        <div v-if="isTeacherVersion" class="day-three-teacher-content">
+        <div v-if="isTeacherVersion && !isCompactVersion" class="day-three-teacher-content">
           <div class="script-section">
             <h3>Day 3 Teacher Script</h3>
             
@@ -410,12 +463,17 @@
           </div>
         </div>
         
-        <!-- Passage Section (both versions) -->
-        <div v-if="content.weeklyPassage" class="passage-section">
+        <!-- Passage Section (all versions) -->
+        <div v-if="content.weeklyPassage && !isCompactVersion" class="passage-section">
           <h3>{{ content.weeklyPassage.title }}</h3>
           <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
           
           <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+        </div>
+        
+        <!-- Compact: Just passage title and word count -->
+        <div v-if="content.weeklyPassage && isCompactVersion" class="passage-compact">
+          <p><strong>Passage:</strong> {{ content.weeklyPassage.title }} ({{ calculateWordCount(content.weeklyPassage.text) }} words)</p>
         </div>
         
         <!-- Vocabulary Matching (Student Version) -->
@@ -446,7 +504,7 @@
               <div class="answer-line"></div>
               <div class="answer-line"></div>
             </div>
-            <div v-else class="teacher-answer-box">
+            <div v-else-if="isTeacherVersion || isCompactVersion" class="teacher-answer-box">
               <p class="answer-label">Expected Answer:</p>
               <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
@@ -459,7 +517,7 @@
         <h2>Day 4: Student Read + Cause/Effect Organizer</h2>
         
         <!-- Teacher Script -->
-        <div v-if="isTeacherVersion" class="day-four-teacher-content">
+        <div v-if="isTeacherVersion && !isCompactVersion" class="day-four-teacher-content">
           <div class="script-section">
             <h3>Day 4 Teacher Script</h3>
             
@@ -570,11 +628,16 @@
       <div class="print-section page-break">
         <h2>Day 5: Reading Assessment + Vocab Spiral</h2>
         
-        <div v-if="content.fridayPassage" class="passage-section">
+        <div v-if="content.fridayPassage && !isCompactVersion" class="passage-section">
           <h3>{{ content.fridayPassage.title }}</h3>
           <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.fridayPassage.text) }} words</p>
           
           <div class="passage-text">{{ content.fridayPassage.text }}</div>
+        </div>
+        
+        <!-- Compact: Just passage title and word count -->
+        <div v-if="content.fridayPassage && isCompactVersion" class="passage-compact">
+          <p><strong>Passage:</strong> {{ content.fridayPassage.title }} ({{ calculateWordCount(content.fridayPassage.text) }} words)</p>
         </div>
 
         <!-- Assessment Questions -->
@@ -586,7 +649,7 @@
               <div class="answer-line"></div>
               <div class="answer-line"></div>
             </div>
-            <div v-else class="teacher-answer-box">
+            <div v-else-if="isTeacherVersion || isCompactVersion" class="teacher-answer-box">
               <p class="answer-label">Expected Answer:</p>
               <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
             </div>
@@ -697,6 +760,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 const isTeacherVersion = computed(() => route.query.version === 'teacher')
+const isCompactVersion = computed(() => route.query.version === 'compact')
 
 const content = ref<{
   vocab: (VocabDocument | PassageVocabItem)[]
@@ -1564,5 +1628,89 @@ fieldset{
   font-size: 0.85rem;
   font-style: italic;
   line-height: 1.5;
+}
+
+/* Compact Teacher Reference Version */
+.compact-teacher-version {
+  font-size: 0.95rem;
+}
+
+.vocab-compact {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #4a90e2;
+}
+
+.vocab-compact h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+}
+
+.vocab-compact p {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+.clarification-compact {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.clarification-compact p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.affix-compact {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 6px;
+}
+
+.affix-compact p {
+  margin: 0.25rem 0;
+}
+
+.examples-compact {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.compact-day2 .sentence-compact {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.compact-day2 .sentence-compact h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+}
+
+.compact-day2 .sentence-compact p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.sorting-compact {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.sorting-compact p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #4a5568;
 }
 </style>

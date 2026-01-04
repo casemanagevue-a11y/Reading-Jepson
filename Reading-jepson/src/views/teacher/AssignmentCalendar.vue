@@ -58,7 +58,14 @@
               :to="`/teacher/assignments/print?assignmentId=${currentWeekAssignment.id}&studentId=${selectedStudentId}&version=teacher`" 
               class="btn btn-primary btn-sm"
             >
-              👨‍🏫 Teacher Materials
+              👨‍🏫 Teacher Script
+            </router-link>
+            <router-link 
+              v-if="currentWeekAssignment"
+              :to="`/teacher/assignments/print?assignmentId=${currentWeekAssignment.id}&studentId=${selectedStudentId}&version=compact`" 
+              class="btn btn-primary btn-sm"
+            >
+              📋 Teacher Reference
             </router-link>
             <router-link 
               v-if="currentWeekAssignment"
