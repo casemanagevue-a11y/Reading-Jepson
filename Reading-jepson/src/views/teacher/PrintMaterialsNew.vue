@@ -775,7 +775,7 @@
             </fieldset>
           </div>
           
-          <div v-if="isTeacherVersion || isCompactVersion" class="error-tracking">
+          <div v-if="isTeacherVersion" class="error-tracking">
             <fieldset>
               <legend>Reading Errors (for accuracy calculation)</legend>
             
@@ -1018,9 +1018,6 @@ h5{
   font-size: 0.85rem;
   font-weight: 600;
   color: #1a202c;
- 
-  page-break-after: avoid;
-  page-break-inside: avoid !important;
 }
 
 .version-badge {
@@ -1081,7 +1078,6 @@ ul.teacher-questions {
 /* Student Vocab Format */
 .vocab-item-student {
   margin-bottom: 2rem;
-  page-break-inside: avoid;
 }
 
 .vocab-number {
@@ -1113,7 +1109,6 @@ ul.teacher-questions {
   padding: 1rem;
   background: #f7fafc;
   border-radius: 8px;
-  page-break-inside: avoid;
 }
 
 .vocab-item-teacher h4 {
@@ -1224,7 +1219,6 @@ ul.teacher-questions {
 
 .question-item {
   margin-bottom: 2rem;
-  page-break-inside: avoid;
 }
 
 .question-item p {
@@ -1263,7 +1257,6 @@ ul.teacher-questions {
 
 .fluency-tracking {
   margin-top: 2rem;
-  page-break-inside: avoid;
 }
 
 .tracking-grid {
@@ -1360,9 +1353,7 @@ fieldset{
   color: #c53030;
 }
 
-.page-break {
-  page-break-before: always;
-}
+/* Removed - handled in @media print */
 
 .btn {
   padding: 0.75rem 1.5rem;
@@ -1392,7 +1383,9 @@ fieldset{
 }
 
 @media print {
-  nav, .navbar{display: none !important;}
+  nav, .navbar {
+    display: none !important;
+  }
  
   .no-print {
     display: none !important;
@@ -1407,41 +1400,41 @@ fieldset{
     padding: 0.5in;
   }
   
+  /* Modern CSS - Force page breaks for new days */
   .page-break {
-    page-break-before: always;
+    break-before: page;
   }
   
+  /* CRITICAL FIX: Allow large sections to flow naturally */
   .print-section {
-    page-break-inside: avoid;
+    break-inside: auto; /* Changed from avoid - allows natural page breaks */
   }
   
-  /* Prevent page breaks between review and new word sections */
-  .review-section-wrapper {
-    page-break-after: avoid !important;
-  }
-  
-  .new-word-section {
-    page-break-before: avoid !important;
-  }
-  
-  .script-section,
+  /* Protect ONLY small atomic units (individual word blocks, sentence analyses) */
   .word-script-block,
-  .review-block,
-  .affix-script-block,
-  .build-meaning-section,
-  .sentence-support-section,
-  .picture-support-section {
-    page-break-inside: avoid;
+  .word-sentence-analysis,
+  .student-sorting-activity,
+  .vocab-compact,
+  .sentence-compact,
+  .affix-compact,
+  .question-item {
+    break-inside: avoid;
   }
   
+  /* Prevent orphaned headers */
+  h2, h3, h4, h5 {
+    break-after: avoid;
+  }
+  
+  /* Keep Day 1 core instruction together if possible */
+  .day-one-core {
+    break-inside: avoid;
+  }
+  
+  /* Semantic maps on new page */
   .semantic-maps-section,
   .semantic-maps-wrapper {
-    page-break-before: always;
-  }
-  
-  .word-sentence-analysis,
-  .student-sorting-activity {
-    page-break-inside: avoid;
+    break-before: page;
   }
   
   .formula {
