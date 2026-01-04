@@ -144,11 +144,13 @@
 
               <!-- Step 9: Co-Construct Meaning -->
               <div class="routine-step">
-                <h5>★ Step 9: Co-Construct Meaning (Oral Definition + Oral Sentence)</h5>
+                <h5>★ Step 9: Worksheet Instructions</h5>
                 <p class="script-note">On the worksheet, teacher and student work together to:</p>
                 <ul class="action-list">
+                  <li>Write the word.</li>
                   <li>Write a simple definition in student language.</li>
                   <li>Write one sentence using the word.</li>
+                  <li>Create a picture to go with the word.</li>
                 </ul>
               </div>
 
@@ -505,27 +507,7 @@
                 </ul>
               </div>
               
-              <div class="assessment-scale">
-                <h4>Main Idea Assessment Scale</h4>
-                
-                <p class="script-note"><strong>INDEPENDENT (Student responds without support):</strong></p>
-                <ul class="scale-list">
-                  <li>⭐⭐⭐ Main idea + 2 or more details</li>
-                  <li>⭐⭐ Main idea + 1 detail</li>
-                  <li>⭐ Partial understanding (main idea vague or incomplete)</li>
-                  <li>❌ Did not know / No response</li>
-                </ul>
-                
-                <p class="script-note"><strong>WITH TEACHER SUPPORT (if student struggles):</strong></p>
-                <p class="script-line">Support prompt: "Let's look back at the passage. What is this mostly about? Can you find a sentence or detail that shows that?"</p>
-                
-                <ul class="scale-list">
-                  <li>⭐⭐⭐ Main idea + 2 or more details (with support)</li>
-                  <li>⭐⭐ Main idea + 1 detail (with support)</li>
-                  <li>⭐ Partial understanding (with support)</li>
-                  <li>❌ Did not know (even with support)</li>
-                </ul>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -536,23 +518,8 @@
           <p class="directions">Read the passage aloud again.</p>
         </div>
         
-        <!-- Cause/Effect Questions -->
-        <div class="questions-section">
-          <h3>Cause/Effect Organizer</h3>
-          <p v-if="!isTeacherVersion" class="directions">Answer these cause/effect and main idea questions.</p>
-          <div v-for="(q, index) in content.day4Questions" :key="index" class="question-item">
-            <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} <span class="question-type-badge">{{ q.type }}</span></p>
-            <div v-if="!isTeacherVersion" class="answer-space">
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
-              <div v-if="q.type === 'mainIdea'" class="answer-line"></div>
-            </div>
-            <div v-else class="teacher-answer-box">
-              <p class="answer-label">Expected Answer:</p>
-              <p class="answer-text">{{ q.rubric || '(Answer key not provided)' }}</p>
-            </div>
-          </div>
-        </div>
+    
+     
         
         <!-- Main Idea Question -->
         <div class="main-idea-section">
@@ -640,32 +607,53 @@
         
         <!-- Fluency Assessment Tracking -->
         <div class="fluency-tracking">
-          <h3>Fluency Assessment {{ isTeacherVersion ? '(Teacher Recording Form)' : '' }}</h3>
+          <h3>Reading Assessment {{ isTeacherVersion ? '(Teacher Recording Form)' : '' }}</h3>
           <div class="tracking-grid">
+            <fieldset>
+              <legend>Comprehension</legend>
             <div class="tracking-item">
-              <label>Time (seconds):</label>
+              <label>correct (literal):</label>
               <div class="tracking-box"></div>
             </div>
             <div class="tracking-item">
-              <label>Words Per Minute:</label>
+              <label>Correct (infern.)</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>Total:</label>
+              <div class="tracking-box"></div>
+            </div>
+            </fieldset>
+            <fieldset>
+              <legend>Fluency: rate</legend>
+            
+            <div class="tracking-item">
+              <label>Time (sec):</label>
+              <div class="tracking-box"></div>
+            </div>
+            <div class="tracking-item">
+              <label>WPM:</label>
               <div class="tracking-box"></div>
               <p class="formula">WPM = ({{ calculateWordCount(content.fridayPassage?.text || '') }} words ÷ seconds) × 60</p>
             </div>
+            </fieldset>
           </div>
           
           <div v-if="isTeacherVersion" class="error-tracking">
-            <h4>Reading Errors (for accuracy calculation)</h4>
+            <fieldset>
+              <legend>Reading Errors (for accuracy calculation)</legend>
+            
             <div class="errors-grid">
               <div class="error-item">
-                <label>Omissions (skipped):</label>
+                <label>Omissions:</label>
                 <div class="error-box"></div>
               </div>
               <div class="error-item">
-                <label>Insertions (added):</label>
+                <label>Insertions:</label>
                 <div class="error-box"></div>
               </div>
               <div class="error-item">
-                <label>Substitutions (replaced):</label>
+                <label>Substitutions:</label>
                 <div class="error-box"></div>
               </div>
               <div class="error-item">
@@ -682,6 +670,7 @@
                 <p class="formula">Accuracy = ((words - errors) ÷ words) × 100</p>
               </div>
             </div>
+            </fieldset>
           </div>
         </div>
       </div>
@@ -1142,11 +1131,37 @@ ul.teacher-questions {
 
 .tracking-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 3fr 2fr;
+  gap: .5rem;
   margin-top: 1rem;
 }
+.tracking-grid .tracking-item:nth-child(3) .tracking-box {
+    content: "____/5";
+    display: flex;
+    justify-content: center;
+    
+}
 
+.tracking-grid fieldset:first-of-type{
+  height: auto;
+  background: rgb(241, 253, 241);
+  border-radius: 8px;
+  padding: 1rem;
+  gap:calc(1rem * 0.2);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.tracking-grid fieldset:nth-of-type(2){
+  background: rgb(247, 247, 222);
+  border-radius: 8px;
+  padding: 1rem;
+    display: grid;
+    gap:calc(1rem * 0.2);
+    grid-template-columns: 1fr 1fr;
+}
+fieldset{
+  height: min-content;
+}
 .tracking-item label {
   display: block;
   font-weight: 600;
@@ -1167,11 +1182,12 @@ ul.teacher-questions {
   font-style: italic;
 }
 
-.error-tracking {
-  margin-top: 2rem;
-  padding: 1.5rem;
+.error-tracking fieldset{
+ 
+  padding: .5rem;
   background: #fff5f5;
-  border-radius: 8px;
+  border-radius: 4px;
+  
 }
 
 .error-tracking h4 {
@@ -1181,7 +1197,7 @@ ul.teacher-questions {
 
 .errors-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 1rem;
 }
 
