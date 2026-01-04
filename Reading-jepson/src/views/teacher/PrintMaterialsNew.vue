@@ -286,15 +286,31 @@
           </div>
         </div>
         
-        <!-- Student Version: Simple vocab list -->
+        <!-- Student Version: Vocab worksheet -->
         <div v-else class="student-vocab-section">
           <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
             <h4>{{ index + 1 }}. {{ word.word }}</h4>
-            <p class="definition-line">{{ word.definition }}</p>
-            <p class="context-sentence">"{{ word.exampleSentence || '' }}"</p>
+            <p class="definition-line"><strong>Definition:</strong> {{ word.definition }}</p>
+            <p class="context-sentence"><strong>Sentence from text:</strong> "{{ word.exampleSentence || '' }}"</p>
+            
             <div class="student-work-space">
+              <p><strong>Part of Speech:</strong> <span class="blank-line-short"></span></p>
+              
+              <div v-if="word.whatItIs || word.whatItIsNot" class="clarification-section">
+                <p><strong>It is:</strong></p>
+                <p class="clarif-text">{{ word.whatItIs || '' }}</p>
+                
+                <p><strong>It is not:</strong></p>
+                <p class="clarif-text">{{ word.whatItIsNot || '' }}</p>
+              </div>
+              <div v-else class="clarification-section">
+                <p><strong>It is:</strong> <span class="blank-line-long"></span></p>
+                <p><strong>It is not:</strong> <span class="blank-line-long"></span></p>
+              </div>
+              
               <p><strong>My Sentence:</strong></p>
               <div class="write-lines"></div>
+              
               <p><strong>Picture:</strong></p>
               <div class="picture-box"></div>
             </div>
@@ -1096,11 +1112,53 @@ ul.teacher-questions {
   font-weight: 500;
 }
 
-.blank-line {
+.blank-line-short {
   display: inline-block;
   border-bottom: 2px solid #1a202c;
-  min-width: 300px;
+  min-width: 150px;
   margin-left: 0.5rem;
+}
+
+.blank-line-long {
+  display: inline-block;
+  border-bottom: 2px solid #1a202c;
+  min-width: 400px;
+  margin-left: 0.5rem;
+}
+
+.clarification-section {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 6px;
+}
+
+.clarif-text {
+  margin: 0.25rem 0 0.75rem 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  line-height: 1.6;
+  color: #2d3748;
+}
+
+.definition-line {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.write-lines {
+  border-bottom: 2px solid #cbd5e0;
+  height: 40px;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.picture-box {
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  min-height: 150px;
+  margin: 0.5rem 0;
+  background: #f7fafc;
 }
 
 /* Teacher Vocab Format */
