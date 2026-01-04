@@ -776,7 +776,13 @@
           
           <!-- Affix Questions -->
           <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="'affix-q-' + index" class="quiz-item">
-            <p class="quiz-question"><strong>{{ content.vocab.length + index + 1 }}.</strong> What does the word part <em>{{ affix.affix }}</em> mean?</p>
+            <p class="quiz-question">
+              <strong>{{ content.vocab.length + index + 1 }}.</strong> 
+              What does the {{ affix.kind }} <em>{{ affix.affix }}</em> mean? 
+              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint">
+                (<span class="underline">{{ affix.affix }}</span>{{ affix.examples[0].replace(new RegExp(affix.affix.replace(/[-\/]/g, ''), 'i'), '') }})
+              </span>
+            </p>
             <div class="quiz-choices">
               <p class="choice">A. {{ affix.meaning }}</p>
               <p class="choice">B. {{ generateAffixDistractor(affix.affix, 1) }}</p>
@@ -2027,5 +2033,18 @@ fieldset{
 .quiz-note p {
   margin: 0.25rem 0;
   font-size: 0.95rem;
+}
+
+.example-hint {
+  color: #718096;
+  font-weight: 400;
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+.underline {
+  text-decoration: underline;
+  font-weight: 700;
+  color: #667eea;
 }
 </style>
