@@ -63,7 +63,7 @@
               
               <!-- Step 1: Say the Word -->
               <div class="routine-step">
-                <h5>Step 1: Say the Word (Entry & Connection)</h5>
+                <h5>★ Step 1: Say the Word + Syllables + Familiarity Check</h5>
                 <p class="script-note">Teacher says the word clearly:</p>
                 <p class="script-line">"{{ word.word }}"</p>
                 <p class="script-note">Teacher asks:</p>
@@ -76,7 +76,7 @@
 
               <!-- Step 2: Define the Word -->
               <div class="routine-step">
-                <h5>Step 2: Define the Word (Teacher Model)</h5>
+                <h5>★ Step 2: Teacher Definition (Modeled)</h5>
                 <p class="script-note">Teacher says:</p>
                 <p class="script-line">"This word means: {{ word.definition }}"</p>
                 <p class="script-note">(One short, student-friendly sentence.)</p>
@@ -84,7 +84,7 @@
 
               <!-- Step 3: Use in Sentence -->
               <div class="routine-step">
-                <h5>Step 3: Use the Word in a Sentence (Teacher Model)</h5>
+                <h5>★ Step 3: Teacher Model Sentence (Listening Only)</h5>
                 <p class="script-note">Teacher says:</p>
                 <p class="script-line">"Listen to how I use the word in a sentence: {{ word.exampleSentence || '[Sentence needed]' }}"</p>
                 <p class="script-note">(Literal meaning only.)</p>
@@ -144,7 +144,7 @@
 
               <!-- Step 9: Co-Construct Meaning -->
               <div class="routine-step">
-                <h5>Step 9: Co-Construct Meaning (Teacher + Student)</h5>
+                <h5>★ Step 9: Co-Construct Meaning (Oral Definition + Oral Sentence)</h5>
                 <p class="script-note">On the worksheet, teacher and student work together to:</p>
                 <ul class="action-list">
                   <li>Write a simple definition in student language.</li>
@@ -154,7 +154,7 @@
 
               <!-- Step 10: Clarify Meaning -->
               <div class="routine-step">
-                <h5>Step 10: Clarify Meaning (If Helpful)</h5>
+                <h5>★ Step 10: Clarify Meaning (What It Is / What It Is Not)</h5>
                 <p class="script-note">Student records:</p>
                 <div v-if="word.partOfSpeech || word.whatItIs || word.whatItIsNot" style="margin-left: 1rem;">
                   <p v-if="word.partOfSpeech" class="script-note"><strong>Part of speech:</strong> {{ word.partOfSpeech }}</p>
@@ -171,7 +171,7 @@
 
               <!-- Step 11: Reflection -->
               <div class="routine-step">
-                <h5>Step 11: Reflection (Exit)</h5>
+                <h5>★ Step 11: Reflection (❓ 👀 🧠 ⭐ Scale)</h5>
                 <p class="script-note">Teacher asks:</p>
                 <p class="script-line">"Where are you now with this word?"</p>
                 <p class="script-note">Student marks:</p>
@@ -486,13 +486,7 @@
             </div>
             
             <div class="routine-step">
-              <h5>Step 3: Cause/Effect Organizer</h5>
-              <p class="script-line">"Today we're looking at cause and effect. A cause is WHY something happens. An effect is WHAT happens."</p>
-              <p class="script-note">Guide students through the cause/effect questions.</p>
-            </div>
-            
-            <div class="routine-step">
-              <h5>Step 4: Main Idea with Evidence</h5>
+              <h5>Step 3: Main Idea with Evidence</h5>
               <p class="script-line">"What is the main idea of this passage? Give me 2-3 details from the text that prove it."</p>
               
               <!-- Main Idea Teacher Answer Key -->
@@ -1076,7 +1070,7 @@ ul.teacher-questions {
 }
 
 .passage-text {
-  line-height: 2;
+  line-height: 1.5;
   font-size: 1.0625rem;
   margin: 1.5rem 0;
   text-align: justify;
