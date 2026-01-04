@@ -1080,6 +1080,7 @@ ul.teacher-questions {
   font-size: 1.0625rem;
   margin: 1.5rem 0;
   text-align: justify;
+  white-space: pre-line; /* Preserves line breaks and paragraph spacing */
 }
 
 .vocab-practice {
