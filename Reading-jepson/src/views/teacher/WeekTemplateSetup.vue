@@ -919,11 +919,40 @@ async function loadTemplateData() {
         text: weeklyPassageDoc.text
       }
       
-      // Load vocab items for weekly passage
+      // Load vocab items for weekly passage AND populate vocabWords array
       if (weeklyPassageDoc.vocabItems) {
         weeklyPassageDoc.vocabItems.forEach((item, index) => {
           weeklyPassageVocab.value.set(index, item)
+          
+          // Also populate vocabWords array for Step 2 display
+          if (!vocabWords.value[index] || !vocabWords.value[index].word) {
+            vocabWords.value[index] = {
+              word: item.word,
+              definition: item.definition,
+              exampleSentence: item.exampleSentence || '',
+              teacherPrompts: item.teacherPrompts || '',
+              sentenceFrame: item.sentenceFrame || '',
+              pictureGuidance: item.pictureGuidance || '',
+              wordPhraseCardsStr: item.wordPhraseCards?.join(', ') || '',
+              sortingKey: {
+                whoWhat: item.sortingKey?.whoWhat?.join(', ') || '',
+                doingDid: item.sortingKey?.doingDid?.join(', ') || '',
+                whichWhatKind: item.sortingKey?.whichWhatKind?.join(', ') || '',
+                whereWhenHowWhy: item.sortingKey?.whereWhenHowWhy?.join(', ') || '',
+                relationship: item.sortingKey?.relationship?.join(', ') || '',
+                glue: item.sortingKey?.glue?.join(', ') || ''
+              },
+              partOfSpeech: item.partOfSpeech,
+              whatItIs: item.whatItIs,
+              whatItIsNot: item.whatItIsNot
+            }
+          }
         })
+      }
+      
+      // Also check if there's mainIdeaAnswer
+      if (weeklyPassageDoc.mainIdeaAnswer) {
+        mainIdeaAnswer.value = weeklyPassageDoc.mainIdeaAnswer
       }
       
       // Load affix items for weekly passage
@@ -1001,6 +1030,7 @@ async function loadTemplateData() {
       .map(q => ({
         type: q.type,
         prompt: q.prompt,
+        rubric: q.rubric || '',
         orderIndex: q.orderIndex || 0
       }))
     
@@ -1010,6 +1040,7 @@ async function loadTemplateData() {
       .map(q => ({
         type: q.type,
         prompt: q.prompt,
+        rubric: q.rubric || '',
         orderIndex: q.orderIndex || 0
       }))
     
@@ -1019,6 +1050,7 @@ async function loadTemplateData() {
       .map(q => ({
         type: q.type,
         prompt: q.prompt,
+        rubric: q.rubric || '',
         orderIndex: q.orderIndex || 0
       }))
     
@@ -1614,6 +1646,11 @@ const saveTemplate = async () => {
         if (vocab.sentenceFrame) vocabPayload.sentenceFrame = vocab.sentenceFrame
         if (vocab.pictureGuidance) vocabPayload.pictureGuidance = vocab.pictureGuidance
         
+        // AI-generated clarification fields
+        if (vocab.partOfSpeech) vocabPayload.partOfSpeech = vocab.partOfSpeech
+        if (vocab.whatItIs) vocabPayload.whatItIs = vocab.whatItIs
+        if (vocab.whatItIsNot) vocabPayload.whatItIsNot = vocab.whatItIsNot
+        
         // Parse word/phrase cards
         if (vocab.wordPhraseCardsStr) {
           const cards = vocab.wordPhraseCardsStr.split(',').map(c => c.trim()).filter(c => c)
@@ -1682,6 +1719,7 @@ const saveTemplate = async () => {
           day: 3,
           type: q.type as any,
           prompt: q.prompt,
+          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
         })
       }
@@ -1695,6 +1733,7 @@ const saveTemplate = async () => {
           day: 4,
           type: q.type as any,
           prompt: q.prompt,
+          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
         })
       }
@@ -1708,6 +1747,7 @@ const saveTemplate = async () => {
           day: 5,
           type: q.type as any,
           prompt: q.prompt,
+          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
         })
       }
