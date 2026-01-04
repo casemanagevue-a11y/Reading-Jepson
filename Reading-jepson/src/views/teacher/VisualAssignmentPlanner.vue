@@ -108,10 +108,18 @@
                   <router-link 
                     :to="`/teacher/assignments/print?assignmentId=${day.assignment.id}&studentId=${selectedStudentId}&version=teacher`"
                     class="print-link"
-                    title="Teacher Materials"
+                    title="Teacher Script"
                     @click.stop
                   >
                     👨‍🏫
+                  </router-link>
+                  <router-link 
+                    :to="`/teacher/assignments/print?assignmentId=${day.assignment.id}&studentId=${selectedStudentId}&version=compact`"
+                    class="print-link"
+                    title="Teacher Reference (Compact)"
+                    @click.stop
+                  >
+                    📋
                   </router-link>
                   <router-link 
                     :to="`/teacher/assignments/print?assignmentId=${day.assignment.id}&studentId=${selectedStudentId}&version=student`"
