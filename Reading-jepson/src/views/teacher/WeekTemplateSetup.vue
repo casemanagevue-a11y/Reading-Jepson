@@ -1714,42 +1714,45 @@ const saveTemplate = async () => {
     // Create Day 3 questions (Inference organizer)
     for (const q of day3Questions.value) {
       if (q.prompt) {
-        await createQuestion({
+        const questionPayload: any = {
           weekId: finalTemplateId,
           day: 3,
           type: q.type as any,
           prompt: q.prompt,
-          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
-        })
+        }
+        if (q.rubric) questionPayload.rubric = q.rubric
+        await createQuestion(questionPayload)
       }
     }
     
     // Create Day 4 questions (Cause/Effect organizer)
     for (const q of day4Questions.value) {
       if (q.prompt) {
-        await createQuestion({
+        const questionPayload: any = {
           weekId: finalTemplateId,
           day: 4,
           type: q.type as any,
           prompt: q.prompt,
-          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
-        })
+        }
+        if (q.rubric) questionPayload.rubric = q.rubric
+        await createQuestion(questionPayload)
       }
     }
     
     // Create Day 5 questions (Reading assessment)
     for (const q of day5Questions.value) {
       if (q.prompt) {
-        await createQuestion({
+        const questionPayload: any = {
           weekId: finalTemplateId,
           day: 5,
           type: q.type as any,
           prompt: q.prompt,
-          rubric: q.rubric || undefined,
           orderIndex: q.orderIndex
-        })
+        }
+        if (q.rubric) questionPayload.rubric = q.rubric
+        await createQuestion(questionPayload)
       }
     }
     
