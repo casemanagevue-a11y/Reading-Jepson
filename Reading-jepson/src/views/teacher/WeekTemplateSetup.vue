@@ -1404,9 +1404,25 @@ async function generateSingleClarification(vocabIndex: number) {
     
     const result = await generateVocabClarifications(vocab.word, vocab.definition)
     
+    // Update vocabWords array
     vocab.partOfSpeech = result.partOfSpeech
     vocab.whatItIs = result.whatItIs
     vocab.whatItIsNot = result.whatItIsNot
+    
+    // ALSO update passage vocab items (both weekly and friday if assigned)
+    const weeklyItem = weeklyPassageVocab.value.get(vocabIndex)
+    if (weeklyItem) {
+      weeklyItem.partOfSpeech = result.partOfSpeech
+      weeklyItem.whatItIs = result.whatItIs
+      weeklyItem.whatItIsNot = result.whatItIsNot
+    }
+    
+    const fridayItem = fridayPassageVocab.value.get(vocabIndex)
+    if (fridayItem) {
+      fridayItem.partOfSpeech = result.partOfSpeech
+      fridayItem.whatItIs = result.whatItIs
+      fridayItem.whatItIsNot = result.whatItIsNot
+    }
     
     console.log('[WeekTemplateSetup] Generated clarifications for', vocab.word, result)
   } catch (error: any) {
@@ -1433,13 +1449,32 @@ async function generateAllClarifications() {
     generatingClarifications.value = true
     let successCount = 0
     
-    for (const vocab of vocabWords.value) {
+    for (let index = 0; index < vocabWords.value.length; index++) {
+      const vocab = vocabWords.value[index]
       if (vocab.word && vocab.definition && !vocab.whatItIs) {
         try {
           const result = await generateVocabClarifications(vocab.word, vocab.definition)
+          
+          // Update vocabWords array
           vocab.partOfSpeech = result.partOfSpeech
           vocab.whatItIs = result.whatItIs
           vocab.whatItIsNot = result.whatItIsNot
+          
+          // ALSO update passage vocab items
+          const weeklyItem = weeklyPassageVocab.value.get(index)
+          if (weeklyItem) {
+            weeklyItem.partOfSpeech = result.partOfSpeech
+            weeklyItem.whatItIs = result.whatItIs
+            weeklyItem.whatItIsNot = result.whatItIsNot
+          }
+          
+          const fridayItem = fridayPassageVocab.value.get(index)
+          if (fridayItem) {
+            fridayItem.partOfSpeech = result.partOfSpeech
+            fridayItem.whatItIs = result.whatItIs
+            fridayItem.whatItIsNot = result.whatItIsNot
+          }
+          
           successCount++
           
           // Small delay to avoid rate limits
