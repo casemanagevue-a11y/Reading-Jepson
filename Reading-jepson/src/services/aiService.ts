@@ -224,36 +224,55 @@ export async function generateComprehensionQuestions(
     mainIdea: count.mainIdea ?? 1
   }
 
-  const dayContext = day === 3 
-    ? 'Day 3 inference organizer (focus on literal and inferential comprehension)'
+  const dayInstructions = day === 3
+    ? `Generate ${defaultCounts.literal} literal questions and ${defaultCounts.inferential} inferential questions. Do NOT generate main idea questions for Day 3.`
     : day === 4
-    ? 'Day 4 cause/effect organizer (focus on cause/effect relationships and main idea)'
-    : 'Day 5 reading assessment (comprehensive evaluation)'
+    ? `Generate ${defaultCounts.mainIdea} main idea question(s) and ${defaultCounts.inferential} cause/effect questions.`
+    : `Generate ${defaultCounts.literal} literal questions and ${defaultCounts.inferential} inferential questions for assessment.`
 
-  const prompt = `Generate comprehension questions for the following passage. This is for ${dayContext}.
+  const prompt = `Generate comprehension questions for a 7th grade student with Developmental Language Disorder (DLD).
+
+CRITICAL LANGUAGE REQUIREMENTS:
+- Use simple, clear, direct language
+- Use short sentences (under 15 words if possible)
+- Use common, everyday words
+- Avoid complex sentence structures
+- Avoid double negatives
+- One question = one concept
+- Be concrete and specific
 
 Passage:
 """
 ${passageText}
 """
 
-Generate:
-- ${defaultCounts.literal} literal questions (direct recall from text)
-- ${defaultCounts.inferential} inferential questions (require making connections and inferences)
-- ${defaultCounts.mainIdea} main idea question(s) (focus on central theme/purpose)
+${dayInstructions}
 
-For each question, provide:
+Question Types:
+- LITERAL: Direct recall from text. Ask "What...", "Who...", "When...", "Where..."
+- INFERENTIAL: Simple connections. Ask "Why did..." or "What caused..." (not "Why might..." or "What could...")
+
+For each question provide:
 - The question type
-- The question prompt (clear, grade-appropriate)
-- A rubric for evaluating answers (what key points should be included)
+- The question prompt (simple, clear language for DLD student)
+- A rubric (expected answer with key points)
 
-Respond with a JSON object:
+Example of GOOD questions for DLD:
+✓ "Who was Sundiata's father?" (literal)
+✓ "What did Sundiata do after he won the battle?" (literal)
+✓ "Why did Sundiata bring the Malinke people together?" (inferential)
+
+Example of BAD questions (too complex):
+✗ "What might have motivated Sundiata to unite the disparate factions?"
+✗ "How could the establishment of trade routes have influenced subsequent development?"
+
+Respond with JSON:
 {
   "questions": [
     {
-      "type": "literal" | "inferential" | "mainIdea",
-      "prompt": <string>,
-      "rubric": <string>,
+      "type": "literal" | "inferential" | "mainIdea" | "causeEffect",
+      "prompt": <string - simple, clear language>,
+      "rubric": <string - expected answer>,
       "orderIndex": <number, starting from 0>
     }
   ]
@@ -262,7 +281,7 @@ Respond with a JSON object:
   const messages = [
     {
       role: 'system',
-      content: 'You are an experienced reading teacher skilled at creating thought-provoking comprehension questions aligned to grade-level standards.'
+      content: 'You are an expert special education teacher who creates simple, clear comprehension questions for students with Developmental Language Disorder. You use short sentences, common words, and direct questions. You avoid complex language and academic jargon.'
     },
     {
       role: 'user',

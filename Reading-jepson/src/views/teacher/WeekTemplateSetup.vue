@@ -1249,7 +1249,7 @@ async function generateDay3Questions() {
     const questions = await generateComprehensionQuestions(
       weeklyPassage.value.text,
       3,
-      { literal: 3, inferential: 2 }
+      { literal: 3, inferential: 2, mainIdea: 0 } // No main idea for Day 3
     )
     
     // Replace existing questions with AI-generated ones
@@ -1282,7 +1282,7 @@ async function generateDay5Questions() {
     const questions = await generateComprehensionQuestions(
       fridayPassage.value.text,
       5,
-      { literal: 3, inferential: 2 }
+      { literal: 3, inferential: 2, mainIdea: 0 } // No main idea for Day 5
     )
     
     // Replace existing questions with AI-generated ones
