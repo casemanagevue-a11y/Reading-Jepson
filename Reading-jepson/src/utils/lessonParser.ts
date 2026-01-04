@@ -55,7 +55,7 @@ export function parseVocabulary(_data: any, weekId: string): VocabDocument[] {
 
 /**
  * Extract all sentences from a passage that contain a specific word
- * Returns array of sentences with the word highlighted
+ * Returns array of sentences (handles inflectional endings)
  */
 export function extractSentencesContainingWord(
   passageText: string,
@@ -65,7 +65,17 @@ export function extractSentencesContainingWord(
   
   // Normalize word for case-insensitive matching
   const normalizedWord = word.toLowerCase().trim()
-  const wordRegex = new RegExp(`\\b${normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+  
+  // Escape special regex characters
+  const escapedWord = normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  
+  // Create regex that matches the base word + common inflectional endings
+  // Handles: plurals (-s, -es), past tense (-ed), gerunds (-ing), comparatives (-er, -est)
+  // Also handles: possessives ('s), contractions
+  const wordRegex = new RegExp(
+    `\\b${escapedWord}(s|es|ed|ing|er|est|'s|')?\\b`,
+    'gi'
+  )
   
   // Split passage into sentences
   // Handle common sentence endings: . ! ? and also handle quotes, parentheses
@@ -74,7 +84,7 @@ export function extractSentencesContainingWord(
     .map(s => s.trim())
     .filter(s => s.length > 0)
   
-  // Find sentences containing the word
+  // Find sentences containing the word or its inflected forms
   const matchingSentences: string[] = []
   
   for (const sentence of sentences) {
