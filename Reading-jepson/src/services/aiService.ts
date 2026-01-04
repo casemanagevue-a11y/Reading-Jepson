@@ -478,81 +478,69 @@ Respond with JSON matching this exact format.`
 export interface SentenceSortingResult {
   wordPhraseCards: string[] // Cut-apart cards
   sortingKey: {
-    whoWhat: string[] // Who or what? (Noun-Subject)
-    isWasDoing: string[] // Is/was doing or happening? (Verb)
-    whichWhatKind: string[] // Which one, what kind, how many? (Adjective)
-    toWhatToWhom: string[] // To what? To whom? (Object of verb)
-    whenWhereWhyHow: string[] // When, where, why, how? (Adverb)
+    whoWhat: string[] // Who or what? (noun-subject)
+    doingDid: string[] // Doing or did? (verb-predicate)
+    whichWhatKind: string[] // Which one, what kind, how many? (adjective-modifies noun)
+    whereWhenHowWhy: string[] // Where, when, how, why? (adverb-modifies verb)
+    relationship: string[] // What is the relationship? (prepositions)
+    glue: string[] // What connects? (conjunctions)
   }
-  connectors?: string[] // Conjunctions like 'and', 'or', 'but' that don't fit the 5 questions
 }
 
 export async function generateSentenceSorting(
-  word: string,
+  _word: string,
   sentence: string
 ): Promise<SentenceSortingResult> {
-  const prompt = `Analyze this sentence for a Day 2 "Words Working Together" lesson (Nancy Hennessy / Reading Comprehension Blueprint style).
+  const prompt = `Analyze this sentence for a "Words Working Together" syntax lesson (Nancy Hennessy / Reading Comprehension Blueprint). 
 
-Target Word: ${word}
+Goal: Sentence comprehension through functional syntax analysis.
+
 Sentence: "${sentence}"
 
-Break the sentence into word/phrase cards for a 5-column syntactic sorting activity to help students understand what the sentence is about.
+Break the sentence into word/phrase cards. Every single word must be assigned to one of these 6 functional categories:
 
-CONSTRAINTS FOR ACCURACY:
-1. COLUMN C (Adjectives): MUST include ALL articles (the, a, an), demonstratives (this, that), possessives (his, her, their), and quantifiers (many, some, all).
-2. COLUMN D (Objects): Should be the direct or indirect object ONLY. Do NOT include prepositional phrases here unless they are truly receiving the action.
-3. COLUMN E (Adverbial): Include phrases that tell when, where, why, or how. Prepositional phrases acting as adverbs go here.
-4. CONNECTORS: If the sentence contains conjunctions (and, or, but, so), do NOT place them in the 5 columns. List them separately in a "connectors" array.
-5. NO OVERLAP: Every word in the sentence must be accounted for exactly once (either in a column or in connectors).
-6. KEEP PHRASES TOGETHER: Keep prepositional phrases together (e.g., "in West Africa", "for help", "about his achievements").
+1. whoWhat: (noun-subject) Who or what?
+   👉 Focus: The actors or things the sentence is about.
+2. doingDid: (verb-predicate) Doing or did?
+   👉 Focus: The action or state of being.
+3. whichWhatKind: (adjective-modifies the noun) Which one, what kind, how many?
+   👉 Focus: Describing the nouns (Include: the, a, an, this, his, her).
+4. whereWhenHowWhy: (adverb-modifies the verb) Where, when, how, why?
+   👉 Focus: Circumstances of the action.
+5. relationship: (preposition) What is the relationship between the words?
+   👉 Focus: Direction, location, or connection (e.g., through, of, about, from, as).
+6. glue: (conjunctions) What is connected or needs to be glued together?
+   👉 Focus: Connectors (e.g., and, or, but).
 
-COLUMN HEADERS (functional questions, not strict grammar labels):
-A) Who or what? → Subject/Noun
-   👉 Names a person, place, thing, or idea
-B) Is/was doing or happening? → Verb
-   👉 Shows action or state of being
-C) Which one, what kind, how many? → Adjective/Article/Determiner
-   👉 Describes or limits a noun
-D) To what? To whom? → Object
-   👉 Receives the action (direct or indirect object)
-E) When, where, why, how? → Adverb/Adverbial Phrase
-   👉 Gives more information about the verb
+INSTRUCTIONS:
+- Break the sentence into functional units (cards).
+- Every word must be accounted for.
+- Map every card to one of the 6 JSON keys below.
+- Keep prepositional phrases together when they function as a unit.
+- Articles and determiners go with "whichWhatKind" (they describe/limit nouns).
 
-EXAMPLES:
-
-Example 1:
+EXAMPLE:
 Sentence: "The griots told many a tale about his achievements."
-Cards: ["The griots", "told", "many", "a", "tale", "about his achievements"]
+Cards: ["The", "griots", "told", "many", "a", "tale", "about", "his", "achievements"]
 Sorting Key:
-- Who/What: ["griots"]
-- Is/Was Doing: ["told"]
-- Which/What Kind: ["The", "many", "a", "his"]
-- To What/To Whom: ["tale"]
-- When/Where/Why/How: ["about his achievements"]
-- Connectors: []
-
-Example 2:
-Sentence: "This family connection shows his lineage, or the family he came from."
-Cards: ["This", "family", "connection", "shows", "his", "lineage", "the family he came from"]
-Sorting Key:
-- Who/What: ["family", "connection"]
-- Is/Was Doing: ["shows", "came"]
-- Which/What Kind: ["This", "his", "the"]
-- To What/To Whom: ["lineage", "family"]
-- When/Where/Why/How: ["he came from"]
-- Connectors: ["or"]
+- whoWhat: ["griots", "tale", "achievements"]
+- doingDid: ["told"]
+- whichWhatKind: ["The", "many", "a", "his"]
+- whereWhenHowWhy: []
+- relationship: ["about"]
+- glue: []
 
 Respond with JSON:
 {
   "wordPhraseCards": [array of all word/phrase chunks],
   "sortingKey": {
     "whoWhat": [array of strings],
-    "isWasDoing": [array of strings],
+    "doingDid": [array of strings],
     "whichWhatKind": [array of strings],
-    "toWhatToWhom": [array of strings],
-    "whenWhereWhyHow": [array of strings]
-  },
-  "connectors": [array of words like 'and', 'or', 'but' that don't fit the 5 questions]
+    "whereWhenHowWhy": [array of strings],
+    "relationship": [array of strings],
+    "glue": [array of strings]
+  }
 }`
 
   const messages = [

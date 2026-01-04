@@ -267,7 +267,7 @@
                     </div>
                     
                     <!-- Show/Edit AI Results -->
-                    <div v-if="vocab.wordPhraseCardsStr || vocab.sortingKey.whoWhat || vocab.sortingKey.isWasDoing" class="ai-results-section" style="margin-top: 1rem;">
+                    <div v-if="vocab.wordPhraseCardsStr || vocab.sortingKey.whoWhat || vocab.sortingKey.doingDid" class="ai-results-section" style="margin-top: 1rem;">
                       <h5>Day 2 Sorting Results (Editable)</h5>
                       
                       <div class="form-group">
@@ -284,28 +284,39 @@
                         <p><strong>Sorting Key (Teacher Answers):</strong></p>
                         
                         <div class="form-group-compact">
-                          <label>1. Who/what? (Noun)</label>
-                          <input v-model="vocab.sortingKey.whoWhat" type="text" class="form-input-sm" />
+                          <label>1. Who or what? (noun-subject)</label>
+                          <input v-model="vocab.sortingKey.whoWhat" type="text" class="form-input-sm" placeholder="e.g., griots" />
+                          <small class="hint-text">The actors or things the sentence is about</small>
                         </div>
                         
                         <div class="form-group-compact">
-                          <label>2. Is/was doing? (Verb)</label>
-                          <input v-model="vocab.sortingKey.isWasDoing" type="text" class="form-input-sm" />
+                          <label>2. Doing or did? (verb-predicate)</label>
+                          <input v-model="vocab.sortingKey.doingDid" type="text" class="form-input-sm" placeholder="e.g., told" />
+                          <small class="hint-text">The action or state of being</small>
                         </div>
                         
                         <div class="form-group-compact">
-                          <label>3. Which/what kind? (Adjective)</label>
-                          <input v-model="vocab.sortingKey.whichWhatKind" type="text" class="form-input-sm" />
+                          <label>3. Which/what kind/how many? (adjective)</label>
+                          <input v-model="vocab.sortingKey.whichWhatKind" type="text" class="form-input-sm" placeholder="e.g., The, many, his" />
+                          <small class="hint-text">Include articles, possessives, demonstratives</small>
                         </div>
                         
                         <div class="form-group-compact">
-                          <label>4. To what/whom? (Object)</label>
-                          <input v-model="vocab.sortingKey.toWhatToWhom" type="text" class="form-input-sm" />
+                          <label>4. Where/when/how/why? (adverb)</label>
+                          <input v-model="vocab.sortingKey.whereWhenHowWhy" type="text" class="form-input-sm" placeholder="e.g., later" />
+                          <small class="hint-text">Circumstances of the action</small>
                         </div>
                         
                         <div class="form-group-compact">
-                          <label>5. When/where/why/how? (Adverb)</label>
-                          <input v-model="vocab.sortingKey.whenWhereWhyHow" type="text" class="form-input-sm" />
+                          <label>5. What relationship? (preposition)</label>
+                          <input v-model="vocab.sortingKey.relationship" type="text" class="form-input-sm" placeholder="e.g., about, from, of" />
+                          <small class="hint-text">Connection between words</small>
+                        </div>
+                        
+                        <div class="form-group-compact">
+                          <label>6. What connects? (conjunction)</label>
+                          <input v-model="vocab.sortingKey.glue" type="text" class="form-input-sm" placeholder="e.g., and, or" />
+                          <small class="hint-text">Words that glue parts together</small>
                         </div>
                       </div>
                     </div>
@@ -625,10 +636,11 @@ const vocabWords = ref<Array<{
   wordPhraseCardsStr: string;
   sortingKey: {
     whoWhat: string;
-    isWasDoing: string;
+    doingDid: string;
     whichWhatKind: string;
-    toWhatToWhom: string;
-    whenWhereWhyHow: string;
+    whereWhenHowWhy: string;
+    relationship: string;
+    glue: string;
   };
   partOfSpeech?: string;
   whatItIs?: string;
@@ -644,10 +656,11 @@ const vocabWords = ref<Array<{
     wordPhraseCardsStr: '',
     sortingKey: {
       whoWhat: '',
-      isWasDoing: '',
+      doingDid: '',
       whichWhatKind: '',
-      toWhatToWhom: '',
-      whenWhereWhyHow: ''
+      whereWhenHowWhy: '',
+      relationship: '',
+      glue: ''
     }
   }
 ])
@@ -868,10 +881,11 @@ async function loadTemplateData() {
         wordPhraseCardsStr: v.wordPhraseCards?.join(', ') || '',
         sortingKey: {
         whoWhat: v.sortingKey?.whoWhat?.join(', ') || '',
-        isWasDoing: v.sortingKey?.isWasDoing?.join(', ') || '',
+        doingDid: v.sortingKey?.doingDid?.join(', ') || '',
         whichWhatKind: v.sortingKey?.whichWhatKind?.join(', ') || '',
-        toWhatToWhom: v.sortingKey?.toWhatToWhom?.join(', ') || '',
-        whenWhereWhyHow: v.sortingKey?.whenWhereWhyHow?.join(', ') || ''
+        whereWhenHowWhy: v.sortingKey?.whereWhenHowWhy?.join(', ') || '',
+        relationship: v.sortingKey?.relationship?.join(', ') || '',
+        glue: v.sortingKey?.glue?.join(', ') || ''
         },
         partOfSpeech: v.partOfSpeech,
         whatItIs: v.whatItIs,
@@ -947,10 +961,11 @@ function importVocabFromLibrary(item: VocabLibraryWithId) {
     wordPhraseCardsStr: '',
     sortingKey: {
       whoWhat: '',
-      isWasDoing: '',
+      doingDid: '',
       whichWhatKind: '',
-      toWhatToWhom: '',
-      whenWhereWhyHow: ''
+      whereWhenHowWhy: '',
+      relationship: '',
+      glue: ''
     },
     partOfSpeech: item.partOfSpeech,
     whatItIs: item.whatItIs,
@@ -1003,13 +1018,15 @@ function handleVocabAssignment(passageType: 'weekly' | 'friday', vocabIndex: num
       wordPhraseCards: vocab.wordPhraseCardsStr 
         ? vocab.wordPhraseCardsStr.split(',').map(c => c.trim()).filter(c => c)
         : undefined,
-      sortingKey: (vocab.sortingKey.whoWhat || vocab.sortingKey.isWasDoing || 
-                   vocab.sortingKey.whichWhatKind || vocab.sortingKey.toWhatToWhom || vocab.sortingKey.whenWhereWhyHow) ? {
+      sortingKey: (vocab.sortingKey.whoWhat || vocab.sortingKey.doingDid || 
+                   vocab.sortingKey.whichWhatKind || vocab.sortingKey.whereWhenHowWhy || 
+                   vocab.sortingKey.relationship || vocab.sortingKey.glue) ? {
         whoWhat: vocab.sortingKey.whoWhat ? vocab.sortingKey.whoWhat.split(',').map(s => s.trim()).filter(s => s) : undefined,
-        isWasDoing: vocab.sortingKey.isWasDoing ? vocab.sortingKey.isWasDoing.split(',').map(s => s.trim()).filter(s => s) : undefined,
+        doingDid: vocab.sortingKey.doingDid ? vocab.sortingKey.doingDid.split(',').map(s => s.trim()).filter(s => s) : undefined,
         whichWhatKind: vocab.sortingKey.whichWhatKind ? vocab.sortingKey.whichWhatKind.split(',').map(s => s.trim()).filter(s => s) : undefined,
-        toWhatToWhom: vocab.sortingKey.toWhatToWhom ? vocab.sortingKey.toWhatToWhom.split(',').map(s => s.trim()).filter(s => s) : undefined,
-        whenWhereWhyHow: vocab.sortingKey.whenWhereWhyHow ? vocab.sortingKey.whenWhereWhyHow.split(',').map(s => s.trim()).filter(s => s) : undefined
+        whereWhenHowWhy: vocab.sortingKey.whereWhenHowWhy ? vocab.sortingKey.whereWhenHowWhy.split(',').map(s => s.trim()).filter(s => s) : undefined,
+        relationship: vocab.sortingKey.relationship ? vocab.sortingKey.relationship.split(',').map(s => s.trim()).filter(s => s) : undefined,
+        glue: vocab.sortingKey.glue ? vocab.sortingKey.glue.split(',').map(s => s.trim()).filter(s => s) : undefined
       } : undefined,
       partOfSpeech: vocab.partOfSpeech || undefined,
       whatItIs: vocab.whatItIs || undefined,
@@ -1134,10 +1151,11 @@ async function generateSortingForVocab(vocabIndex: number, sentence: string) {
     // Populate the fields with AI results in vocabWords array
     vocab.wordPhraseCardsStr = result.wordPhraseCards.join(', ')
     vocab.sortingKey.whoWhat = result.sortingKey.whoWhat.join(', ')
-    vocab.sortingKey.isWasDoing = result.sortingKey.isWasDoing.join(', ')
+    vocab.sortingKey.doingDid = result.sortingKey.doingDid.join(', ')
     vocab.sortingKey.whichWhatKind = result.sortingKey.whichWhatKind.join(', ')
-    vocab.sortingKey.toWhatToWhom = result.sortingKey.toWhatToWhom.join(', ')
-    vocab.sortingKey.whenWhereWhyHow = result.sortingKey.whenWhereWhyHow.join(', ')
+    vocab.sortingKey.whereWhenHowWhy = result.sortingKey.whereWhenHowWhy.join(', ')
+    vocab.sortingKey.relationship = result.sortingKey.relationship.join(', ')
+    vocab.sortingKey.glue = result.sortingKey.glue.join(', ')
     
     // ALSO update the passage vocab items (both weekly and friday if assigned)
     const weeklyItem = weeklyPassageVocab.value.get(vocabIndex)
@@ -1154,13 +1172,9 @@ async function generateSortingForVocab(vocabIndex: number, sentence: string) {
       console.log('[WeekTemplateSetup] Updated fridayPassageVocab item:', { word: vocab.word, hasCards: !!fridayItem.wordPhraseCards, hasSortingKey: !!fridayItem.sortingKey })
     }
     
-    console.log('[WeekTemplateSetup] AI generated sorting:', { word: vocab.word, cards: result.wordPhraseCards, sortingKey: result.sortingKey, connectors: result.connectors })
+    console.log('[WeekTemplateSetup] AI generated sorting:', { word: vocab.word, cards: result.wordPhraseCards, sortingKey: result.sortingKey })
     
-    const connectorsMsg = result.connectors && result.connectors.length > 0 
-      ? `\n\nConnectors (not in columns): ${result.connectors.join(', ')}`
-      : ''
-    
-    alert(`✅ AI generated sorting for "${vocab.word}"!\n\nCards: ${result.wordPhraseCards.join(', ')}${connectorsMsg}\n\nReview and edit the results below if needed.`)
+    alert(`✅ AI generated sorting for "${vocab.word}"!\n\nCards: ${result.wordPhraseCards.join(', ')}\n\nReview and edit the results below if needed.`)
     
   } catch (error: any) {
     console.error('Error generating with AI:', error)
@@ -1367,25 +1381,28 @@ const saveTemplate = async () => {
         let hasSortingKey = false
         
         if (vocab.sortingKey.whoWhat) {
-          sortingKey.whoWhat = vocab.sortingKey.whoWhat.split(',').map(s => s.trim()).filter(s => s)
+          sortingKey.whoWhat = vocab.sortingKey.whoWhat.split(',').map((s: string) => s.trim()).filter((s: string) => s)
           if (sortingKey.whoWhat.length > 0) hasSortingKey = true
         }
-        if (vocab.sortingKey.isWasDoing) {
-          sortingKey.isWasDoing = vocab.sortingKey.isWasDoing.split(',').map(s => s.trim()).filter(s => s)
-          if (sortingKey.isWasDoing.length > 0) hasSortingKey = true
+        if (vocab.sortingKey.doingDid) {
+          sortingKey.doingDid = vocab.sortingKey.doingDid.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          if (sortingKey.doingDid.length > 0) hasSortingKey = true
         }
         if (vocab.sortingKey.whichWhatKind) {
-          sortingKey.whichWhatKind = vocab.sortingKey.whichWhatKind.split(',').map(s => s.trim()).filter(s => s)
+          sortingKey.whichWhatKind = vocab.sortingKey.whichWhatKind.split(',').map((s: string) => s.trim()).filter((s: string) => s)
           if (sortingKey.whichWhatKind.length > 0) hasSortingKey = true
         }
-        if (vocab.sortingKey.toWhatToWhom) {
-          sortingKey.toWhatToWhom = vocab.sortingKey.toWhatToWhom.split(',').map(s => s.trim()).filter(s => s)
-          if (sortingKey.toWhatToWhom.length > 0) hasSortingKey = true
+        if (vocab.sortingKey.whereWhenHowWhy) {
+          sortingKey.whereWhenHowWhy = vocab.sortingKey.whereWhenHowWhy.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          if (sortingKey.whereWhenHowWhy.length > 0) hasSortingKey = true
         }
-        
-        if (vocab.sortingKey.whenWhereWhyHow) {
-          sortingKey.whenWhereWhyHow = vocab.sortingKey.whenWhereWhyHow.split(',').map(s => s.trim()).filter(s => s)
-          if (sortingKey.whenWhereWhyHow.length > 0) hasSortingKey = true
+        if (vocab.sortingKey.relationship) {
+          sortingKey.relationship = vocab.sortingKey.relationship.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          if (sortingKey.relationship.length > 0) hasSortingKey = true
+        }
+        if (vocab.sortingKey.glue) {
+          sortingKey.glue = vocab.sortingKey.glue.split(',').map((s: string) => s.trim()).filter((s: string) => s)
+          if (sortingKey.glue.length > 0) hasSortingKey = true
         }
         
         if (hasSortingKey) vocabPayload.sortingKey = sortingKey

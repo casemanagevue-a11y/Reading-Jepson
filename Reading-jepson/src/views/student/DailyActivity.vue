@@ -90,18 +90,20 @@
             
             <div class="sorting-table">
               <p class="table-instruction">Sort the words/phrases into the table:</p>
-              <table class="five-column-table">
+              <table class="six-column-table">
                 <thead>
                   <tr>
-                    <th>Who or what?<br><small>Noun (subject)</small></th>
-                    <th>Is/was doing or happening?<br><small>Verb</small></th>
-                    <th>Which one, what kind, how many?<br><small>Adjective</small></th>
-                    <th>To what? To whom?<br><small>Object of verb</small></th>
-                    <th>When, where, why, how?<br><small>Adverb</small></th>
+                    <th>Who or what?<br><small>noun-subject</small></th>
+                    <th>Doing or did?<br><small>verb-predicate</small></th>
+                    <th>Which/what kind/how many?<br><small>adjective</small></th>
+                    <th>Where/when/how/why?<br><small>adverb</small></th>
+                    <th>Relationship?<br><small>preposition</small></th>
+                    <th>Connects?<br><small>conjunction</small></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
+                    <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
                     <td><textarea class="sort-cell" rows="3" placeholder="Place cards here..."></textarea></td>
@@ -757,7 +759,7 @@ onMounted(async () => {
   margin: 0 0 1rem 0;
 }
 
-.five-column-table {
+.six-column-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
@@ -765,29 +767,29 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.five-column-table th {
+.six-column-table th {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.75rem 0.4rem;
+  padding: 0.75rem 0.35rem;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.five-column-table th:last-child {
+.six-column-table th:last-child {
   border-right: none;
 }
 
-.five-column-table th small {
+.six-column-table th small {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 400;
   margin-top: 0.25rem;
   opacity: 0.9;
 }
 
-.five-column-table td {
+.six-column-table td {
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   vertical-align: top;

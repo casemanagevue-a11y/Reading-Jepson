@@ -275,34 +275,38 @@
             <div class="routine-step">
               <h5>Sentence Sorting Routine:</h5>
               <p class="script-line">1) "Read the sentence aloud."</p>
-              <p class="script-line">2) "Let's ask the 5 questions in order and place the matching word or phrase under the correct column."</p>
-              <p class="script-note"><em>Goal: Help students identify the syntax to understand what the sentence is about.</em></p>
+              <p class="script-line">2) "Let's ask the 6 functional questions in order and place the matching word or phrase under the correct category."</p>
+              <p class="script-note"><em>Goal: Sentence comprehension through functional syntax analysis - understanding how words function helps students understand what the sentence is about.</em></p>
               
               <div class="sorting-questions">
-                <p class="script-line"><strong>Question 1: Who or what?</strong> → Noun (usually the subject)</p>
-                <p class="explanation">👉 Names a person, place, thing, or idea</p>
+                <p class="script-line"><strong>Question 1: Who or what?</strong> (noun-subject)</p>
+                <p class="explanation">👉 The actors or things the sentence is about</p>
                 <p class="teacher-answer" v-if="word.sortingKey?.whoWhat">Teacher Answer: {{ Array.isArray(word.sortingKey.whoWhat) ? word.sortingKey.whoWhat.join(', ') : word.sortingKey.whoWhat }}</p>
                 
-                <p class="script-line"><strong>Question 2: Is/was doing or happening?</strong> → Verb</p>
-                <p class="explanation">👉 Shows action or state of being</p>
-                <p class="teacher-answer" v-if="word.sortingKey?.isWasDoing">Teacher Answer: {{ Array.isArray(word.sortingKey.isWasDoing) ? word.sortingKey.isWasDoing.join(', ') : word.sortingKey.isWasDoing }}</p>
+                <p class="script-line"><strong>Question 2: Doing or did?</strong> (verb-predicate)</p>
+                <p class="explanation">👉 The action or state of being</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.doingDid">Teacher Answer: {{ Array.isArray(word.sortingKey.doingDid) ? word.sortingKey.doingDid.join(', ') : word.sortingKey.doingDid }}</p>
                 
-                <p class="script-line"><strong>Question 3: Which one, what kind, how many?</strong> → Adjective</p>
-                <p class="explanation">👉 Describes or limits a noun</p>
+                <p class="script-line"><strong>Question 3: Which one, what kind, how many?</strong> (adjective-modifies noun)</p>
+                <p class="explanation">👉 Describing the nouns (Include: the, a, an, this, his, her)</p>
                 <p class="teacher-answer" v-if="word.sortingKey?.whichWhatKind">Teacher Answer: {{ Array.isArray(word.sortingKey.whichWhatKind) ? word.sortingKey.whichWhatKind.join(', ') : word.sortingKey.whichWhatKind }}</p>
                 
-                <p class="script-line"><strong>Question 4: To what? To whom?</strong> → Object of verb</p>
-                <p class="explanation">👉 Receives the action</p>
-                <p class="teacher-answer" v-if="word.sortingKey?.toWhatToWhom">Teacher Answer: {{ Array.isArray(word.sortingKey.toWhatToWhom) ? word.sortingKey.toWhatToWhom.join(', ') : word.sortingKey.toWhatToWhom }}</p>
+                <p class="script-line"><strong>Question 4: Where, when, how, why?</strong> (adverb-modifies verb)</p>
+                <p class="explanation">👉 Circumstances of the action</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.whereWhenHowWhy">Teacher Answer: {{ Array.isArray(word.sortingKey.whereWhenHowWhy) ? word.sortingKey.whereWhenHowWhy.join(', ') : word.sortingKey.whereWhenHowWhy }}</p>
                 
-                <p class="script-line"><strong>Question 5: When, where, why, how?</strong> → Adverb</p>
-                <p class="explanation">👉 Gives more information about the verb</p>
-                <p class="teacher-answer" v-if="word.sortingKey?.whenWhereWhyHow">Teacher Answer: {{ Array.isArray(word.sortingKey.whenWhereWhyHow) ? word.sortingKey.whenWhereWhyHow.join(', ') : word.sortingKey.whenWhereWhyHow }}</p>
+                <p class="script-line"><strong>Question 5: What is the relationship?</strong> (preposition)</p>
+                <p class="explanation">👉 Direction, location, or connection (e.g., of, about, from)</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.relationship">Teacher Answer: {{ Array.isArray(word.sortingKey.relationship) ? word.sortingKey.relationship.join(', ') : word.sortingKey.relationship }}</p>
+                
+                <p class="script-line"><strong>Question 6: What connects?</strong> (conjunction)</p>
+                <p class="explanation">👉 Words that glue parts together (e.g., and, or, but)</p>
+                <p class="teacher-answer" v-if="word.sortingKey?.glue">Teacher Answer: {{ Array.isArray(word.sortingKey.glue) ? word.sortingKey.glue.join(', ') : word.sortingKey.glue }}</p>
               </div>
               
-              <p class="script-line">3) "Direct students to place the matching word/phrase card under the correct column."</p>
+              <p class="script-line">3) "Direct students to place the matching word/phrase card under the correct category."</p>
               <p class="script-line">4) Quick check: "Show me the card for [specific word/phrase]."</p>
-              <p class="script-line">5) Final comprehension: "Now tell me - what is this sentence about?" (Student breaks it apart using the columns)</p>
+              <p class="script-line">5) Final comprehension: "Now tell me - what is this sentence about?" (Student uses the sorted cards to explain meaning)</p>
             </div>
             
             <div v-if="word.wordPhraseCards && word.wordPhraseCards.length > 0" class="word-cards-section">
@@ -329,15 +333,17 @@
             <table class="sorting-table">
               <thead>
                 <tr>
-                  <th>Who or what?<br><small>Noun (subject)</small></th>
-                  <th>Is/was doing or happening?<br><small>Verb</small></th>
-                  <th>Which one, what kind, how many?<br><small>Adjective</small></th>
-                  <th>To what? To whom?<br><small>Object of verb</small></th>
-                  <th>When, where, why, how?<br><small>Adverb</small></th>
+                  <th>Who or what?<br><small>noun-subject</small></th>
+                  <th>Doing or did?<br><small>verb-predicate</small></th>
+                  <th>Which/what kind/how many?<br><small>adjective</small></th>
+                  <th>Where/when/how/why?<br><small>adverb</small></th>
+                  <th>Relationship?<br><small>preposition</small></th>
+                  <th>Connects?<br><small>conjunction</small></th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
+                  <td class="sort-cell"></td>
                   <td class="sort-cell"></td>
                   <td class="sort-cell"></td>
                   <td class="sort-cell"></td>

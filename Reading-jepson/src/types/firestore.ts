@@ -81,10 +81,11 @@ export interface PassageVocabItem {
   wordPhraseCards?: string[];
   sortingKey?: {
     whoWhat?: string[];
-    isWasDoing?: string[];
+    doingDid?: string[];
     whichWhatKind?: string[];
-    toWhatToWhom?: string[];
-    whenWhereWhyHow?: string[];
+    whereWhenHowWhy?: string[];
+    relationship?: string[];
+    glue?: string[];
   };
   // AI-generated clarification fields
   whatItIs?: string; // Examples, synonyms
@@ -146,11 +147,12 @@ export interface VocabDocument {
   // Day 2: Words Working Together fields (sentence structure analysis)
   wordPhraseCards?: string[]; // Cut-apart cards for sorting (exact text on each card)
   sortingKey?: {
-    whoWhat?: string[]; // Cards that answer "Who or what?" (Noun-Subject)
-    isWasDoing?: string[]; // Cards that answer "Is/was doing or happening?" (Verb)
-    whichWhatKind?: string[]; // Cards that answer "Which one, what kind, how many?" (Adjective)
-    toWhatToWhom?: string[]; // Cards that answer "To what? To whom?" (Object of verb)
-    whenWhereWhyHow?: string[]; // Cards that answer "When, where, why, how?" (Adverb)
+    whoWhat?: string[]; // Who or what? (noun-subject)
+    doingDid?: string[]; // Doing or did? (verb-predicate)
+    whichWhatKind?: string[]; // Which one, what kind, how many? (adjective-modifies noun)
+    whereWhenHowWhy?: string[]; // Where, when, how, why? (adverb-modifies verb)
+    relationship?: string[]; // What is the relationship? (prepositions)
+    glue?: string[]; // What connects? (conjunctions)
   };
   // AI-generated clarification fields
   partOfSpeech?: string; // noun, verb, adjective, etc.
