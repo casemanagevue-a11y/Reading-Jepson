@@ -109,6 +109,10 @@ export interface PassageDocument {
   subjectTag?: string; // Optional categorization tag
   vocabItems?: PassageVocabItem[]; // Vocab words assigned to this passage with sentences
   affixItems?: PassageAffixItem[]; // Affixes assigned to this passage with examples
+  mainIdeaAnswer?: { // AI-generated teacher answer for "What is the main idea?"
+    mainIdea: string;
+    supportingDetails: string[];
+  };
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

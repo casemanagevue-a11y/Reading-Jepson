@@ -491,6 +491,22 @@
               <h5>Step 4: Main Idea with Evidence</h5>
               <p class="script-line">"What is the main idea of this passage? Give me 2-3 details from the text that prove it."</p>
               
+              <!-- Main Idea Teacher Answer Key -->
+              <div v-if="content.weeklyPassage?.mainIdeaAnswer" class="main-idea-answer-key">
+                <h4>Main Idea - Teacher Answer Key</h4>
+                <p class="script-note"><strong>Question:</strong> "What is the main idea of this passage? Give me 2-3 details from the text that prove it."</p>
+                
+                <p class="script-note"><strong>Expected Answer:</strong></p>
+                <p class="main-idea-text">{{ content.weeklyPassage.mainIdeaAnswer.mainIdea }}</p>
+                
+                <p class="script-note"><strong>Supporting Details (look for these in student response):</strong></p>
+                <ul class="details-key-list">
+                  <li v-for="(detail, idx) in content.weeklyPassage.mainIdeaAnswer.supportingDetails" :key="idx">
+                    {{ idx + 1 }}. {{ detail }}
+                  </li>
+                </ul>
+              </div>
+              
               <div class="assessment-scale">
                 <h4>Main Idea Assessment Scale</h4>
                 

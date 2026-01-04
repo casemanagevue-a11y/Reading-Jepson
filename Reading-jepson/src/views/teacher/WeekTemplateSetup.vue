@@ -364,6 +364,19 @@
           <div class="section">
             <h3>Inference Organizer Questions</h3>
             <p class="section-note">Literal and inferential questions for Day 3</p>
+            
+            <!-- AI Generate Button -->
+            <div class="ai-generate-section" style="margin-bottom: 1.5rem;">
+              <button 
+                @click="generateDay3Questions"
+                :disabled="!weeklyPassage.text || generatingQuestions === 3"
+                class="btn btn-ai"
+              >
+                {{ generatingQuestions === 3 ? '🤖 Generating...' : '✨ AI Generate Questions (3 Literal + 2 Inferential)' }}
+              </button>
+              <small class="form-hint">AI will analyze the passage and create questions with teacher answer keys</small>
+            </div>
+            
             <div v-for="(question, index) in day3Questions" :key="index">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
@@ -388,6 +401,28 @@
           <div class="section">
             <h3>Cause/Effect Organizer</h3>
             <p class="section-note">Main idea and cause/effect questions for Day 4</p>
+            
+            <!-- AI Generate Main Idea Answer -->
+            <div class="ai-generate-section" style="margin-bottom: 1.5rem;">
+              <button 
+                @click="generateMainIdeaWithDetails"
+                :disabled="!weeklyPassage.text || generatingMainIdea"
+                class="btn btn-ai"
+              >
+                {{ generatingMainIdea ? '🤖 Generating...' : '✨ AI Generate Main Idea Answer (with 2-5 supporting details)' }}
+              </button>
+              <small class="form-hint">AI will create the teacher answer key for "What is the main idea of this passage?"</small>
+              
+              <div v-if="mainIdeaAnswer" class="main-idea-display">
+                <p><strong>Main Idea (Teacher Answer):</strong></p>
+                <p class="answer-text">{{ mainIdeaAnswer.mainIdea }}</p>
+                <p><strong>Supporting Details:</strong></p>
+                <ul class="details-list">
+                  <li v-for="(detail, idx) in mainIdeaAnswer.supportingDetails" :key="idx">{{ detail }}</li>
+                </ul>
+              </div>
+            </div>
+            
             <div v-for="(question, index) in day4Questions" :key="index">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
@@ -522,6 +557,19 @@
           <div class="section">
             <h3>Reading Assessment Questions</h3>
             <p class="section-note">Questions for reading comprehension assessment</p>
+            
+            <!-- AI Generate Button -->
+            <div class="ai-generate-section" style="margin-bottom: 1.5rem;">
+              <button 
+                @click="generateDay5Questions"
+                :disabled="!fridayPassage.text || generatingQuestions === 5"
+                class="btn btn-ai"
+              >
+                {{ generatingQuestions === 5 ? '🤖 Generating...' : '✨ AI Generate Questions (3 Literal + 2 Inferential)' }}
+              </button>
+              <small class="form-hint">AI will analyze the passage and create questions with teacher answer keys</small>
+            </div>
+            
             <div v-for="(question, index) in day5Questions" :key="index">
               <div class="form-group">
                 <label>Question {{ index + 1 }}</label>
@@ -583,7 +631,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { generateSentenceSorting } from '@/services/aiService'
+import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer } from '@/services/aiService'
+import type { MainIdeaAnswerResult } from '@/services/aiService'
 import { 
   createWeekTemplate,
   updateWeekTemplate,
@@ -617,6 +666,9 @@ const templateId = computed(() => route.params.templateId as string)
 const currentStep = ref(1)
 const saving = ref(false)
 const generatingAI = ref<number | null>(null)
+const generatingQuestions = ref<number | null>(null)
+const generatingMainIdea = ref(false)
+const mainIdeaAnswer = ref<MainIdeaAnswerResult | null>(null)
 
 const templateData = ref({
   templateName: '',
@@ -1184,6 +1236,94 @@ async function generateSortingForVocab(vocabIndex: number, sentence: string) {
   }
 }
 
+// Generate Day 3 questions with AI
+async function generateDay3Questions() {
+  if (!weeklyPassage.value.text) {
+    alert('Please enter the weekly passage text first')
+    return
+  }
+  
+  try {
+    generatingQuestions.value = 3
+    
+    const questions = await generateComprehensionQuestions(
+      weeklyPassage.value.text,
+      3,
+      { literal: 3, inferential: 2 }
+    )
+    
+    // Replace existing questions with AI-generated ones
+    day3Questions.value = questions.map((q, index) => ({
+      type: q.type,
+      prompt: q.prompt,
+      orderIndex: index + 1,
+      rubric: q.rubric
+    }))
+    
+    alert(`✅ Generated ${questions.length} questions for Day 3!\n\n3 literal questions\n2 inferential questions\n\nReview and edit as needed.`)
+  } catch (error: any) {
+    console.error('Error generating Day 3 questions:', error)
+    alert('Failed to generate questions. Please try again or create manually.')
+  } finally {
+    generatingQuestions.value = null
+  }
+}
+
+// Generate Day 5 questions with AI (same as Day 3)
+async function generateDay5Questions() {
+  if (!fridayPassage.value.text) {
+    alert('Please enter the Friday passage text first')
+    return
+  }
+  
+  try {
+    generatingQuestions.value = 5
+    
+    const questions = await generateComprehensionQuestions(
+      fridayPassage.value.text,
+      5,
+      { literal: 3, inferential: 2 }
+    )
+    
+    // Replace existing questions with AI-generated ones
+    day5Questions.value = questions.map((q, index) => ({
+      type: q.type,
+      prompt: q.prompt,
+      orderIndex: index + 1,
+      rubric: q.rubric
+    }))
+    
+    alert(`✅ Generated ${questions.length} questions for Day 5!\n\n3 literal questions\n2 inferential questions\n\nReview and edit as needed.`)
+  } catch (error: any) {
+    console.error('Error generating Day 5 questions:', error)
+    alert('Failed to generate questions. Please try again or create manually.')
+  } finally {
+    generatingQuestions.value = null
+  }
+}
+
+// Generate Main Idea Answer with Supporting Details
+async function generateMainIdeaWithDetails() {
+  if (!weeklyPassage.value.text) {
+    alert('Please enter the weekly passage text first')
+    return
+  }
+  
+  try {
+    generatingMainIdea.value = true
+    
+    const result = await generateMainIdeaAnswer(weeklyPassage.value.text)
+    mainIdeaAnswer.value = result
+    
+    alert(`✅ Generated Main Idea Answer!\n\nMain Idea: ${result.mainIdea}\n\n${result.supportingDetails.length} supporting details included.\n\nThis will appear in the teacher script for Day 4.`)
+  } catch (error: any) {
+    console.error('Error generating main idea:', error)
+    alert('Failed to generate main idea. Please try again.')
+  } finally {
+    generatingMainIdea.value = false
+  }
+}
+
 const saveTemplate = async () => {
   if (!user.value) return
   
@@ -1317,6 +1457,7 @@ const saveTemplate = async () => {
     }
     if (cleanWeeklyVocabItems.length > 0) weeklyPassagePayload.vocabItems = cleanWeeklyVocabItems
     if (weeklyAffixItems.length > 0) weeklyPassagePayload.affixItems = weeklyAffixItems
+    if (mainIdeaAnswer.value) weeklyPassagePayload.mainIdeaAnswer = mainIdeaAnswer.value
     
     await createPassage(weeklyPassagePayload)
     
@@ -1967,5 +2108,30 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 0.85rem;
   color: #742a2a;
+}
+
+.main-idea-display {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #48bb78;
+}
+
+.main-idea-display .answer-text {
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.details-list {
+  margin: 0.5rem 0 0 1.5rem;
+  color: #4a5568;
+  line-height: 1.8;
+}
+
+.details-list li {
+  margin-bottom: 0.5rem;
 }
 </style>

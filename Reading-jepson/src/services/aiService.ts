@@ -214,7 +214,7 @@ Respond with a JSON object:
 
 export async function generateComprehensionQuestions(
   passageText: string,
-  day: 2 | 4 | 5,
+  day: 3 | 4 | 5,
   count: { literal?: number; inferential?: number; mainIdea?: number } = {}
 ): Promise<ComprehensionQuestion[]> {
   
@@ -224,11 +224,11 @@ export async function generateComprehensionQuestions(
     mainIdea: count.mainIdea ?? 1
   }
 
-  const dayContext = day === 2 
-    ? 'first reading comprehension (focus on basic understanding)'
+  const dayContext = day === 3 
+    ? 'Day 3 inference organizer (focus on literal and inferential comprehension)'
     : day === 4
-    ? 'deeper analysis (focus on main idea and supporting details)'
-    : 'Friday assessment (comprehensive evaluation)'
+    ? 'Day 4 cause/effect organizer (focus on cause/effect relationships and main idea)'
+    : 'Day 5 reading assessment (comprehensive evaluation)'
 
   const prompt = `Generate comprehension questions for the following passage. This is for ${dayContext}.
 
@@ -558,6 +558,63 @@ Respond with JSON:
   return JSON.parse(response)
 }
 
+// ============================================================================
+// Main Idea Answer Generation with Supporting Details
+// ============================================================================
+
+export interface MainIdeaAnswerResult {
+  mainIdea: string // The main idea statement
+  supportingDetails: string[] // 2-5 supporting details from the text
+}
+
+export async function generateMainIdeaAnswer(
+  passageText: string
+): Promise<MainIdeaAnswerResult> {
+  const prompt = `Analyze this passage and generate a main idea answer with supporting details for a teacher answer key.
+
+Passage:
+"""
+${passageText}
+"""
+
+Generate:
+1. A clear main idea statement (1-2 sentences)
+2. 2-5 supporting details from the text that prove the main idea
+
+For a 7th grade student with developmental language disorder, the answer should be:
+- Clear and concise
+- Use vocabulary from the passage
+- Each detail should be a specific fact or event from the text
+
+Example format:
+{
+  "mainIdea": "The passage explains how Sundiata Keita founded the Mali Empire and became a legendary ruler.",
+  "supportingDetails": [
+    "Sundiata led Mali to victory in the Battle of Kirina in 1235",
+    "He brought the Malinke people together and formed a strong government",
+    "He protected trade routes and helped farming begin again after years of war",
+    "He allowed people to practice different religions and offered freedom to enslaved people",
+    "Griots told stories about his achievements and people called him the Lion King"
+  ]
+}
+
+Respond with JSON matching this exact format.`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert reading teacher who creates clear, evidence-based comprehension answers for students with language disorders.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callGemini(messages, 0.5, { type: 'json_object' })
+  return JSON.parse(response)
+}
+
 export default {
   estimateReadingLevel,
   adjustPassageWithVocab,
@@ -566,7 +623,8 @@ export default {
   generateInquiryQuestionsForVocabList,
   calculateFleschKincaidGrade,
   generateVocabClarifications,
-  generateSentenceSorting
+  generateSentenceSorting,
+  generateMainIdeaAnswer
 }
 
 
