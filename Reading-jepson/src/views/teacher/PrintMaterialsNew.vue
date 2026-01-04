@@ -15,7 +15,7 @@
     <div v-if="loading" class="loading no-print">Loading materials...</div>
     <div v-else-if="error" class="error no-print">{{ error }}</div>
 
-    <div v-else class="printable-content container">
+    <div v-else class="printable-content container"style="break-after: avoid;">
       <!-- Header for printed page - single line -->
       <div class="print-page-header">
         {{ studentName }} | {{ formatDateRange() }} | 
@@ -25,7 +25,7 @@
       </div>
 
       <!-- DAY 1: Vocabulary & Affixes -->
-      <div class="print-section">
+      <div class="print-section"style="break-after: avoid;break-before: avoid;break-inside: avoid;">
         <h2>Day 1: Vocabulary & Affixes</h2>
         
         <!-- Teacher Script Version -->
@@ -340,7 +340,7 @@
         
         <!-- Teacher Script -->
         <div v-if="isTeacherVersion && !isCompactVersion" class="day-two-teacher-content">
-          <div class="script-section">
+          <div class="script-section" style="break-after: avoid;break-before: avoid;break-inside: avoid;">
             <h3>Day 2 Teacher Script</h3>
             <p class="script-note"><strong>Opening Routine:</strong></p>
             <p class="script-line">"Today we will look closely at sentences with our vocabulary words and see how the words work together."</p>
@@ -758,45 +758,7 @@
         </div>
         
         <!-- Vocabulary & Affix Multiple Choice Quiz -->
-        <div class="vocab-quiz-section">
-          <h3>Spiral Vocabulary & Affix Assessment (Multiple Choice)</h3>
-          <p v-if="!isTeacherVersion && !isCompactVersion" class="directions">Circle the correct answer for each question.</p>
-          
-          <!-- Vocabulary Questions -->
-          <div v-for="(word, index) in content.vocab" :key="'vocab-q-' + index" class="quiz-item">
-            <p class="quiz-question"><strong>{{ index + 1 }}.</strong> What does <em>{{ word.word }}</em> mean?</p>
-            <div class="quiz-choices">
-              <p class="choice">A. {{ word.definition }}</p>
-              <p class="choice">B. {{ generateDistractor(word.word, 1) }}</p>
-              <p class="choice">C. {{ generateDistractor(word.word, 2) }}</p>
-              <p class="choice">D. {{ generateDistractor(word.word, 3) }}</p>
-            </div>
-            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
-          </div>
-          
-          <!-- Affix Questions -->
-          <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="'affix-q-' + index" class="quiz-item">
-            <p class="quiz-question">
-              <strong>{{ content.vocab.length + index + 1 }}.</strong> 
-              What does the {{ affix.kind }} <em>{{ affix.affix }}</em> mean? 
-              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint" v-html="`(${formatAffixExample(affix.affix, affix.examples[0], affix.kind)})`">
-              </span>
-            </p>
-            <div class="quiz-choices">
-              <p class="choice">A. {{ affix.meaning }}</p>
-              <p class="choice">B. {{ generateAffixDistractor(affix.affix, 1) }}</p>
-              <p class="choice">C. {{ generateAffixDistractor(affix.affix, 2) }}</p>
-              <p class="choice">D. {{ generateAffixDistractor(affix.affix, 3) }}</p>
-            </div>
-            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
-          </div>
-          
-          <div v-if="isTeacherVersion && !isCompactVersion" class="quiz-note">
-            <p><strong>Scoring:</strong> {{ content.vocab.length + Math.min(content.affixes.length, 2) }} total questions</p>
-            <p>Student Score: _____ / {{ content.vocab.length + Math.min(content.affixes.length, 2) }}</p>
-          </div>
-        </div>
-        
+       
         <!-- Reading Assessment Tracking -->
         <div v-if="isTeacherVersion || isCompactVersion" class="fluency-tracking">
           <h3>Reading Assessment (Teacher Recording Form)</h3>
@@ -865,6 +827,45 @@
             </fieldset>
           </div>
         </div>
+        <div class="vocab-quiz-section page-break">
+          <h3>Spiral Vocabulary & Affix Assessment (Multiple Choice)</h3>
+          <p v-if="!isTeacherVersion && !isCompactVersion" class="directions">Circle the correct answer for each question.</p>
+          
+          <!-- Vocabulary Questions -->
+          <div v-for="(word, index) in content.vocab" :key="'vocab-q-' + index" class="quiz-item">
+            <p class="quiz-question"><strong>{{ index + 1 }}.</strong> What does <em>{{ word.word }}</em> mean?</p>
+            <div class="quiz-choices">
+              <p class="choice">A. {{ word.definition }}</p>
+              <p class="choice">B. {{ generateDistractor(word.word, 1) }}</p>
+              <p class="choice">C. {{ generateDistractor(word.word, 2) }}</p>
+              <p class="choice">D. {{ generateDistractor(word.word, 3) }}</p>
+            </div>
+            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
+          </div>
+          
+          <!-- Affix Questions -->
+          <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="'affix-q-' + index" class="quiz-item">
+            <p class="quiz-question">
+              <strong>{{ content.vocab.length + index + 1 }}.</strong> 
+              What does the {{ affix.kind }} <em>{{ affix.affix }}</em> mean? 
+              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint" v-html="`(${formatAffixExample(affix.affix, affix.examples[0], affix.kind)})`">
+              </span>
+            </p>
+            <div class="quiz-choices">
+              <p class="choice">A. {{ affix.meaning }}</p>
+              <p class="choice">B. {{ generateAffixDistractor(affix.affix, 1) }}</p>
+              <p class="choice">C. {{ generateAffixDistractor(affix.affix, 2) }}</p>
+              <p class="choice">D. {{ generateAffixDistractor(affix.affix, 3) }}</p>
+            </div>
+            <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
+          </div>
+          
+          <div v-if="isTeacherVersion && !isCompactVersion" class="quiz-note">
+            <p><strong>Scoring:</strong> {{ content.vocab.length + Math.min(content.affixes.length, 2) }} total questions</p>
+            <p>Student Score: _____ / {{ content.vocab.length + Math.min(content.affixes.length, 2) }}</p>
+          </div>
+        </div>
+        
       </div>
     </div>
   </div>
@@ -1073,8 +1074,8 @@ h5{
 }
 
 .script-line {
-  margin: 0.75rem 0 !important;
-  line-height: 1.8 !important;
+  margin: 0.5rem 0 !important;
+  line-height: 1.2 !important;
   color: #4a5d9e !important;
   font-size: 0.95rem !important;
   font-style: italic !important;
@@ -1086,7 +1087,7 @@ h5{
     color: #718096;
     font-size: .9rem;
     margin: .3rem 0;
-    line-height: 1.4;
+    line-height: 1;
 }
 .print-header {
   background: #f7fafc;
@@ -1222,13 +1223,25 @@ ul.teacher-questions {
   margin-left: 0.5rem;
 }
 
+.word-script-block, .script-section, .word-sentence-analysis {
+  break-after: avoid;
+    break-before: avoid;
+    break-inside: avoid;
+}
 .clarification-section {
   margin: 1rem 0;
   padding: 0.75rem;
   background: #f7fafc;
   border-radius: 6px;
 }
-
+.teacher-answer-box {
+    display: flex;
+    gap: 10px;
+    color: #48bb78;
+    font-size: 12px;
+    margin-left: 20px;
+  
+}
 .clarif-text {
   margin: 0.25rem 0 0.75rem 0;
   padding: 0.5rem;
@@ -1353,7 +1366,7 @@ ul.teacher-questions {
 }
 
 .vocab-practice {
-  margin-top: 2rem;
+ 
   padding: 1.5rem;
   background: #f7fafc;
   border-radius: 8px;
@@ -1372,12 +1385,12 @@ ul.teacher-questions {
 }
 
 .question-item {
-  margin-bottom: 2rem;
+
 }
 
 .question-item p {
   margin: 0 0 0.5rem 0;
-  line-height: 1.6;
+
 }
 
 .answer-space {
@@ -1635,7 +1648,7 @@ fieldset{
   color: #48bb78;
   font-weight: 600;
   margin-left: 1.5rem;
-  margin-top: 0.25rem;
+  
   font-size: 0.9rem;
 }
 
@@ -2003,8 +2016,8 @@ fieldset{
 }
 
 .quiz-item {
-  margin-bottom: 2rem;
-  padding: 1rem;
+  margin-bottom: .2rem;
+  padding: .4rem;
   background: white;
   border-radius: 8px;
 }
@@ -2027,15 +2040,14 @@ fieldset{
 }
 
 .choice {
-  margin: 0.5rem 0;
-  padding: 0.5rem;
+ 
   line-height: 1.6;
   font-size: 0.95rem;
 }
 
 .quiz-answer {
-  margin-top: 0.75rem;
-  padding: 0.5rem 1rem;
+  margin-top: 0.3rem;
+  padding: 0.2rem .3rem;
   background: #f0fff4;
   border-left: 4px solid #48bb78;
   color: #22543d;
