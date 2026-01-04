@@ -779,8 +779,7 @@
             <p class="quiz-question">
               <strong>{{ content.vocab.length + index + 1 }}.</strong> 
               What does the {{ affix.kind }} <em>{{ affix.affix }}</em> mean? 
-              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint">
-                (<span class="underline">{{ affix.affix }}</span>{{ affix.examples[0].replace(new RegExp(affix.affix.replace(/[-\/]/g, ''), 'i'), '') }})
+              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint" v-html="`(${formatAffixExample(affix.affix, affix.examples[0], affix.kind)})`">
               </span>
             </p>
             <div class="quiz-choices">
@@ -974,6 +973,28 @@ const generateAffixDistractor = (affix: string, num: number): string => {
     'big or large'
   ]
   return distractors[(affix.length + num) % distractors.length]
+}
+
+// Format affix example with underline in correct position
+const formatAffixExample = (affix: string, exampleWord: string, _kind: string): string => {
+  // Remove hyphens from affix for matching
+  const cleanAffix = affix.replace(/[-]/g, '')
+  const cleanExample = exampleWord.toLowerCase()
+  const affixLower = cleanAffix.toLowerCase()
+  
+  const affixIndex = cleanExample.indexOf(affixLower)
+  
+  if (affixIndex === -1) {
+    // Affix not found in word, just return word
+    return exampleWord
+  }
+  
+  // Split word into parts and add underline HTML
+  const before = exampleWord.substring(0, affixIndex)
+  const affixPart = exampleWord.substring(affixIndex, affixIndex + cleanAffix.length)
+  const after = exampleWord.substring(affixIndex + cleanAffix.length)
+  
+  return `${before}<span class="underline">${affixPart}</span>${after}`
 }
 
 onMounted(async () => {
