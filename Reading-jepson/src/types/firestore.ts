@@ -93,12 +93,23 @@ export interface PassageVocabItem {
   partOfSpeech?: string; // noun, verb, adjective, etc.
 }
 
+// Affix word breakdown for teaching
+export interface AffixWordBreakdown {
+  word: string; // The full word (e.g., "unhappy")
+  affix: string; // The affix part (e.g., "un-")
+  root: string; // The root/base word (e.g., "happy")
+  affixMeaning: string; // Meaning of the affix (e.g., "not")
+  rootMeaning: string; // Meaning of the root word (e.g., "feeling good")
+  combinedMeaning?: string; // Combined meaning of affix + root (e.g., "not feeling good")
+}
+
 // Affix item embedded in passage (with passage-specific examples)
 export interface PassageAffixItem {
   affix: string;
   kind: AffixKind;
   meaning: string;
-  examples: string[]; // Examples found in this passage
+  examples: string[]; // Examples found in this passage (up to 3)
+  wordBreakdowns?: AffixWordBreakdown[]; // Breakdown of each example word (affix + root + meanings)
 }
 
 export interface PassageDocument {
@@ -384,12 +395,22 @@ export interface VocabLibraryDocument {
   updatedAt: Timestamp;
 }
 
+// Word breakdown for affix examples (matches JSON structure)
+export interface AffixExampleBreakdown {
+  word: string; // e.g., "unhappy"
+  root: string; // e.g., "happy"
+  root_meaning: string; // e.g., "feeling good or pleased"
+  combined_meaning: string; // e.g., "not feeling good"
+}
+
 export interface AffixLibraryDocument {
   teacherUid: string;
   affix: string;
   kind: AffixKind;
-  meaning: string;
-  examples: string[];
+  meaning: string; // affix_meaning from JSON
+  note?: string; // Optional teaching note about the affix
+  examples: string[]; // Simple array of example words (for backward compatibility)
+  wordBreakdowns?: AffixExampleBreakdown[]; // Detailed breakdowns matching JSON structure
   grade?: string;
   unit?: string;
   subject?: SubjectFocus;

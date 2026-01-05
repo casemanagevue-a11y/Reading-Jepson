@@ -164,6 +164,8 @@
         
         <p class="meaning">{{ item.meaning }}</p>
         
+        <p v-if="item.note" class="affix-note-browser"><em>{{ item.note }}</em></p>
+        
         <div v-if="item.examples && item.examples.length > 0" class="examples">
           <strong>Examples:</strong>
           <div class="example-tags">
@@ -634,6 +636,17 @@ onMounted(() => {
   font-size: 1rem;
   line-height: 1.6;
   margin-bottom: 1rem;
+}
+
+.affix-note-browser {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f0f9ff;
+  border-left: 3px solid #0ea5e9;
+  border-radius: 4px;
+  color: #075985;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 .example,

@@ -109,13 +109,67 @@
     <!-- Step 2: Paste & Configure -->
     <div v-if="step === 2" class="step-content">
       <div class="paste-section">
-        <label>{{ importType === 'passage' ? 'Paste Passage Text' : 'Paste Your List' }}</label>
+        <!-- JSON Import for Affixes -->
+        <div v-if="importType === 'affix'" class="json-import-section">
+          <h4>Import from JSON File</h4>
+          <p class="json-import-description">
+            Import affixes with word breakdowns (root, root_meaning, combined_meaning) from a JSON file.
+            This is the recommended method for importing affixes.
+          </p>
+          <label for="json-file" class="json-upload-label">
+            <input
+              id="json-file"
+              type="file"
+              accept=".json"
+              @change="handleJSONFileSelect"
+              :disabled="isImportingJSON"
+            />
+            <span class="json-upload-button">📁 Choose JSON File</span>
+          </label>
+          <p v-if="selectedJSONFile" class="json-file-name">
+            Selected: {{ selectedJSONFile.name }}
+          </p>
+          <button
+            v-if="selectedJSONFile"
+            @click="handleJSONImport"
+            :disabled="isImportingJSON"
+            class="btn btn-primary json-import-btn"
+          >
+            <span v-if="isImportingJSON">Importing...</span>
+            <span v-else>Import from JSON</span>
+          </button>
+          <div v-if="jsonImportResult" class="json-import-result">
+            <div class="result-stats">
+              <span class="stat success">✓ {{ jsonImportResult.success }} imported</span>
+              <span v-if="jsonImportResult.failed > 0" class="stat failed">✗ {{ jsonImportResult.failed }} failed</span>
+            </div>
+            <div v-if="jsonImportResult.errors.length > 0" class="json-errors">
+              <details>
+                <summary>Errors ({{ jsonImportResult.errors.length }})</summary>
+                <ul>
+                  <li v-for="(error, idx) in jsonImportResult.errors" :key="idx">
+                    <strong>{{ error.affix }}</strong>: {{ error.error }}
+                  </li>
+                </ul>
+              </details>
+            </div>
+          </div>
+          <div class="json-import-divider">
+            <span>OR</span>
+          </div>
+        </div>
+        
+        <label>{{ importType === 'passage' ? 'Paste Passage Text' : importType === 'affix' ? 'Paste Your List (Legacy - Use JSON import above)' : 'Paste Your List' }}</label>
         <textarea
           v-model="rawText"
           class="paste-textarea"
           :placeholder="getPlaceholder()"
+          :disabled="importType === 'affix'"
           rows="15"
         ></textarea>
+        <p v-if="importType === 'affix'" class="affix-note">
+          ⚠️ Legacy text import is disabled. Please use the JSON import above for accurate affix data with word breakdowns.
+        </p>
 
         <div v-if="importType !== 'passage'" class="detection-settings">
           <h4>Detection Settings</h4>
@@ -166,6 +220,7 @@
             ← Back
           </button>
           <button 
+            v-if="importType !== 'affix'"
             @click="parseAndPreview" 
             class="btn btn-primary"
             :disabled="!rawText.trim()"
@@ -408,6 +463,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import libraryServices from '@/services/libraryServices'
 import aiService from '@/services/aiService'
+import { loadAndImportAffixes } from '@/utils/affixImporter'
 import type { SubjectFocus, AffixKind } from '@/types/firestore'
 import type { ReadingLevelEstimate } from '@/services/aiService'
 
@@ -473,6 +529,15 @@ const isSaving = ref(false)
 const isEstimatingLevel = ref(false)
 const estimatedLevel = ref<ReadingLevelEstimate | null>(null)
 const successMessage = ref('')
+
+// JSON import state
+const selectedJSONFile = ref<File | null>(null)
+const isImportingJSON = ref(false)
+const jsonImportResult = ref<{
+  success: number
+  failed: number
+  errors: Array<{ affix: string; error: string }>
+} | null>(null)
 
 // Computed
 const isMetadataValid = computed(() => {
@@ -653,9 +718,52 @@ function parseAndPreview() {
   if (importType.value === 'passage') {
     passageData.value.text = rawText.value
     goToStep(3)
+  } else if (importType.value === 'affix') {
+    // Affix parsing is disabled - use JSON import instead
+    alert('Please use the JSON import above for affixes. The text import is no longer supported for affixes.')
+    return
   } else {
     parsedItems.value = parseImportedList()
     goToStep(3)
+  }
+}
+
+// JSON import handlers
+function handleJSONFileSelect(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    selectedJSONFile.value = target.files[0]
+    jsonImportResult.value = null
+  }
+}
+
+async function handleJSONImport() {
+  if (!selectedJSONFile.value || !user.value) {
+    alert('Please select a file and ensure you are logged in.')
+    return
+  }
+
+  isImportingJSON.value = true
+  jsonImportResult.value = null
+
+  try {
+    const result = await loadAndImportAffixes(selectedJSONFile.value, user.value.uid)
+    jsonImportResult.value = result
+    
+    if (result.failed === 0) {
+      successMessage.value = `Successfully imported ${result.success} affixes with word breakdowns!`
+      setTimeout(() => {
+        emit('success')
+        emit('close')
+      }, 2000)
+    } else {
+      alert(`Imported ${result.success} affixes, ${result.failed} failed. Check errors below.`)
+    }
+  } catch (error) {
+    console.error('JSON import error:', error)
+    alert(`Error importing affixes: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isImportingJSON.value = false
   }
 }
 
@@ -774,20 +882,9 @@ async function saveToLibrary() {
         console.error('Some items failed:', result.errors)
       }
     } else if (importType.value === 'affix') {
-      const affixItems = parsedItems.value.map(item => ({
-        ...baseData,
-        affix: item.term,
-        kind: item.kind || 'prefix' as AffixKind,
-        meaning: item.definition,
-        examples: item.examples ? item.examples.split(',').map(e => e.trim()).filter(e => e) : []
-      }))
-
-      const result = await libraryServices.batchCreateAffixLibrary(affixItems)
-      successMessage.value = `Successfully saved ${result.successCount} affixes!`
-      
-      if (result.errors.length > 0) {
-        console.error('Some items failed:', result.errors)
-      }
+      // Affix import is now done via JSON import only
+      alert('Please use the JSON import feature for affixes. The text-based import is no longer supported.')
+      return
     } else {
       // Passage
       const passageDataToSave: any = {
@@ -825,6 +922,8 @@ function reset() {
   step.value = 1
   rawText.value = ''
   parsedItems.value = []
+  selectedJSONFile.value = null
+  jsonImportResult.value = null
   passageData.value = {
     title: '',
     text: '',
@@ -1299,6 +1398,156 @@ tr.has-error {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* JSON Import Section */
+.json-import-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border: 2px solid #0ea5e9;
+  border-radius: 8px;
+}
+
+.json-import-section h4 {
+  margin: 0 0 0.5rem 0;
+  color: #0c4a6e;
+  font-size: 1.1rem;
+}
+
+.json-import-description {
+  color: #075985;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.json-upload-label {
+  display: inline-block;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.json-upload-label input[type="file"] {
+  display: none;
+}
+
+.json-upload-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #0ea5e9;
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.json-upload-button:hover {
+  background: #0284c7;
+}
+
+.json-upload-label:has(input:disabled) .json-upload-button {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.json-file-name {
+  margin-top: 0.5rem;
+  color: #075985;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.json-import-btn {
+  margin-top: 1rem;
+}
+
+.json-import-result {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+}
+
+.result-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.result-stats .stat {
+  font-weight: 600;
+}
+
+.result-stats .stat.success {
+  color: #38a169;
+}
+
+.result-stats .stat.failed {
+  color: #e53e3e;
+}
+
+.json-errors {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.json-errors details {
+  cursor: pointer;
+}
+
+.json-errors summary {
+  color: #e53e3e;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.json-errors ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.json-errors li {
+  padding: 0.5rem;
+  background: #fff5f5;
+  border-left: 3px solid #e53e3e;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.json-import-divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.json-import-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: #cbd5e0;
+}
+
+.json-import-divider span {
+  position: relative;
+  background: #f0f9ff;
+  padding: 0 1rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.affix-note {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  color: #92400e;
+  font-size: 0.9rem;
 }
 </style>
 

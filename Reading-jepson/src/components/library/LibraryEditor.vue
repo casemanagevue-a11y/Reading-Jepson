@@ -185,6 +185,17 @@
         </div>
 
         <div class="form-group">
+          <label>Note (optional teaching note)</label>
+          <textarea 
+            v-model="formData.note" 
+            class="form-textarea"
+            placeholder="e.g., -ing does not change what the word means. It tells us the action is happening now or is still going."
+            rows="2"
+          ></textarea>
+          <small class="form-hint">Optional note to help explain the affix to students</small>
+        </div>
+
+        <div class="form-group">
           <label>Examples (comma-separated)</label>
           <input 
             v-model="examplesString" 
@@ -351,6 +362,7 @@ function initializeFormData() {
       formData.value.affix = ''
       formData.value.kind = 'prefix' as AffixKind
       formData.value.meaning = ''
+      formData.value.note = ''
       formData.value.examples = []
     } else {
       formData.value.title = ''
@@ -458,12 +470,17 @@ async function save() {
         ? examplesString.value.split(',').map(e => e.trim()).filter(e => e)
         : []
 
-      const affixData = {
+      const affixData: any = {
         ...baseData,
         affix: formData.value.affix,
         kind: formData.value.kind,
         meaning: formData.value.meaning,
         examples
+      }
+      
+      // Include note if provided
+      if (formData.value.note !== undefined && formData.value.note.trim()) {
+        affixData.note = formData.value.note
       }
 
       if (isNew.value) {

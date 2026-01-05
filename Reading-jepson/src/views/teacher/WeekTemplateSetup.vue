@@ -363,20 +363,43 @@
                   <strong>{{ affix.affix }}</strong> ({{ affix.kind }}) - {{ affix.meaning }}
                 </label>
                 <div v-if="weeklyPassageAffixes.has(index)" class="affix-word-selection">
-                  <label>Select valid examples (uncheck words that don't use this affix):</label>
-                  <div class="affix-word-checkboxes">
-                    <label 
-                      v-for="word in weeklyPassageAffixes.get(index)?.examples || []" 
-                      :key="word"
-                      class="word-checkbox"
-                    >
-                      <input 
-                        type="checkbox" 
-                        :checked="isAffixWordSelected('weekly', index, word)"
-                        @change="toggleAffixWord('weekly', index, word, $event)"
-                      />
-                      <span>{{ word }}</span>
-                    </label>
+                  <div v-if="affixDetectionLoading.get(`weekly-${index}`)" class="loading-state">
+                    <p>🔍 Detecting words with affix and breaking them down...</p>
+                  </div>
+                  <div v-else>
+                    <label>Example words (up to 3): Select valid examples (uncheck words that don't use this affix):</label>
+                    <div class="affix-word-breakdowns">
+                      <div 
+                        v-for="(word, wordIdx) in weeklyPassageAffixes.get(index)?.examples || []" 
+                        :key="word"
+                        class="word-breakdown-item"
+                      >
+                        <label class="word-checkbox">
+                          <input 
+                            type="checkbox" 
+                            :checked="isAffixWordSelected('weekly', index, word)"
+                            @change="toggleAffixWord('weekly', index, word, $event)"
+                          />
+                          <strong>{{ word }}</strong>
+                        </label>
+                        <div v-if="weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]" class="breakdown-details">
+                          <div class="breakdown-row">
+                            <span class="breakdown-label">Affix:</span>
+                            <span class="breakdown-value">{{ weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.affix }}</span>
+                            <span class="breakdown-meaning">({{ weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.affixMeaning }})</span>
+                          </div>
+                          <div class="breakdown-row">
+                            <span class="breakdown-label">Root:</span>
+                            <span class="breakdown-value">{{ weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.root }}</span>
+                            <span class="breakdown-meaning">({{ weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.rootMeaning }})</span>
+                          </div>
+                          <div v-if="weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.combinedMeaning" class="breakdown-row combined-meaning">
+                            <span class="breakdown-label">Combined Meaning:</span>
+                            <span class="breakdown-value combined">{{ weeklyPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.combinedMeaning }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -564,20 +587,43 @@
                   <strong>{{ affix.affix }}</strong> ({{ affix.kind }}) - {{ affix.meaning }}
                 </label>
                 <div v-if="fridayPassageAffixes.has(index)" class="affix-word-selection">
-                  <label>Select valid examples (uncheck words that don't use this affix):</label>
-                  <div class="affix-word-checkboxes">
-                    <label 
-                      v-for="word in fridayPassageAffixes.get(index)?.examples || []" 
-                      :key="word"
-                      class="word-checkbox"
-                    >
-                      <input 
-                        type="checkbox" 
-                        :checked="isAffixWordSelected('friday', index, word)"
-                        @change="toggleAffixWord('friday', index, word, $event)"
-                      />
-                      <span>{{ word }}</span>
-                    </label>
+                  <div v-if="affixDetectionLoading.get(`friday-${index}`)" class="loading-state">
+                    <p>🔍 Detecting words with affix and breaking them down...</p>
+                  </div>
+                  <div v-else>
+                    <label>Example words (up to 3): Select valid examples (uncheck words that don't use this affix):</label>
+                    <div class="affix-word-breakdowns">
+                      <div 
+                        v-for="(word, wordIdx) in fridayPassageAffixes.get(index)?.examples || []" 
+                        :key="word"
+                        class="word-breakdown-item"
+                      >
+                        <label class="word-checkbox">
+                          <input 
+                            type="checkbox" 
+                            :checked="isAffixWordSelected('friday', index, word)"
+                            @change="toggleAffixWord('friday', index, word, $event)"
+                          />
+                          <strong>{{ word }}</strong>
+                        </label>
+                        <div v-if="fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]" class="breakdown-details">
+                          <div class="breakdown-row">
+                            <span class="breakdown-label">Affix:</span>
+                            <span class="breakdown-value">{{ fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.affix }}</span>
+                            <span class="breakdown-meaning">({{ fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.affixMeaning }})</span>
+                          </div>
+                          <div class="breakdown-row">
+                            <span class="breakdown-label">Root:</span>
+                            <span class="breakdown-value">{{ fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.root }}</span>
+                            <span class="breakdown-meaning">({{ fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.rootMeaning }})</span>
+                          </div>
+                          <div v-if="fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.combinedMeaning" class="breakdown-row combined-meaning">
+                            <span class="breakdown-label">Combined Meaning:</span>
+                            <span class="breakdown-value combined">{{ fridayPassageAffixes.get(index)?.wordBreakdowns?.[wordIdx]?.combinedMeaning }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -665,7 +711,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer, generateVocabClarifications } from '@/services/aiService'
+import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer, generateVocabClarifications, detectAndBreakdownAffixWords } from '@/services/aiService'
 import type { MainIdeaAnswerResult } from '@/services/aiService'
 import { 
   createWeekTemplate,
@@ -687,7 +733,7 @@ import {
 import libraryServices from '@/services/libraryServices'
 import type { VocabLibraryWithId, AffixLibraryWithId } from '@/services/libraryServices'
 import { extractSentencesContainingWord, extractWordsContainingAffix } from '@/utils/lessonParser'
-import type { SubjectFocus, AffixKind, PassageVocabItem, PassageAffixItem } from '@/types/firestore'
+import type { SubjectFocus, AffixKind, PassageVocabItem, PassageAffixItem, AffixExampleBreakdown } from '@/types/firestore'
 
 const router = useRouter()
 const route = useRoute()
@@ -1167,8 +1213,11 @@ function handleVocabAssignment(passageType: 'weekly' | 'friday', vocabIndex: num
   }
 }
 
+// Track loading state for affix detection
+const affixDetectionLoading = ref<Map<string, boolean>>(new Map())
+
 // Handle affix assignment to passage
-function handleAffixAssignment(passageType: 'weekly' | 'friday', affixIndex: number, event: Event) {
+async function handleAffixAssignment(passageType: 'weekly' | 'friday', affixIndex: number, event: Event) {
   const checked = (event.target as HTMLInputElement).checked
   const passageText = passageType === 'weekly' ? weeklyPassage.value.text : fridayPassage.value.text
   const affix = affixes.value[affixIndex]
@@ -1176,25 +1225,160 @@ function handleAffixAssignment(passageType: 'weekly' | 'friday', affixIndex: num
   const key = `${passageType}-${affixIndex}`
   
   if (checked && affix.affix && passageText) {
-    // Extract words containing the affix (respecting prefix/suffix position)
-    const words = extractWordsContainingAffix(passageText, affix.affix, affix.kind)
+    // Set loading state
+    affixDetectionLoading.value.set(key, true)
     
-    // Create affix item for passage
-    const affixItem: PassageAffixItem = {
-      affix: affix.affix,
-      kind: affix.kind,
-      meaning: affix.meaning,
-      examples: words.length > 0 ? words : (affix.examplesStr ? affix.examplesStr.split(',').map(e => e.trim()).filter(e => e) : [])
+    try {
+      // First, try to get affix data from library (with wordBreakdowns)
+      const affixLibraryLookup = await import('@/utils/affixLibraryLookup')
+      const libraryItem = user.value 
+        ? await affixLibraryLookup.findAffixInLibrary(user.value.uid, affix.affix, affix.kind)
+        : null
+      
+      if (libraryItem && libraryItem.wordBreakdowns && libraryItem.wordBreakdowns.length > 0) {
+        // Use library data - find words from library that appear in the passage
+        const passageWords = passageText.toLowerCase().split(/\W+/).filter(w => w.length > 0)
+        const passageWordsSet = new Set(passageWords)
+        
+        // Filter library breakdowns to only include words found in passage
+        const foundBreakdowns = libraryItem.wordBreakdowns.filter(bd => 
+          passageWordsSet.has(bd.word.toLowerCase())
+        )
+        
+        // Always provide 3 examples: use words from passage first, then fill from library
+        const wordBreakdowns: AffixExampleBreakdown[] = []
+        const usedWords = new Set<string>()
+        
+        // First, add words found in passage (up to 3)
+        for (const bd of foundBreakdowns) {
+          if (wordBreakdowns.length >= 3) break
+          if (!usedWords.has(bd.word.toLowerCase())) {
+            wordBreakdowns.push(bd)
+            usedWords.add(bd.word.toLowerCase())
+          }
+        }
+        
+        // Then, fill remaining slots from library (even if not in passage) to reach 3 total
+        for (const bd of libraryItem.wordBreakdowns) {
+          if (wordBreakdowns.length >= 3) break
+          if (!usedWords.has(bd.word.toLowerCase())) {
+            wordBreakdowns.push(bd)
+            usedWords.add(bd.word.toLowerCase())
+          }
+        }
+        
+        // Convert to AffixWordBreakdown format (matching PassageAffixItem)
+        const breakdowns = wordBreakdowns.map((bd: AffixExampleBreakdown) => ({
+          word: bd.word,
+          affix: affix.affix,
+          root: bd.root,
+          affixMeaning: libraryItem.meaning,
+          rootMeaning: bd.root_meaning,
+          combinedMeaning: bd.combined_meaning
+        }))
+        
+        const exampleWords = breakdowns.map((bd: { word: string }) => bd.word)
+        
+        const affixItem: PassageAffixItem = {
+          affix: affix.affix,
+          kind: affix.kind,
+          meaning: libraryItem.meaning, // Use library meaning
+          examples: exampleWords,
+          wordBreakdowns: breakdowns
+        }
+        
+        affixMap.value.set(affixIndex, affixItem)
+        selectedAffixWords.value.set(key, new Set(exampleWords))
+      } else {
+        // Fallback to AI detection if not in library
+        const result = await detectAndBreakdownAffixWords(
+          passageText,
+          affix.affix,
+          affix.kind,
+          affix.meaning
+        )
+        
+        // Ensure we have 3 examples (or as many as available)
+        const maxExamples = Math.min(3, result.words.length)
+        let exampleWords = result.words.map(w => w.word).slice(0, maxExamples)
+        let wordBreakdowns = result.words.slice(0, maxExamples)
+        
+        // If we have fewer than 3, try to add from affix examples if available
+        if (exampleWords.length < 3 && affix.examplesStr) {
+          const additionalExamples = affix.examplesStr.split(',').map(e => e.trim()).filter(e => e)
+          const existingWords = new Set(exampleWords.map(w => w.toLowerCase()))
+          
+          for (const example of additionalExamples) {
+            if (exampleWords.length >= 3) break
+            if (!existingWords.has(example.toLowerCase())) {
+              exampleWords.push(example)
+              existingWords.add(example.toLowerCase())
+              // Create a basic breakdown for this example
+              wordBreakdowns.push({
+                word: example,
+                affix: affix.affix,
+                root: '', // Will be filled if needed
+                affixMeaning: result.affixMeaning,
+                rootMeaning: '',
+                combinedMeaning: ''
+              })
+            }
+          }
+        }
+        
+        const affixItem: PassageAffixItem = {
+          affix: affix.affix,
+          kind: affix.kind,
+          meaning: result.affixMeaning,
+          examples: exampleWords,
+          wordBreakdowns: wordBreakdowns
+        }
+        
+        affixMap.value.set(affixIndex, affixItem)
+        selectedAffixWords.value.set(key, new Set(exampleWords))
+      }
+    } catch (error) {
+      console.error('Error detecting affix words:', error)
+      // Fallback to simple extraction if AI fails
+      const words = extractWordsContainingAffix(passageText, affix.affix, affix.kind)
+      let exampleWords = words.slice(0, 3) // Max 3 words
+      
+      // If we have fewer than 3, fill from affix examples
+      if (exampleWords.length < 3 && affix.examplesStr) {
+        const additionalExamples = affix.examplesStr.split(',').map(e => e.trim()).filter(e => e)
+        const existingWords = new Set(exampleWords.map(w => w.toLowerCase()))
+        
+        for (const example of additionalExamples) {
+          if (exampleWords.length >= 3) break
+          if (!existingWords.has(example.toLowerCase())) {
+            exampleWords.push(example)
+            existingWords.add(example.toLowerCase())
+          }
+        }
+      }
+      
+      // If still no examples, use affix examples string
+      if (exampleWords.length === 0 && affix.examplesStr) {
+        exampleWords = affix.examplesStr.split(',').map(e => e.trim()).filter(e => e).slice(0, 3)
+      }
+      
+      const affixItem: PassageAffixItem = {
+        affix: affix.affix,
+        kind: affix.kind,
+        meaning: affix.meaning,
+        examples: exampleWords
+      }
+      
+      affixMap.value.set(affixIndex, affixItem)
+      selectedAffixWords.value.set(key, new Set(affixItem.examples))
+    } finally {
+      affixDetectionLoading.value.set(key, false)
     }
-    
-    affixMap.value.set(affixIndex, affixItem)
-    
-    // Initialize all words as selected
-    selectedAffixWords.value.set(key, new Set(affixItem.examples))
   } else {
     // Remove assignment
     affixMap.value.delete(affixIndex)
     selectedAffixWords.value.delete(key)
+    affixDetectionLoading.value.delete(key)
   }
 }
 
@@ -1204,7 +1388,7 @@ function isAffixWordSelected(passageType: 'weekly' | 'friday', affixIndex: numbe
   return selectedAffixWords.value.get(key)?.has(word) || false
 }
 
-// Toggle affix word selection
+// Toggle affix word selection (maintain breakdowns, max 3 words)
 function toggleAffixWord(passageType: 'weekly' | 'friday', affixIndex: number, word: string, event: Event) {
   const checked = (event.target as HTMLInputElement).checked
   const key = `${passageType}-${affixIndex}`
@@ -1215,17 +1399,29 @@ function toggleAffixWord(passageType: 'weekly' | 'friday', affixIndex: number, w
   }
   
   const selectedWords = selectedAffixWords.value.get(key)!
+  const affixItem = affixMap.value.get(affixIndex)
+  
+  if (!affixItem) return
   
   if (checked) {
+    // Only allow max 3 words
+    if (selectedWords.size >= 3) {
+      event.preventDefault()
+      alert('Maximum 3 example words allowed per affix.')
+      return
+    }
     selectedWords.add(word)
   } else {
     selectedWords.delete(word)
   }
   
-  // Update the affix item with only selected words
-  const affixItem = affixMap.value.get(affixIndex)
-  if (affixItem) {
-    affixItem.examples = Array.from(selectedWords)
+  // Update the affix item with only selected words and their breakdowns
+  const selectedWordsArray = Array.from(selectedWords)
+  affixItem.examples = selectedWordsArray
+  
+  // Preserve word breakdowns for selected words only
+  if (affixItem.wordBreakdowns) {
+    affixItem.wordBreakdowns = affixItem.wordBreakdowns.filter(bd => selectedWordsArray.includes(bd.word))
   }
 }
 
@@ -2090,6 +2286,75 @@ onMounted(() => {
   font-size: 0.85rem;
   color: #4a5568;
   margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.affix-word-selection {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.affix-word-breakdowns {
+  margin-top: 1rem;
+}
+
+.word-breakdown-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.breakdown-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.breakdown-label {
+  font-weight: 600;
+  color: #4a5568;
+  min-width: 50px;
+}
+
+.breakdown-value {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.breakdown-meaning {
+  color: #718096;
+  font-style: italic;
+}
+
+.breakdown-row.combined-meaning {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.breakdown-value.combined {
+  font-weight: 600;
+  color: #2d3748;
+  font-style: normal;
+}
+
+.loading-state {
+  padding: 1rem;
+  background: #edf2f7;
+  border-radius: 6px;
+  text-align: center;
+  color: #4a5568;
   font-style: italic;
 }
 

@@ -1,0 +1,2296 @@
+[
+  {
+    "affix": "inter-",
+    "category": "prefix",
+    "affix_meaning": "between; among",
+    "examples": [
+      {
+        "word": "interaction",
+        "root": "act",
+        "root_meaning": "do; act",
+        "combined_meaning": "action between"
+      },
+      {
+        "word": "interact",
+        "root": "act",
+        "root_meaning": "do; act",
+        "combined_meaning": "to act between"
+      },
+      {
+        "word": "international",
+        "root": "nation",
+        "root_meaning": "country; people",
+        "combined_meaning": "between nations"
+      },
+      {
+        "word": "interdependent",
+        "root": "depend",
+        "root_meaning": "rely on",
+        "combined_meaning": "relying on each other"
+      },
+      {
+        "word": "interconnected",
+        "root": "connect",
+        "root_meaning": "link",
+        "combined_meaning": "linked between parts"
+      }
+    ]
+  },
+  {
+    "affix": "re-",
+    "category": "prefix",
+    "affix_meaning": "again; back",
+    "examples": [
+      {
+        "word": "reform",
+        "root": "form",
+        "root_meaning": "shape; make",
+        "combined_meaning": "form again; improve by changing"
+      },
+      {
+        "word": "review",
+        "root": "view",
+        "root_meaning": "see",
+        "combined_meaning": "see again"
+      },
+      {
+        "word": "rebuild",
+        "root": "build",
+        "root_meaning": "construct",
+        "combined_meaning": "build again"
+      },
+      {
+        "word": "return",
+        "root": "turn",
+        "root_meaning": "turn; go",
+        "combined_meaning": "turn back"
+      },
+      {
+        "word": "revise",
+        "root": "vise/vid",
+        "root_meaning": "see; look",
+        "combined_meaning": "look again; improve"
+      }
+    ]
+  },
+  {
+    "affix": "trans-",
+    "category": "prefix",
+    "affix_meaning": "across; through",
+    "examples": [
+      {
+        "word": "transport",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "carry across"
+      },
+      {
+        "word": "transfer",
+        "root": "fer",
+        "root_meaning": "carry; bring",
+        "combined_meaning": "carry across"
+      },
+      {
+        "word": "transcontinental",
+        "root": "continent",
+        "root_meaning": "large landmass",
+        "combined_meaning": "across a continent"
+      },
+      {
+        "word": "transmit",
+        "root": "mit/miss",
+        "root_meaning": "send",
+        "combined_meaning": "send across"
+      },
+      {
+        "word": "transaction",
+        "root": "act",
+        "root_meaning": "do; act",
+        "combined_meaning": "action across people/groups"
+      }
+    ]
+  },
+  {
+    "affix": "in-",
+    "category": "prefix",
+    "affix_meaning": "in; into (sometimes 'not')",
+    "examples": [
+      {
+        "word": "inject",
+        "root": "ject",
+        "root_meaning": "throw; put",
+        "combined_meaning": "put into"
+      },
+      {
+        "word": "insert",
+        "root": "sert",
+        "root_meaning": "put",
+        "combined_meaning": "put in"
+      },
+      {
+        "word": "import",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "carry in"
+      },
+      {
+        "word": "include",
+        "root": "clude/clus",
+        "root_meaning": "close; shut",
+        "combined_meaning": "close in; contain"
+      },
+      {
+        "word": "invisible",
+        "root": "vis",
+        "root_meaning": "see",
+        "combined_meaning": "not seen"
+      }
+    ]
+  },
+  {
+    "affix": "sub-",
+    "category": "prefix",
+    "affix_meaning": "under; below; less",
+    "examples": [
+      {
+        "word": "subterranean",
+        "root": "terra",
+        "root_meaning": "earth",
+        "combined_meaning": "under the earth"
+      },
+      {
+        "word": "submerge",
+        "root": "merg",
+        "root_meaning": "dip; sink",
+        "combined_meaning": "sink under"
+      },
+      {
+        "word": "subregion",
+        "root": "region",
+        "root_meaning": "area",
+        "combined_meaning": "smaller area under a larger region"
+      },
+      {
+        "word": "subordinate",
+        "root": "ordin",
+        "root_meaning": "order; rank",
+        "combined_meaning": "lower in rank"
+      },
+      {
+        "word": "substandard",
+        "root": "standard",
+        "root_meaning": "level; norm",
+        "combined_meaning": "below the standard"
+      }
+    ]
+  },
+  {
+    "affix": "non-",
+    "category": "prefix",
+    "affix_meaning": "not; without",
+    "examples": [
+      {
+        "word": "nonfiction",
+        "root": "fiction",
+        "root_meaning": "made-up story",
+        "combined_meaning": "not fiction"
+      },
+      {
+        "word": "nonadaptive",
+        "root": "adapt",
+        "root_meaning": "fit; adjust",
+        "combined_meaning": "not adaptive"
+      },
+      {
+        "word": "nonrenewable",
+        "root": "new",
+        "root_meaning": "new again; renew",
+        "combined_meaning": "not able to be renewed"
+      },
+      {
+        "word": "nonviolent",
+        "root": "violent",
+        "root_meaning": "using force",
+        "combined_meaning": "not violent"
+      },
+      {
+        "word": "nonessential",
+        "root": "essential",
+        "root_meaning": "necessary",
+        "combined_meaning": "not necessary"
+      }
+    ]
+  },
+  {
+    "affix": "ad-",
+    "category": "prefix",
+    "affix_meaning": "to; toward (often changes spelling: ac-, af-, ag-, al-, an-, ap-, ar-, as-, at-)",
+    "examples": [
+      {
+        "word": "adapt",
+        "root": "apt",
+        "root_meaning": "fit",
+        "combined_meaning": "fit toward a situation; adjust"
+      },
+      {
+        "word": "adhere",
+        "root": "here/hes",
+        "root_meaning": "stick",
+        "combined_meaning": "stick to"
+      },
+      {
+        "word": "attach",
+        "root": "tach",
+        "root_meaning": "fasten",
+        "combined_meaning": "fasten to"
+      },
+      {
+        "word": "approach",
+        "root": "proach/prox",
+        "root_meaning": "near",
+        "combined_meaning": "move toward"
+      },
+      {
+        "word": "associate",
+        "root": "soci",
+        "root_meaning": "join; companion",
+        "combined_meaning": "join to; connect"
+      }
+    ]
+  },
+  {
+    "affix": "eco-",
+    "category": "prefix",
+    "affix_meaning": "environment; home",
+    "examples": [
+      {
+        "word": "ecosystem",
+        "root": "system",
+        "root_meaning": "connected parts",
+        "combined_meaning": "environment system"
+      },
+      {
+        "word": "ecology",
+        "root": "logy",
+        "root_meaning": "study of",
+        "combined_meaning": "study of environments"
+      },
+      {
+        "word": "economic",
+        "root": "nom",
+        "root_meaning": "manage",
+        "combined_meaning": "managing resources"
+      },
+      {
+        "word": "ecotourism",
+        "root": "tour",
+        "root_meaning": "travel",
+        "combined_meaning": "travel focused on environments"
+      },
+      {
+        "word": "eco-friendly",
+        "root": "friendly",
+        "root_meaning": "helpful; kind",
+        "combined_meaning": "good for the environment"
+      }
+    ]
+  },
+  {
+    "affix": "de-",
+    "category": "prefix",
+    "affix_meaning": "down; away; apart; reverse",
+    "examples": [
+      {
+        "word": "decompose",
+        "root": "pose",
+        "root_meaning": "put; place",
+        "combined_meaning": "take apart; break down"
+      },
+      {
+        "word": "decomposer",
+        "root": "compose",
+        "root_meaning": "put together",
+        "combined_meaning": "one that breaks down"
+      },
+      {
+        "word": "decrease",
+        "root": "crease/cresc",
+        "root_meaning": "grow",
+        "combined_meaning": "grow down; become less"
+      },
+      {
+        "word": "deactivate",
+        "root": "act",
+        "root_meaning": "do; work",
+        "combined_meaning": "make not active"
+      },
+      {
+        "word": "deforest",
+        "root": "forest",
+        "root_meaning": "woods",
+        "combined_meaning": "remove forest"
+      }
+    ]
+  },
+  {
+    "affix": "-ment",
+    "category": "suffix",
+    "affix_meaning": "result; process; state",
+    "examples": [
+      {
+        "word": "environment",
+        "root": "viron",
+        "root_meaning": "surround",
+        "combined_meaning": "surrounding conditions"
+      },
+      {
+        "word": "development",
+        "root": "velop",
+        "root_meaning": "wrap; unfold",
+        "combined_meaning": "process of growing/unfolding"
+      },
+      {
+        "word": "government",
+        "root": "govern",
+        "root_meaning": "rule",
+        "combined_meaning": "system/process of ruling"
+      },
+      {
+        "word": "settlement",
+        "root": "settle",
+        "root_meaning": "place; establish",
+        "combined_meaning": "place that is established"
+      },
+      {
+        "word": "movement",
+        "root": "move",
+        "root_meaning": "go",
+        "combined_meaning": "act/process of moving"
+      }
+    ]
+  },
+  {
+    "affix": "-tion",
+    "category": "suffix",
+    "affix_meaning": "act; process; result (often -sion/-tion)",
+    "examples": [
+      {
+        "word": "mutation",
+        "root": "mut",
+        "root_meaning": "change",
+        "combined_meaning": "process of change"
+      },
+      {
+        "word": "variation",
+        "root": "vari",
+        "root_meaning": "different; change",
+        "combined_meaning": "process/state of differing"
+      },
+      {
+        "word": "colonization",
+        "root": "colon",
+        "root_meaning": "settler",
+        "combined_meaning": "process of forming colonies"
+      },
+      {
+        "word": "civilization",
+        "root": "civil",
+        "root_meaning": "citizen",
+        "combined_meaning": "process/state of organized society"
+      },
+      {
+        "word": "observation",
+        "root": "serv",
+        "root_meaning": "watch; keep",
+        "combined_meaning": "act of watching carefully"
+      }
+    ]
+  },
+  {
+    "affix": "-ion",
+    "category": "suffix",
+    "affix_meaning": "act; process; result (variant of -tion)",
+    "examples": [
+      {
+        "word": "expansion",
+        "root": "pand",
+        "root_meaning": "spread",
+        "combined_meaning": "process of spreading out"
+      },
+      {
+        "word": "erosion",
+        "root": "eros",
+        "root_meaning": "wear away",
+        "combined_meaning": "process of wearing away"
+      },
+      {
+        "word": "migration",
+        "root": "migr",
+        "root_meaning": "move",
+        "combined_meaning": "process of moving place to place"
+      },
+      {
+        "word": "population",
+        "root": "popul",
+        "root_meaning": "people",
+        "combined_meaning": "group/state of people"
+      },
+      {
+        "word": "selection",
+        "root": "lect",
+        "root_meaning": "choose",
+        "combined_meaning": "act of choosing"
+      }
+    ]
+  },
+  {
+    "affix": "-er",
+    "category": "suffix",
+    "affix_meaning": "person/thing that does; one who",
+    "examples": [
+      {
+        "word": "producer",
+        "root": "duce/duct",
+        "root_meaning": "lead; bring",
+        "combined_meaning": "one that produces/makes"
+      },
+      {
+        "word": "consumer",
+        "root": "sum/sumpt",
+        "root_meaning": "take; use",
+        "combined_meaning": "one that uses up"
+      },
+      {
+        "word": "decomposer",
+        "root": "compose",
+        "root_meaning": "put together",
+        "combined_meaning": "one that breaks down"
+      },
+      {
+        "word": "farmer",
+        "root": "farm",
+        "root_meaning": "grow crops",
+        "combined_meaning": "one who farms"
+      },
+      {
+        "word": "teacher",
+        "root": "teach",
+        "root_meaning": "instruct",
+        "combined_meaning": "one who teaches"
+      }
+    ]
+  },
+  {
+    "affix": "-ful",
+    "category": "suffix",
+    "affix_meaning": "full of",
+    "examples": [
+      {
+        "word": "resourceful",
+        "root": "resource",
+        "root_meaning": "supply",
+        "combined_meaning": "full of resources/ideas"
+      },
+      {
+        "word": "meaningful",
+        "root": "meaning",
+        "root_meaning": "what it means",
+        "combined_meaning": "full of meaning"
+      },
+      {
+        "word": "helpful",
+        "root": "help",
+        "root_meaning": "support",
+        "combined_meaning": "full of help"
+      },
+      {
+        "word": "powerful",
+        "root": "power",
+        "root_meaning": "strength",
+        "combined_meaning": "full of power"
+      },
+      {
+        "word": "successful",
+        "root": "success",
+        "root_meaning": "good result",
+        "combined_meaning": "full of success"
+      }
+    ]
+  },
+  {
+    "affix": "-ous",
+    "category": "suffix",
+    "affix_meaning": "having; full of",
+    "examples": [
+      {
+        "word": "dangerous",
+        "root": "danger",
+        "root_meaning": "harm",
+        "combined_meaning": "full of danger"
+      },
+      {
+        "word": "curious",
+        "root": "cur",
+        "root_meaning": "care",
+        "combined_meaning": "full of care/wonder"
+      },
+      {
+        "word": "famous",
+        "root": "fam",
+        "root_meaning": "talk; report",
+        "combined_meaning": "much talked about"
+      },
+      {
+        "word": "generous",
+        "root": "gen",
+        "root_meaning": "birth; kind",
+        "combined_meaning": "full of giving"
+      },
+      {
+        "word": "glorious",
+        "root": "glory",
+        "root_meaning": "honor",
+        "combined_meaning": "full of glory"
+      }
+    ]
+  },
+  {
+    "affix": "-al",
+    "category": "suffix",
+    "affix_meaning": "related to",
+    "examples": [
+      {
+        "word": "regional",
+        "root": "region",
+        "root_meaning": "area",
+        "combined_meaning": "related to a region"
+      },
+      {
+        "word": "natural",
+        "root": "nature",
+        "root_meaning": "world; life",
+        "combined_meaning": "related to nature"
+      },
+      {
+        "word": "cultural",
+        "root": "culture",
+        "root_meaning": "way of life",
+        "combined_meaning": "related to culture"
+      },
+      {
+        "word": "national",
+        "root": "nation",
+        "root_meaning": "country",
+        "combined_meaning": "related to a nation"
+      },
+      {
+        "word": "environmental",
+        "root": "environment",
+        "root_meaning": "surroundings",
+        "combined_meaning": "related to the environment"
+      }
+    ]
+  },
+  {
+    "affix": "-ity",
+    "category": "suffix",
+    "affix_meaning": "state; quality",
+    "examples": [
+      {
+        "word": "diversity",
+        "root": "diverse",
+        "root_meaning": "different",
+        "combined_meaning": "state of being different"
+      },
+      {
+        "word": "community",
+        "root": "common",
+        "root_meaning": "shared",
+        "combined_meaning": "state/group that shares"
+      },
+      {
+        "word": "activity",
+        "root": "act",
+        "root_meaning": "do",
+        "combined_meaning": "state of doing"
+      },
+      {
+        "word": "authority",
+        "root": "author",
+        "root_meaning": "source; creator",
+        "combined_meaning": "state/power to decide"
+      },
+      {
+        "word": "stability",
+        "root": "stable",
+        "root_meaning": "steady",
+        "combined_meaning": "state of being steady"
+      }
+    ]
+  },
+  {
+    "affix": "-or",
+    "category": "suffix",
+    "affix_meaning": "one who; thing that",
+    "examples": [
+      {
+        "word": "creator",
+        "root": "creat",
+        "root_meaning": "make",
+        "combined_meaning": "one who makes"
+      },
+      {
+        "word": "navigator",
+        "root": "nav",
+        "root_meaning": "ship",
+        "combined_meaning": "one who guides travel"
+      },
+      {
+        "word": "educator",
+        "root": "educ",
+        "root_meaning": "lead out; teach",
+        "combined_meaning": "one who teaches"
+      },
+      {
+        "word": "contributor",
+        "root": "trib",
+        "root_meaning": "give",
+        "combined_meaning": "one who gives to a group"
+      },
+      {
+        "word": "operator",
+        "root": "oper",
+        "root_meaning": "work",
+        "combined_meaning": "one who operates/works"
+      }
+    ]
+  },
+  {
+    "affix": "-ive",
+    "category": "suffix",
+    "affix_meaning": "having the quality of",
+    "examples": [
+      {
+        "word": "adaptive",
+        "root": "adapt",
+        "root_meaning": "fit; adjust",
+        "combined_meaning": "able to adjust"
+      },
+      {
+        "word": "active",
+        "root": "act",
+        "root_meaning": "do",
+        "combined_meaning": "doing; working"
+      },
+      {
+        "word": "creative",
+        "root": "creat",
+        "root_meaning": "make",
+        "combined_meaning": "able to make new things"
+      },
+      {
+        "word": "relative",
+        "root": "relat",
+        "root_meaning": "connect",
+        "combined_meaning": "connected; compared to"
+      },
+      {
+        "word": "effective",
+        "root": "effect",
+        "root_meaning": "result",
+        "combined_meaning": "having strong results"
+      }
+    ]
+  },
+  {
+    "affix": "-ism",
+    "category": "suffix",
+    "affix_meaning": "belief; system; practice",
+    "examples": [
+      {
+        "word": "colonialism",
+        "root": "colon",
+        "root_meaning": "settler",
+        "combined_meaning": "system of colonies/control"
+      },
+      {
+        "word": "scientism",
+        "root": "science",
+        "root_meaning": "knowledge",
+        "combined_meaning": "belief science explains everything"
+      },
+      {
+        "word": "tourism",
+        "root": "tour",
+        "root_meaning": "travel",
+        "combined_meaning": "practice of traveling"
+      },
+      {
+        "word": "realism",
+        "root": "real",
+        "root_meaning": "actual",
+        "combined_meaning": "belief/style focused on real life"
+      },
+      {
+        "word": "activism",
+        "root": "act",
+        "root_meaning": "do",
+        "combined_meaning": "practice of acting for change"
+      }
+    ]
+  },
+  {
+    "affix": "-ant",
+    "category": "suffix",
+    "affix_meaning": "one who; relating to",
+    "examples": [
+      {
+        "word": "protestant",
+        "root": "protest",
+        "root_meaning": "speak against",
+        "combined_meaning": "one who protested"
+      },
+      {
+        "word": "participant",
+        "root": "part",
+        "root_meaning": "share",
+        "combined_meaning": "one who takes part"
+      },
+      {
+        "word": "assistant",
+        "root": "sist",
+        "root_meaning": "stand",
+        "combined_meaning": "one who stands by to help"
+      },
+      {
+        "word": "inhabitant",
+        "root": "habit",
+        "root_meaning": "live; dwell",
+        "combined_meaning": "one who lives in a place"
+      },
+      {
+        "word": "dominant",
+        "root": "domin",
+        "root_meaning": "master; rule",
+        "combined_meaning": "having ruling power"
+      }
+    ]
+  },
+  {
+    "affix": "pre-",
+    "category": "prefix",
+    "affix_meaning": "before",
+    "examples": [
+      {
+        "word": "predict",
+        "root": "dict",
+        "root_meaning": "say",
+        "combined_meaning": "say before"
+      },
+      {
+        "word": "preview",
+        "root": "view",
+        "root_meaning": "see",
+        "combined_meaning": "see before"
+      },
+      {
+        "word": "prehistoric",
+        "root": "historic",
+        "root_meaning": "history/time",
+        "combined_meaning": "before recorded history"
+      },
+      {
+        "word": "prepare",
+        "root": "pare",
+        "root_meaning": "make ready",
+        "combined_meaning": "make ready before"
+      },
+      {
+        "word": "pretest",
+        "root": "test",
+        "root_meaning": "try/measure",
+        "combined_meaning": "test before"
+      }
+    ]
+  },
+  {
+    "affix": "post-",
+    "category": "prefix",
+    "affix_meaning": "after",
+    "examples": [
+      {
+        "word": "postwar",
+        "root": "war",
+        "root_meaning": "war",
+        "combined_meaning": "after the war"
+      },
+      {
+        "word": "posttest",
+        "root": "test",
+        "root_meaning": "try/measure",
+        "combined_meaning": "test after"
+      },
+      {
+        "word": "postpone",
+        "root": "pone/pos",
+        "root_meaning": "put",
+        "combined_meaning": "put after"
+      },
+      {
+        "word": "postscript",
+        "root": "script",
+        "root_meaning": "write",
+        "combined_meaning": "written after"
+      },
+      {
+        "word": "postseason",
+        "root": "season",
+        "root_meaning": "time period",
+        "combined_meaning": "after the season"
+      }
+    ]
+  },
+  {
+    "affix": "anti-",
+    "category": "prefix",
+    "affix_meaning": "against; opposite",
+    "examples": [
+      {
+        "word": "antibiotic",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "against bacteria/life forms"
+      },
+      {
+        "word": "antislavery",
+        "root": "slave",
+        "root_meaning": "enslaved person",
+        "combined_meaning": "against slavery"
+      },
+      {
+        "word": "antisocial",
+        "root": "social",
+        "root_meaning": "group/people",
+        "combined_meaning": "against social behavior"
+      },
+      {
+        "word": "antibody",
+        "root": "body",
+        "root_meaning": "body",
+        "combined_meaning": "against germs in the body"
+      },
+      {
+        "word": "antagonist",
+        "root": "agon",
+        "root_meaning": "struggle",
+        "combined_meaning": "one who struggles against"
+      }
+    ]
+  },
+  {
+    "affix": "auto-",
+    "category": "prefix",
+    "affix_meaning": "self",
+    "examples": [
+      {
+        "word": "autobiography",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "self life-writing"
+      },
+      {
+        "word": "automatic",
+        "root": "mat",
+        "root_meaning": "think/do",
+        "combined_meaning": "self-acting"
+      },
+      {
+        "word": "autograph",
+        "root": "graph",
+        "root_meaning": "write",
+        "combined_meaning": "self-written signature"
+      },
+      {
+        "word": "autonomy",
+        "root": "nom",
+        "root_meaning": "rule/manage",
+        "combined_meaning": "self-rule"
+      },
+      {
+        "word": "autocorrect",
+        "root": "correct",
+        "root_meaning": "make right",
+        "combined_meaning": "self-correct"
+      }
+    ]
+  },
+  {
+    "affix": "bio-",
+    "category": "prefix",
+    "affix_meaning": "life",
+    "examples": [
+      {
+        "word": "biology",
+        "root": "logy",
+        "root_meaning": "study",
+        "combined_meaning": "study of life"
+      },
+      {
+        "word": "biome",
+        "root": "ome",
+        "root_meaning": "mass/whole",
+        "combined_meaning": "life region"
+      },
+      {
+        "word": "biography",
+        "root": "graph",
+        "root_meaning": "write",
+        "combined_meaning": "life writing"
+      },
+      {
+        "word": "biodegradable",
+        "root": "grad",
+        "root_meaning": "step",
+        "combined_meaning": "able to break down by life"
+      },
+      {
+        "word": "biotechnology",
+        "root": "tech",
+        "root_meaning": "skill",
+        "combined_meaning": "technology using life"
+      }
+    ]
+  },
+  {
+    "affix": "geo-",
+    "category": "prefix",
+    "affix_meaning": "earth",
+    "examples": [
+      {
+        "word": "geography",
+        "root": "graph",
+        "root_meaning": "write",
+        "combined_meaning": "earth writing/mapping"
+      },
+      {
+        "word": "geology",
+        "root": "logy",
+        "root_meaning": "study",
+        "combined_meaning": "study of earth"
+      },
+      {
+        "word": "geothermal",
+        "root": "therm",
+        "root_meaning": "heat",
+        "combined_meaning": "earth heat"
+      },
+      {
+        "word": "geopolitical",
+        "root": "polit",
+        "root_meaning": "citizen",
+        "combined_meaning": "earth/world politics"
+      },
+      {
+        "word": "geosphere",
+        "root": "spher",
+        "root_meaning": "ball",
+        "combined_meaning": "earth sphere"
+      }
+    ]
+  },
+  {
+    "affix": "micro-",
+    "category": "prefix",
+    "affix_meaning": "small",
+    "examples": [
+      {
+        "word": "microbe",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "small life form"
+      },
+      {
+        "word": "microscope",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "tool to look at small things"
+      },
+      {
+        "word": "microclimate",
+        "root": "climate",
+        "root_meaning": "weather pattern",
+        "combined_meaning": "small-area climate"
+      },
+      {
+        "word": "microscopic",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "very small to see"
+      },
+      {
+        "word": "microorganism",
+        "root": "organ",
+        "root_meaning": "part",
+        "combined_meaning": "tiny living thing"
+      }
+    ]
+  },
+  {
+    "affix": "macro-",
+    "category": "prefix",
+    "affix_meaning": "large",
+    "examples": [
+      {
+        "word": "macroeconomics",
+        "root": "econom",
+        "root_meaning": "manage",
+        "combined_meaning": "study of large-scale economy"
+      },
+      {
+        "word": "macroscopic",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "large enough to see"
+      },
+      {
+        "word": "macrostructure",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "large structure"
+      },
+      {
+        "word": "macromolecule",
+        "root": "molec",
+        "root_meaning": "small mass",
+        "combined_meaning": "large molecule"
+      },
+      {
+        "word": "macroregion",
+        "root": "region",
+        "root_meaning": "area",
+        "combined_meaning": "large region"
+      }
+    ]
+  },
+  {
+    "affix": "multi-",
+    "category": "prefix",
+    "affix_meaning": "many",
+    "examples": [
+      {
+        "word": "multicultural",
+        "root": "culture",
+        "root_meaning": "way of life",
+        "combined_meaning": "many cultures"
+      },
+      {
+        "word": "multinational",
+        "root": "nation",
+        "root_meaning": "country",
+        "combined_meaning": "many nations"
+      },
+      {
+        "word": "multicellular",
+        "root": "cell",
+        "root_meaning": "small unit",
+        "combined_meaning": "many cells"
+      },
+      {
+        "word": "multimedia",
+        "root": "media",
+        "root_meaning": "means",
+        "combined_meaning": "many media"
+      },
+      {
+        "word": "multiply",
+        "root": "ply",
+        "root_meaning": "fold",
+        "combined_meaning": "fold many times"
+      }
+    ]
+  },
+  {
+    "affix": "uni-",
+    "category": "prefix",
+    "affix_meaning": "one",
+    "examples": [
+      {
+        "word": "uniform",
+        "root": "form",
+        "root_meaning": "shape",
+        "combined_meaning": "one form"
+      },
+      {
+        "word": "unify",
+        "root": "fy",
+        "root_meaning": "make",
+        "combined_meaning": "make one"
+      },
+      {
+        "word": "universe",
+        "root": "vers",
+        "root_meaning": "turn",
+        "combined_meaning": "turned into one whole"
+      },
+      {
+        "word": "unique",
+        "root": "uni",
+        "root_meaning": "one",
+        "combined_meaning": "one of a kind"
+      },
+      {
+        "word": "unilateral",
+        "root": "later",
+        "root_meaning": "side",
+        "combined_meaning": "one-sided"
+      }
+    ]
+  },
+  {
+    "affix": "tri-",
+    "category": "prefix",
+    "affix_meaning": "three",
+    "examples": [
+      {
+        "word": "triangle",
+        "root": "angle",
+        "root_meaning": "corner",
+        "combined_meaning": "three corners"
+      },
+      {
+        "word": "tricycle",
+        "root": "cycle",
+        "root_meaning": "circle",
+        "combined_meaning": "three-wheeled cycle"
+      },
+      {
+        "word": "triple",
+        "root": "plic",
+        "root_meaning": "fold",
+        "combined_meaning": "fold three times"
+      },
+      {
+        "word": "trilogy",
+        "root": "logy",
+        "root_meaning": "story",
+        "combined_meaning": "three-part story"
+      },
+      {
+        "word": "trilingual",
+        "root": "lingu",
+        "root_meaning": "language",
+        "combined_meaning": "three languages"
+      }
+    ]
+  },
+  {
+    "affix": "dis-",
+    "category": "prefix",
+    "affix_meaning": "not; apart; opposite",
+    "examples": [
+      {
+        "word": "disconnect",
+        "root": "connect",
+        "root_meaning": "link",
+        "combined_meaning": "not connected"
+      },
+      {
+        "word": "disagree",
+        "root": "agree",
+        "root_meaning": "be in harmony",
+        "combined_meaning": "not agree"
+      },
+      {
+        "word": "disorder",
+        "root": "order",
+        "root_meaning": "arrangement",
+        "combined_meaning": "not in order"
+      },
+      {
+        "word": "disrupt",
+        "root": "rupt",
+        "root_meaning": "break",
+        "combined_meaning": "break apart"
+      },
+      {
+        "word": "distribute",
+        "root": "trib",
+        "root_meaning": "give",
+        "combined_meaning": "give out/apart"
+      }
+    ]
+  },
+  {
+    "affix": "mis-",
+    "category": "prefix",
+    "affix_meaning": "wrong; badly",
+    "examples": [
+      {
+        "word": "misunderstand",
+        "root": "understand",
+        "root_meaning": "know",
+        "combined_meaning": "understand wrongly"
+      },
+      {
+        "word": "misinterpret",
+        "root": "interpret",
+        "root_meaning": "explain",
+        "combined_meaning": "explain wrongly"
+      },
+      {
+        "word": "mislead",
+        "root": "lead",
+        "root_meaning": "guide",
+        "combined_meaning": "guide wrongly"
+      },
+      {
+        "word": "misplace",
+        "root": "place",
+        "root_meaning": "put",
+        "combined_meaning": "put in wrong place"
+      },
+      {
+        "word": "miscalculate",
+        "root": "calculate",
+        "root_meaning": "count",
+        "combined_meaning": "count wrongly"
+      }
+    ]
+  },
+  {
+    "affix": "over-",
+    "category": "prefix",
+    "affix_meaning": "too much",
+    "examples": [
+      {
+        "word": "overuse",
+        "root": "use",
+        "root_meaning": "use",
+        "combined_meaning": "use too much"
+      },
+      {
+        "word": "overpopulation",
+        "root": "popul",
+        "root_meaning": "people",
+        "combined_meaning": "too many people"
+      },
+      {
+        "word": "overheat",
+        "root": "heat",
+        "root_meaning": "warmth",
+        "combined_meaning": "heat too much"
+      },
+      {
+        "word": "overestimate",
+        "root": "estimate",
+        "root_meaning": "guess",
+        "combined_meaning": "guess too high"
+      },
+      {
+        "word": "overgrazing",
+        "root": "graze",
+        "root_meaning": "eat grass",
+        "combined_meaning": "too much grazing"
+      }
+    ]
+  },
+  {
+    "affix": "under-",
+    "category": "prefix",
+    "affix_meaning": "not enough; below",
+    "examples": [
+      {
+        "word": "underestimate",
+        "root": "estimate",
+        "root_meaning": "guess",
+        "combined_meaning": "guess too low"
+      },
+      {
+        "word": "undercook",
+        "root": "cook",
+        "root_meaning": "cook",
+        "combined_meaning": "cook too little"
+      },
+      {
+        "word": "underground",
+        "root": "ground",
+        "root_meaning": "earth",
+        "combined_meaning": "below ground"
+      },
+      {
+        "word": "underdeveloped",
+        "root": "velop",
+        "root_meaning": "unfold/grow",
+        "combined_meaning": "not developed enough"
+      },
+      {
+        "word": "underwater",
+        "root": "water",
+        "root_meaning": "water",
+        "combined_meaning": "below water"
+      }
+    ]
+  },
+  {
+    "affix": "super-",
+    "category": "prefix",
+    "affix_meaning": "above; beyond",
+    "examples": [
+      {
+        "word": "supernatural",
+        "root": "nature",
+        "root_meaning": "world",
+        "combined_meaning": "beyond nature"
+      },
+      {
+        "word": "superstructure",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "structure above"
+      },
+      {
+        "word": "superior",
+        "root": "super",
+        "root_meaning": "above",
+        "combined_meaning": "above in rank"
+      },
+      {
+        "word": "superpower",
+        "root": "power",
+        "root_meaning": "strength",
+        "combined_meaning": "very great power"
+      },
+      {
+        "word": "supervise",
+        "root": "vis",
+        "root_meaning": "see",
+        "combined_meaning": "watch over"
+      }
+    ]
+  },
+  {
+    "affix": "semi-",
+    "category": "prefix",
+    "affix_meaning": "half; partly",
+    "examples": [
+      {
+        "word": "semicircle",
+        "root": "circle",
+        "root_meaning": "round",
+        "combined_meaning": "half circle"
+      },
+      {
+        "word": "semifinal",
+        "root": "final",
+        "root_meaning": "end",
+        "combined_meaning": "partly final round"
+      },
+      {
+        "word": "semiconscious",
+        "root": "conscious",
+        "root_meaning": "aware",
+        "combined_meaning": "partly aware"
+      },
+      {
+        "word": "semiaquatic",
+        "root": "aqua",
+        "root_meaning": "water",
+        "combined_meaning": "partly water-living"
+      },
+      {
+        "word": "semiskilled",
+        "root": "skill",
+        "root_meaning": "ability",
+        "combined_meaning": "partly skilled"
+      }
+    ]
+  },
+  {
+    "affix": "-able",
+    "category": "suffix",
+    "affix_meaning": "able to; capable of",
+    "examples": [
+      {
+        "word": "renewable",
+        "root": "new",
+        "root_meaning": "new",
+        "combined_meaning": "able to be renewed"
+      },
+      {
+        "word": "adaptable",
+        "root": "adapt",
+        "root_meaning": "adjust",
+        "combined_meaning": "able to adapt"
+      },
+      {
+        "word": "portable",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "able to be carried"
+      },
+      {
+        "word": "predictable",
+        "root": "dict",
+        "root_meaning": "say",
+        "combined_meaning": "able to be predicted"
+      },
+      {
+        "word": "comfortable",
+        "root": "comfort",
+        "root_meaning": "ease",
+        "combined_meaning": "able to be comfortable"
+      }
+    ]
+  },
+  {
+    "affix": "-less",
+    "category": "suffix",
+    "affix_meaning": "without",
+    "examples": [
+      {
+        "word": "harmless",
+        "root": "harm",
+        "root_meaning": "hurt",
+        "combined_meaning": "without harm"
+      },
+      {
+        "word": "endless",
+        "root": "end",
+        "root_meaning": "finish",
+        "combined_meaning": "without end"
+      },
+      {
+        "word": "resource-less",
+        "root": "resource",
+        "root_meaning": "supply",
+        "combined_meaning": "without resources"
+      },
+      {
+        "word": "careless",
+        "root": "care",
+        "root_meaning": "attention",
+        "combined_meaning": "without care"
+      },
+      {
+        "word": "fearless",
+        "root": "fear",
+        "root_meaning": "fear",
+        "combined_meaning": "without fear"
+      }
+    ]
+  },
+  {
+    "affix": "-ous",
+    "category": "suffix",
+    "affix_meaning": "having; full of",
+    "examples": [
+      {
+        "word": "hazardous",
+        "root": "hazard",
+        "root_meaning": "danger",
+        "combined_meaning": "full of danger"
+      },
+      {
+        "word": "numerous",
+        "root": "number",
+        "root_meaning": "count",
+        "combined_meaning": "many"
+      },
+      {
+        "word": "continuous",
+        "root": "continue",
+        "root_meaning": "keep going",
+        "combined_meaning": "keeps going"
+      },
+      {
+        "word": "porous",
+        "root": "por",
+        "root_meaning": "pore",
+        "combined_meaning": "full of pores"
+      },
+      {
+        "word": "previous",
+        "root": "pre",
+        "root_meaning": "before",
+        "combined_meaning": "from before"
+      }
+    ]
+  },
+  {
+    "affix": "-logy",
+    "category": "suffix",
+    "affix_meaning": "study of",
+    "examples": [
+      {
+        "word": "biology",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "study of life"
+      },
+      {
+        "word": "ecology",
+        "root": "eco",
+        "root_meaning": "environment",
+        "combined_meaning": "study of environments"
+      },
+      {
+        "word": "geology",
+        "root": "geo",
+        "root_meaning": "earth",
+        "combined_meaning": "study of earth"
+      },
+      {
+        "word": "anthropology",
+        "root": "anthrop",
+        "root_meaning": "human",
+        "combined_meaning": "study of humans"
+      },
+      {
+        "word": "archaeology",
+        "root": "archae",
+        "root_meaning": "ancient",
+        "combined_meaning": "study of ancient past"
+      }
+    ]
+  },
+  {
+    "affix": "-graph",
+    "category": "suffix",
+    "affix_meaning": "write; record",
+    "examples": [
+      {
+        "word": "geography",
+        "root": "geo",
+        "root_meaning": "earth",
+        "combined_meaning": "earth writing/mapping"
+      },
+      {
+        "word": "biography",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "life writing"
+      },
+      {
+        "word": "autograph",
+        "root": "auto",
+        "root_meaning": "self",
+        "combined_meaning": "self-written signature"
+      },
+      {
+        "word": "photograph",
+        "root": "photo",
+        "root_meaning": "light",
+        "combined_meaning": "light writing/image"
+      },
+      {
+        "word": "paragraph",
+        "root": "para",
+        "root_meaning": "beside",
+        "combined_meaning": "written unit beside others"
+      }
+    ]
+  },
+  {
+    "affix": "-scope",
+    "category": "suffix",
+    "affix_meaning": "tool for viewing",
+    "examples": [
+      {
+        "word": "microscope",
+        "root": "micro",
+        "root_meaning": "small",
+        "combined_meaning": "tool to see small things"
+      },
+      {
+        "word": "telescope",
+        "root": "tele",
+        "root_meaning": "far",
+        "combined_meaning": "tool to see far"
+      },
+      {
+        "word": "periscope",
+        "root": "peri",
+        "root_meaning": "around",
+        "combined_meaning": "tool to see around/over"
+      },
+      {
+        "word": "scope",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "to look"
+      },
+      {
+        "word": "endoscope",
+        "root": "endo",
+        "root_meaning": "inside",
+        "combined_meaning": "tool to look inside"
+      }
+    ]
+  },
+  {
+    "affix": "-ist",
+    "category": "suffix",
+    "affix_meaning": "person who practices/believes",
+    "examples": [
+      {
+        "word": "scientist",
+        "root": "science",
+        "root_meaning": "knowledge",
+        "combined_meaning": "person who studies science"
+      },
+      {
+        "word": "artist",
+        "root": "art",
+        "root_meaning": "skill",
+        "combined_meaning": "person who makes art"
+      },
+      {
+        "word": "colonist",
+        "root": "colon",
+        "root_meaning": "settler",
+        "combined_meaning": "person who settles a colony"
+      },
+      {
+        "word": "biologist",
+        "root": "bio",
+        "root_meaning": "life",
+        "combined_meaning": "person who studies life"
+      },
+      {
+        "word": "economist",
+        "root": "econom",
+        "root_meaning": "manage",
+        "combined_meaning": "person who studies economy"
+      }
+    ]
+  },
+  {
+    "affix": "-ize",
+    "category": "suffix",
+    "affix_meaning": "make; become",
+    "examples": [
+      {
+        "word": "organize",
+        "root": "organ",
+        "root_meaning": "part",
+        "combined_meaning": "make into an organized system"
+      },
+      {
+        "word": "civilize",
+        "root": "civil",
+        "root_meaning": "citizen",
+        "combined_meaning": "make civilized"
+      },
+      {
+        "word": "modernize",
+        "root": "modern",
+        "root_meaning": "current time",
+        "combined_meaning": "make modern"
+      },
+      {
+        "word": "specialize",
+        "root": "special",
+        "root_meaning": "particular",
+        "combined_meaning": "make specific"
+      },
+      {
+        "word": "maximize",
+        "root": "max",
+        "root_meaning": "greatest",
+        "combined_meaning": "make as large as possible"
+      }
+    ]
+  },
+  {
+    "affix": "-ary",
+    "category": "suffix",
+    "affix_meaning": "related to; place for",
+    "examples": [
+      {
+        "word": "dictionary",
+        "root": "dict",
+        "root_meaning": "say",
+        "combined_meaning": "book of words said"
+      },
+      {
+        "word": "vocabulary",
+        "root": "vocab",
+        "root_meaning": "words",
+        "combined_meaning": "collection of words"
+      },
+      {
+        "word": "boundary",
+        "root": "bound",
+        "root_meaning": "limit",
+        "combined_meaning": "related to limits"
+      },
+      {
+        "word": "military",
+        "root": "milit",
+        "root_meaning": "soldier",
+        "combined_meaning": "related to soldiers"
+      },
+      {
+        "word": "temporary",
+        "root": "tempor",
+        "root_meaning": "time",
+        "combined_meaning": "related to time"
+      }
+    ]
+  },
+  {
+    "affix": "con-",
+    "category": "prefix",
+    "affix_meaning": "with; together",
+    "examples": [
+      {
+        "word": "connect",
+        "root": "nect",
+        "root_meaning": "bind",
+        "combined_meaning": "bind together"
+      },
+      {
+        "word": "combine",
+        "root": "bine",
+        "root_meaning": "two",
+        "combined_meaning": "join together"
+      },
+      {
+        "word": "construct",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "build together"
+      },
+      {
+        "word": "converge",
+        "root": "verg",
+        "root_meaning": "turn",
+        "combined_meaning": "turn together"
+      },
+      {
+        "word": "community",
+        "root": "mun",
+        "root_meaning": "service",
+        "combined_meaning": "people together in service"
+      }
+    ]
+  },
+  {
+    "affix": "com-",
+    "category": "prefix",
+    "affix_meaning": "with; together (variant of con-)",
+    "examples": [
+      {
+        "word": "compose",
+        "root": "pose",
+        "root_meaning": "put",
+        "combined_meaning": "put together"
+      },
+      {
+        "word": "compare",
+        "root": "par",
+        "root_meaning": "equal",
+        "combined_meaning": "look together to judge"
+      },
+      {
+        "word": "complete",
+        "root": "plet",
+        "root_meaning": "fill",
+        "combined_meaning": "fill up together"
+      },
+      {
+        "word": "communicate",
+        "root": "mun",
+        "root_meaning": "share",
+        "combined_meaning": "share together"
+      },
+      {
+        "word": "compress",
+        "root": "press",
+        "root_meaning": "press",
+        "combined_meaning": "press together"
+      }
+    ]
+  },
+  {
+    "affix": "pro-",
+    "category": "prefix",
+    "affix_meaning": "for; forward",
+    "examples": [
+      {
+        "word": "producer",
+        "root": "duce",
+        "root_meaning": "lead/bring",
+        "combined_meaning": "bring forward/make"
+      },
+      {
+        "word": "progress",
+        "root": "gress",
+        "root_meaning": "step",
+        "combined_meaning": "step forward"
+      },
+      {
+        "word": "promote",
+        "root": "mot",
+        "root_meaning": "move",
+        "combined_meaning": "move forward"
+      },
+      {
+        "word": "protect",
+        "root": "tect",
+        "root_meaning": "cover",
+        "combined_meaning": "cover for"
+      },
+      {
+        "word": "protest",
+        "root": "test",
+        "root_meaning": "witness",
+        "combined_meaning": "speak forward/against"
+      }
+    ]
+  },
+  {
+    "affix": "contra-",
+    "category": "prefix",
+    "affix_meaning": "against",
+    "examples": [
+      {
+        "word": "contradict",
+        "root": "dict",
+        "root_meaning": "say",
+        "combined_meaning": "say against"
+      },
+      {
+        "word": "contrary",
+        "root": "vari",
+        "root_meaning": "turn/change",
+        "combined_meaning": "turned against"
+      },
+      {
+        "word": "contrast",
+        "root": "sta",
+        "root_meaning": "stand",
+        "combined_meaning": "stand against"
+      },
+      {
+        "word": "contraception",
+        "root": "cept",
+        "root_meaning": "take",
+        "combined_meaning": "take against conception"
+      },
+      {
+        "word": "contradiction",
+        "root": "dict",
+        "root_meaning": "say",
+        "combined_meaning": "act of saying against"
+      }
+    ]
+  },
+  {
+    "affix": "peri-",
+    "category": "prefix",
+    "affix_meaning": "around",
+    "examples": [
+      {
+        "word": "perimeter",
+        "root": "metr",
+        "root_meaning": "measure",
+        "combined_meaning": "measure around"
+      },
+      {
+        "word": "periscope",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "look around/over"
+      },
+      {
+        "word": "peripheral",
+        "root": "pher",
+        "root_meaning": "carry",
+        "combined_meaning": "carried around edges"
+      },
+      {
+        "word": "period",
+        "root": "od",
+        "root_meaning": "path",
+        "combined_meaning": "path around; time cycle"
+      },
+      {
+        "word": "periwinkle",
+        "root": "wink",
+        "root_meaning": "turn",
+        "combined_meaning": "turning plant name (common)"
+      }
+    ]
+  },
+  {
+    "affix": "circum-",
+    "category": "prefix",
+    "affix_meaning": "around",
+    "examples": [
+      {
+        "word": "circumference",
+        "root": "fer",
+        "root_meaning": "carry",
+        "combined_meaning": "carry around"
+      },
+      {
+        "word": "circumnavigate",
+        "root": "nav",
+        "root_meaning": "ship",
+        "combined_meaning": "sail around"
+      },
+      {
+        "word": "circumscribe",
+        "root": "scribe",
+        "root_meaning": "write",
+        "combined_meaning": "write around"
+      },
+      {
+        "word": "circumvent",
+        "root": "ven",
+        "root_meaning": "come",
+        "combined_meaning": "come around/avoid"
+      },
+      {
+        "word": "circumstance",
+        "root": "sta",
+        "root_meaning": "stand",
+        "combined_meaning": "things standing around"
+      }
+    ]
+  },
+  {
+    "affix": "tele-",
+    "category": "prefix",
+    "affix_meaning": "far",
+    "examples": [
+      {
+        "word": "telescope",
+        "root": "scope",
+        "root_meaning": "look",
+        "combined_meaning": "look far"
+      },
+      {
+        "word": "telephone",
+        "root": "phon",
+        "root_meaning": "sound",
+        "combined_meaning": "sound far"
+      },
+      {
+        "word": "telegraph",
+        "root": "graph",
+        "root_meaning": "write",
+        "combined_meaning": "write far"
+      },
+      {
+        "word": "teleport",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "carry far"
+      },
+      {
+        "word": "television",
+        "root": "vis",
+        "root_meaning": "see",
+        "combined_meaning": "see far"
+      }
+    ]
+  },
+  {
+    "affix": "-ive",
+    "category": "suffix",
+    "affix_meaning": "having the quality of",
+    "examples": [
+      {
+        "word": "productive",
+        "root": "duce",
+        "root_meaning": "bring",
+        "combined_meaning": "having ability to produce"
+      },
+      {
+        "word": "destructive",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "having ability to destroy/build down"
+      },
+      {
+        "word": "relative",
+        "root": "relat",
+        "root_meaning": "connect",
+        "combined_meaning": "connected"
+      },
+      {
+        "word": "selective",
+        "root": "lect",
+        "root_meaning": "choose",
+        "combined_meaning": "choosing carefully"
+      },
+      {
+        "word": "effective",
+        "root": "fect",
+        "root_meaning": "do/make",
+        "combined_meaning": "making results"
+      }
+    ]
+  },
+  {
+    "affix": "-ence",
+    "category": "suffix",
+    "affix_meaning": "state; quality",
+    "examples": [
+      {
+        "word": "evidence",
+        "root": "vid",
+        "root_meaning": "see",
+        "combined_meaning": "state of seeing/proof"
+      },
+      {
+        "word": "difference",
+        "root": "fer",
+        "root_meaning": "carry",
+        "combined_meaning": "state of being different"
+      },
+      {
+        "word": "influence",
+        "root": "flu",
+        "root_meaning": "flow",
+        "combined_meaning": "power that flows into others"
+      },
+      {
+        "word": "presence",
+        "root": "pres",
+        "root_meaning": "before",
+        "combined_meaning": "state of being present"
+      },
+      {
+        "word": "confidence",
+        "root": "fid",
+        "root_meaning": "trust",
+        "combined_meaning": "state of trust"
+      }
+    ]
+  },
+  {
+    "affix": "-ance",
+    "category": "suffix",
+    "affix_meaning": "state; action",
+    "examples": [
+      {
+        "word": "importance",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "state of carrying weight"
+      },
+      {
+        "word": "distance",
+        "root": "sta",
+        "root_meaning": "stand",
+        "combined_meaning": "space between standings"
+      },
+      {
+        "word": "resistance",
+        "root": "sist",
+        "root_meaning": "stand",
+        "combined_meaning": "act of standing back"
+      },
+      {
+        "word": "appearance",
+        "root": "pear",
+        "root_meaning": "show",
+        "combined_meaning": "state of showing up"
+      },
+      {
+        "word": "acceptance",
+        "root": "cept",
+        "root_meaning": "take",
+        "combined_meaning": "act/state of taking in"
+      }
+    ]
+  },
+  {
+    "affix": "-ous",
+    "category": "suffix",
+    "affix_meaning": "having; full of",
+    "examples": [
+      {
+        "word": "continuous",
+        "root": "tin",
+        "root_meaning": "hold",
+        "combined_meaning": "holding together; not stopping"
+      },
+      {
+        "word": "previous",
+        "root": "vi",
+        "root_meaning": "way",
+        "combined_meaning": "from before"
+      },
+      {
+        "word": "obvious",
+        "root": "via",
+        "root_meaning": "way",
+        "combined_meaning": "easy to see in the way"
+      },
+      {
+        "word": "various",
+        "root": "vari",
+        "root_meaning": "change",
+        "combined_meaning": "many different"
+      },
+      {
+        "word": "famous",
+        "root": "fam",
+        "root_meaning": "talk",
+        "combined_meaning": "much talked about"
+      }
+    ]
+  },
+  {
+    "affix": "-al",
+    "category": "suffix",
+    "affix_meaning": "related to",
+    "examples": [
+      {
+        "word": "functional",
+        "root": "funct",
+        "root_meaning": "perform",
+        "combined_meaning": "related to function"
+      },
+      {
+        "word": "structural",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "related to structure"
+      },
+      {
+        "word": "historical",
+        "root": "hist",
+        "root_meaning": "past",
+        "combined_meaning": "related to history"
+      },
+      {
+        "word": "scientifical",
+        "root": "science",
+        "root_meaning": "knowledge",
+        "combined_meaning": "related to science"
+      },
+      {
+        "word": "cultural",
+        "root": "cult",
+        "root_meaning": "grow",
+        "combined_meaning": "related to culture"
+      }
+    ]
+  },
+  {
+    "affix": "-ure",
+    "category": "suffix",
+    "affix_meaning": "act; result; state",
+    "examples": [
+      {
+        "word": "structure",
+        "root": "struct",
+        "root_meaning": "build",
+        "combined_meaning": "the built arrangement"
+      },
+      {
+        "word": "procedure",
+        "root": "ced/ceed",
+        "root_meaning": "go",
+        "combined_meaning": "way of going/steps"
+      },
+      {
+        "word": "exposure",
+        "root": "pos",
+        "root_meaning": "put",
+        "combined_meaning": "state of being put out"
+      },
+      {
+        "word": "temperature",
+        "root": "temper",
+        "root_meaning": "measure",
+        "combined_meaning": "state of measured heat"
+      },
+      {
+        "word": "literature",
+        "root": "liter",
+        "root_meaning": "letter",
+        "combined_meaning": "writing/letters"
+      }
+    ]
+  },
+  {
+    "affix": "-ship",
+    "category": "suffix",
+    "affix_meaning": "state; skill; relationship",
+    "examples": [
+      {
+        "word": "leadership",
+        "root": "lead",
+        "root_meaning": "guide",
+        "combined_meaning": "state/skill of leading"
+      },
+      {
+        "word": "citizenship",
+        "root": "citizen",
+        "root_meaning": "member",
+        "combined_meaning": "state of being a citizen"
+      },
+      {
+        "word": "friendship",
+        "root": "friend",
+        "root_meaning": "friend",
+        "combined_meaning": "relationship of friends"
+      },
+      {
+        "word": "partnership",
+        "root": "partner",
+        "root_meaning": "partner",
+        "combined_meaning": "relationship of partners"
+      },
+      {
+        "word": "scholarship",
+        "root": "scholar",
+        "root_meaning": "student",
+        "combined_meaning": "support/skill of scholars"
+      }
+    ]
+  },
+  {
+    "affix": "ex-",
+    "category": "prefix",
+    "affix_meaning": "out of; former",
+    "examples": [
+      {
+        "word": "export",
+        "root": "port",
+        "root_meaning": "carry",
+        "combined_meaning": "carry out"
+      },
+      {
+        "word": "extract",
+        "root": "tract",
+        "root_meaning": "pull",
+        "combined_meaning": "pull out"
+      },
+      {
+        "word": "exclude",
+        "root": "clude",
+        "root_meaning": "close",
+        "combined_meaning": "close out"
+      },
+      {
+        "word": "exhale",
+        "root": "hal",
+        "root_meaning": "breathe",
+        "combined_meaning": "breathe out"
+      },
+      {
+        "word": "ex-president",
+        "root": "president",
+        "root_meaning": "leader",
+        "combined_meaning": "former president"
+      }
+    ]
+  }
+]

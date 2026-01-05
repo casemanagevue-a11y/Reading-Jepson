@@ -15,7 +15,7 @@
     <div v-if="loading" class="loading no-print">Loading materials...</div>
     <div v-else-if="error" class="error no-print">{{ error }}</div>
 
-    <div v-else class="printable-content container"style="break-after: avoid;">
+    <div v-else class="printable-content container" style="break-after: avoid;">
       <!-- Header for printed page - single line -->
       <div class="print-page-header">
         {{ studentName }} | {{ formatDateRange() }} | 
@@ -25,7 +25,7 @@
       </div>
 
       <!-- DAY 1: Vocabulary & Affixes -->
-      <div class="print-section"style="break-after: avoid;break-before: avoid;break-inside: avoid;">
+      <div class="print-section" style="break-after: avoid;break-before: avoid;break-inside: avoid;">
         <h2>Day 1: Vocabulary & Affixes</h2>
         
         <!-- Teacher Script Version -->
@@ -203,8 +203,18 @@
               <h4>Affix {{ index + 1 }}: {{ affix.affix }}</h4>
               <p class="script-line">"This word part is <strong>{{ affix.affix }}</strong>."</p>
               <p class="script-line">"It means <em>{{ affix.meaning }}</em>."</p>
+              <p v-if="'note' in affix && affix.note" class="script-note"><strong>Note:</strong> {{ affix.note }}</p>
               <p class="script-line">"Here are words that use this affix: <strong>{{ affix.examples.join(', ') }}</strong>."</p>
               <p class="script-line">"Write the affix and its meaning on your affix page."</p>
+              
+              <!-- Word Breakdowns for Example Words -->
+              <div v-if="'wordBreakdowns' in affix && affix.wordBreakdowns && affix.wordBreakdowns.length > 0" class="affix-word-breakdowns-teacher">
+                <p class="script-note"><strong>Word Breakdowns:</strong></p>
+                <div v-for="(breakdown, wordIdx) in affix.wordBreakdowns" :key="wordIdx" class="word-breakdown-teacher">
+                  <p class="script-line"><strong>{{ breakdown.word }}</strong> = <strong>{{ breakdown.affix }}</strong> ({{ breakdown.affixMeaning }}) + <strong>{{ breakdown.root }}</strong> ({{ breakdown.rootMeaning }})</p>
+                  <p v-if="breakdown.combinedMeaning" class="script-line combined-meaning-line"><strong>Combined Meaning:</strong> {{ breakdown.combinedMeaning }}</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -232,7 +242,7 @@
           <h3>New Vocabulary Words</h3>
           <p class="routine-note"><strong>Vocabulary Routine (Use for EVERY New Word):</strong></p>
           <ol class="compact-list">
-            <li>Say the word and clap syllables</li>
+            <li>Say the word (hand under chin or clap syllables)</li>
             <li>Read and spell the word</li>
             <li>Air write the word</li>
             <li>Write the word</li>
@@ -248,7 +258,7 @@
           </ol>
           
           <p class="routine-note"><strong>Reflection Scale:</strong></p>
-          <ul class="compact-list">
+          <ul class="compact-list reflection-options">
             <li>❓ Never heard it</li>
             <li>👀 Heard it before</li>
             <li>🧠 Know what it means</li>
@@ -262,10 +272,7 @@
             <p><strong>Definition:</strong> {{ word.definition }}</p>
             <p><strong>Example Sentence:</strong> "{{ word.exampleSentence || '' }}"</p>
             <p v-if="word.partOfSpeech"><strong>Part of Speech:</strong> {{ word.partOfSpeech }}</p>
-            <div v-if="word.whatItIs || word.whatItIsNot" class="clarification-compact">
-              <p v-if="word.whatItIs"><strong>It is:</strong> {{ word.whatItIs }}</p>
-              <p v-if="word.whatItIsNot"><strong>It is not:</strong> {{ word.whatItIsNot }}</p>
-            </div>
+            
           </div>
           
           <hr class="section-divider" />
@@ -282,7 +289,17 @@
           <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="index" class="affix-compact">
             <h4>Affix {{ index + 1 }}: {{ affix.affix }}</h4>
             <p><strong>Meaning:</strong> {{ affix.meaning }}</p>
+            <p v-if="'note' in affix && affix.note" class="affix-note-compact"><strong>Note:</strong> {{ affix.note }}</p>
             <p><strong>Examples:</strong> {{ affix.examples.join(', ') }}</p>
+            
+            <!-- Word Breakdowns -->
+            <div v-if="'wordBreakdowns' in affix && affix.wordBreakdowns && affix.wordBreakdowns.length > 0" class="affix-word-breakdowns-compact">
+              <p class="routine-note"><strong>Word Breakdowns:</strong></p>
+              <div v-for="(breakdown, wordIdx) in affix.wordBreakdowns" :key="wordIdx" class="word-breakdown-compact">
+                <p><strong>{{ breakdown.word }}</strong> = <strong>{{ breakdown.affix }}</strong> ({{ breakdown.affixMeaning }}) + <strong>{{ breakdown.root }}</strong> ({{ breakdown.rootMeaning }})</p>
+                <p v-if="breakdown.combinedMeaning" class="combined-meaning-compact"><strong>Combined Meaning:</strong> {{ breakdown.combinedMeaning }}</p>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -319,7 +336,17 @@
           <h3>Affixes</h3>
           <div v-for="(affix, index) in content.affixes.slice(0, 2)" :key="index" class="affix-item-student">
             <p><strong>{{ affix.affix }}</strong> = {{ affix.meaning }}</p>
+            <p v-if="'note' in affix && affix.note" class="affix-note-student"><em>{{ affix.note }}</em></p>
             <p class="examples-line">Examples: {{ affix.examples.join(', ') }}</p>
+            
+            <!-- Word Breakdowns for Students -->
+            <div v-if="'wordBreakdowns' in affix && affix.wordBreakdowns && affix.wordBreakdowns.length > 0" class="affix-word-breakdowns-student">
+              <p class="breakdown-title"><strong>Word Breakdowns:</strong></p>
+              <div v-for="(breakdown, wordIdx) in affix.wordBreakdowns" :key="wordIdx" class="word-breakdown-student">
+                <p><strong>{{ breakdown.word }}</strong> = <strong>{{ breakdown.affix }}</strong> ({{ breakdown.affixMeaning }}) + <strong>{{ breakdown.root }}</strong> ({{ breakdown.rootMeaning }})</p>
+                <p v-if="breakdown.combinedMeaning" class="combined-meaning-student"><strong>Combined Meaning:</strong> {{ breakdown.combinedMeaning }}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -547,6 +574,51 @@
           <div class="passage-text">{{ content.weeklyPassage.text }}</div>
         </div>
         
+        <!-- Compact Teacher Reference for Day 3 -->
+        <div v-if="isCompactVersion" class="compact-day3">
+          <div class="routine-step">
+            <h5>Step 1: Vocabulary Review</h5>
+            <!-- Vocabulary Matching Practice -->
+            <div class="vocab-practice">
+              <h4>Vocabulary Matching (Review)</h4>
+              <div class="matching-section">
+                <div class="matching-column">
+                  <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                    {{ index + 1 }}. {{ word.word }}
+                  </div>
+                </div>
+                <div class="matching-column">
+                  <p><strong>Word Bank</strong></p>
+                  <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                    {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
+                  </div>
+                </div>
+              </div>
+              <p class="teacher-answer"><strong>Answer Key:</strong> 1-A, 2-B, 3-C, 4-D, 5-E, 6-F</p>
+            </div>
+          </div>
+          
+          <div class="routine-step">
+            <h5>Step 2: Teacher Models Reading</h5>
+          </div>
+          
+          <div class="routine-step">
+            <h5>Step 3: Student Rereads</h5>
+          </div>
+          
+          <div class="routine-step">
+            <h5>Step 4: Inference Organizer</h5>
+          </div>
+        </div>
+        
+        <!-- Passage Section (all versions) -->
+        <div v-if="content.weeklyPassage && !isCompactVersion" class="passage-section">
+          <h3>{{ content.weeklyPassage.title }}</h3>
+          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
+          
+          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+        </div>
+        
         <!-- Compact: Full passage included -->
         <div v-if="content.weeklyPassage && isCompactVersion" class="passage-section">
           <h3>{{ content.weeklyPassage.title }}</h3>
@@ -554,8 +626,8 @@
           <div class="passage-text">{{ content.weeklyPassage.text }}</div>
         </div>
         
-        <!-- Vocabulary Matching (Compact and Student Versions) -->
-        <div v-if="!isTeacherVersion || isCompactVersion" class="vocab-practice">
+        <!-- Vocabulary Matching (Student Version) -->
+        <div v-if="!isTeacherVersion && !isCompactVersion" class="vocab-practice">
           <h4>Vocabulary Review - Match the Words</h4>
           <div class="matching-section">
             <div class="matching-column">
@@ -579,6 +651,7 @@
           <div v-for="(q, index) in content.day3Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} 
               <span v-if="isTeacherVersion && !isCompactVersion" class="question-type-badge">{{ q.type }}</span>
+              <span v-if="isCompactVersion" class="question-type-badge">{{ q.type }}</span>
             </p>
             <div v-if="!isTeacherVersion && !isCompactVersion" class="answer-space">
               <div class="answer-line"></div>
@@ -638,34 +711,44 @@
           </div>
         </div>
         
+        <!-- Compact Teacher Reference for Day 4 -->
+        <div v-if="isCompactVersion" class="compact-day4">
+          <div class="routine-step">
+            <h5>Step 1: Student Rereads Passage</h5>
+          </div>
+          
+          <div class="routine-step">
+            <h5>Step 2: Quick Vocabulary Review</h5>
+          </div>
+          
+          <div class="routine-step">
+            <h5>Step 3: Main Idea with Evidence</h5>
+            <!-- Main Idea Teacher Answer Key -->
+            <div v-if="content.weeklyPassage?.mainIdeaAnswer" class="main-idea-answer-key">
+              <h4>Main Idea - Teacher Answer Key</h4>
+              <p><strong>Question:</strong> "What is the main idea of this passage? Give me 2-3 details from the text that prove it."</p>
+              
+              <p><strong>Expected Answer:</strong></p>
+              <p class="main-idea-text">{{ content.weeklyPassage.mainIdeaAnswer.mainIdea }}</p>
+              
+              <p><strong>Supporting Details (look for these in student response):</strong></p>
+              <ul class="details-key-list">
+                <li v-for="(detail, idx) in content.weeklyPassage.mainIdeaAnswer.supportingDetails" :key="idx">
+                  {{ idx + 1 }}. {{ detail }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
         <!-- Passage Reference (Student Version) -->
         <div v-if="!isTeacherVersion && content.weeklyPassage" class="passage-reference">
           <h3>Reread: {{ content.weeklyPassage.title }}</h3>
           <p class="directions">Read the passage aloud again.</p>
         </div>
         
-    
-     
-        
-        <!-- Main Idea Section -->
-        <div v-if="isCompactVersion" class="main-idea-section">
-          <h3>Main Idea & Evidence</h3>
-          <p class="main-idea-prompt"><strong>What is the main idea of this passage? Give 2–3 details from the text that prove it.</strong></p>
-          
-          <div v-if="content.weeklyPassage?.mainIdeaAnswer" class="main-idea-answer-key">
-            <p><strong>Expected Main Idea:</strong></p>
-            <p class="main-idea-text">{{ content.weeklyPassage.mainIdeaAnswer.mainIdea }}</p>
-            <p><strong>Supporting Details:</strong></p>
-            <ul class="details-key-list">
-              <li v-for="(detail, idx) in content.weeklyPassage.mainIdeaAnswer.supportingDetails" :key="idx">
-                {{ detail }}
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <!-- Main Idea Question (Student Version) -->
-        <div v-else-if="!isTeacherVersion" class="main-idea-section">
+        <!-- Main Idea Section (Student Version) -->
+        <div v-if="!isTeacherVersion" class="main-idea-section">
           <h3>Main Idea + Evidence</h3>
           <p class="main-idea-prompt"><strong>What is the main idea of this passage? Provide 2-3 details that prove it.</strong></p>
           <div class="main-idea-answer-space">
@@ -682,43 +765,44 @@
             <p><strong>Detail 3 (optional):</strong></p>
             <div class="answer-line"></div>
           </div>
-          
-          <!-- Teacher Assessment Grid -->
-          <div v-if="isTeacherVersion" class="teacher-assessment-grid">
-            <h4>Teacher Assessment</h4>
-            <table class="assessment-table">
-              <thead>
-                <tr>
-                  <th>Level</th>
-                  <th>Independent</th>
-                  <th>With Support</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Main idea + 2+ details</td>
-                  <td class="checkbox-cell">☐</td>
-                  <td class="checkbox-cell">☐</td>
-                </tr>
-                <tr>
-                  <td>Main idea + 1 detail</td>
-                  <td class="checkbox-cell">☐</td>
-                  <td class="checkbox-cell">☐</td>
-                </tr>
-                <tr>
-                  <td>Partial understanding</td>
-                  <td class="checkbox-cell">☐</td>
-                  <td class="checkbox-cell">☐</td>
-                </tr>
-                <tr>
-                  <td>Did not know</td>
-                  <td class="checkbox-cell">☐</td>
-                  <td class="checkbox-cell">☐</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
+        
+        <!-- Teacher Assessment Grid (Full Teacher Version) -->
+        <div v-if="isTeacherVersion && !isCompactVersion" class="teacher-assessment-grid">
+          <h4>Teacher Assessment</h4>
+          <table class="assessment-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Independent</th>
+                <th>With Support</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Main idea + 2+ details</td>
+                <td class="checkbox-cell">☐</td>
+                <td class="checkbox-cell">☐</td>
+              </tr>
+              <tr>
+                <td>Main idea + 1 detail</td>
+                <td class="checkbox-cell">☐</td>
+                <td class="checkbox-cell">☐</td>
+              </tr>
+              <tr>
+                <td>Partial understanding</td>
+                <td class="checkbox-cell">☐</td>
+                <td class="checkbox-cell">☐</td>
+              </tr>
+              <tr>
+                <td>Did not know</td>
+                <td class="checkbox-cell">☐</td>
+                <td class="checkbox-cell">☐</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
       </div>
 
       <!-- DAY 5: Reading Assessment + Vocab Spiral -->
@@ -745,6 +829,7 @@
           <div v-for="(q, index) in content.day5Questions" :key="index" class="question-item">
             <p><strong>{{ index + 1 }}.</strong> {{ q.prompt }} 
               <span v-if="isTeacherVersion && !isCompactVersion" class="question-type-badge">{{ q.type }}</span>
+              <span v-if="isCompactVersion" class="question-type-badge">{{ q.type }}</span>
             </p>
             <div v-if="!isTeacherVersion && !isCompactVersion" class="answer-space">
               <div class="answer-line"></div>
@@ -757,8 +842,6 @@
           </div>
         </div>
         
-        <!-- Vocabulary & Affix Multiple Choice Quiz -->
-       
         <!-- Reading Assessment Tracking -->
         <div v-if="isTeacherVersion || isCompactVersion" class="fluency-tracking">
           <h3>Reading Assessment (Teacher Recording Form)</h3>
@@ -793,7 +876,7 @@
             </fieldset>
           </div>
           
-          <div v-if="isTeacherVersion" class="error-tracking">
+          <div v-if="isTeacherVersion || isCompactVersion" class="error-tracking">
             <fieldset>
               <legend>Reading Errors (for accuracy calculation)</legend>
             
@@ -848,7 +931,7 @@
             <p class="quiz-question">
               <strong>{{ content.vocab.length + index + 1 }}.</strong> 
               What does the {{ affix.kind }} <em>{{ affix.affix }}</em> mean? 
-              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint" v-html="`(${formatAffixExample(affix.affix, affix.examples[0], affix.kind)})`">
+              <span v-if="affix.examples && affix.examples.length > 0" class="example-hint" v-html="`(${formatAffixExample(affix.affix, affix.examples[0])})`">
               </span>
             </p>
             <div class="quiz-choices">
@@ -860,7 +943,7 @@
             <p v-if="isTeacherVersion || isCompactVersion" class="quiz-answer"><strong>Answer: A</strong></p>
           </div>
           
-          <div v-if="isTeacherVersion && !isCompactVersion" class="quiz-note">
+          <div v-if="isTeacherVersion || isCompactVersion" class="quiz-note">
             <p><strong>Scoring:</strong> {{ content.vocab.length + Math.min(content.affixes.length, 2) }} total questions</p>
             <p>Student Score: _____ / {{ content.vocab.length + Math.min(content.affixes.length, 2) }}</p>
           </div>
@@ -977,7 +1060,7 @@ const generateAffixDistractor = (affix: string, num: number): string => {
 }
 
 // Format affix example with underline in correct position
-const formatAffixExample = (affix: string, exampleWord: string, _kind: string): string => {
+const formatAffixExample = (affix: string, exampleWord: string): string => {
   // Remove hyphens from affix for matching
   const cleanAffix = affix.replace(/[-]/g, '')
   const cleanExample = exampleWord.toLowerCase()
@@ -1102,6 +1185,10 @@ h5{
   align-items: center;
 }
 
+ul.reflection-options{
+    display: flex;
+    justify-content: space-around;
+}
 .header-content h1 {
   font-size: 1.5rem;
   font-weight: 600;
@@ -1389,7 +1476,7 @@ ul.teacher-questions {
 }
 
 .question-item p {
-  margin: 0 0 0.5rem 0;
+  
 
 }
 
@@ -1967,9 +2054,9 @@ fieldset{
 }
 
 .compact-list {
-  margin: 0.75rem 0;
+ 
   padding-left: 1.5rem;
-  line-height: 1.8;
+  line-height: 1.3;
 }
 
 .compact-list li {
@@ -2003,8 +2090,8 @@ fieldset{
 
 /* Vocabulary Quiz Section */
 .vocab-quiz-section {
-  margin-top: 3rem;
-  padding: 2rem;
+  
+  padding: .2rem;
   background: #f7fafc;
   border-radius: 12px;
   border: 3px solid #667eea;
@@ -2012,7 +2099,7 @@ fieldset{
 
 .vocab-quiz-section h3 {
   color: #2d3748;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 .5rem 0;
 }
 
 .quiz-item {
@@ -2025,7 +2112,7 @@ fieldset{
 .quiz-question {
   font-weight: 600;
   color: #2d3748;
-  margin: 0 0 1rem 0;
+ 
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -2041,7 +2128,7 @@ fieldset{
 
 .choice {
  
-  line-height: 1.6;
+  line-height: 1;
   font-size: 0.95rem;
 }
 
@@ -2079,5 +2166,70 @@ fieldset{
   text-decoration: underline;
   font-weight: 700;
   color: #667eea;
+}
+
+/* Affix Word Breakdowns */
+.affix-word-breakdowns-teacher,
+.affix-word-breakdowns-compact,
+.affix-word-breakdowns-student {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.word-breakdown-teacher,
+.word-breakdown-compact,
+.word-breakdown-student {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.word-breakdown-teacher:last-child,
+.word-breakdown-compact:last-child,
+.word-breakdown-student:last-child {
+  margin-bottom: 0;
+}
+
+.breakdown-title {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.combined-meaning-line,
+.combined-meaning-compact,
+.combined-meaning-student {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.combined-meaning-line {
+  color: #4a5d9e;
+  font-style: italic;
+}
+
+.affix-note-display,
+.affix-note-compact,
+.affix-note-student,
+.affix-note-browser {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f0f9ff;
+  border-left: 3px solid #0ea5e9;
+  border-radius: 4px;
+  color: #075985;
+  font-size: 0.9rem;
+}
+
+.affix-note-student {
+  font-style: italic;
+  color: #0c4a6e;
 }
 </style>
