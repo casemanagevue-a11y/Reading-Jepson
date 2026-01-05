@@ -566,12 +566,17 @@
           </div>
         </div>
         
-        <!-- Passage Section (all versions) -->
-        <div v-if="content.weeklyPassage && !isCompactVersion" class="passage-section">
-          <h3>{{ content.weeklyPassage.title }}</h3>
-          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
-          
-          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
+        <!-- Tier 2 Words Pre-Teaching (Before Day 3 Passage) -->
+        <div v-if="content.weeklyPassage?.tier2Words && content.weeklyPassage.tier2Words.length > 0" class="tier2-preteach">
+          <h3>Tier 2 Academic Vocabulary (Pre-Teach Before Reading)</h3>
+          <p class="tier2-note">Teach these words before students read the passage:</p>
+          <div v-for="(t2word, idx) in content.weeklyPassage.tier2Words" :key="idx" class="tier2-word-box">
+            <p class="tier2-word"><strong>{{ idx + 1 }}. {{ t2word.word }}</strong></p>
+            <p class="tier2-definition">{{ t2word.definition }}</p>
+            <p v-if="t2word.reasoning && (isTeacherVersion || isCompactVersion)" class="tier2-reasoning">
+              <em>Why tier 2:</em> {{ t2word.reasoning }}
+            </p>
+          </div>
         </div>
         
         <!-- Compact Teacher Reference for Day 3 -->
@@ -611,16 +616,8 @@
           </div>
         </div>
         
-        <!-- Passage Section (all versions) -->
-        <div v-if="content.weeklyPassage && !isCompactVersion" class="passage-section">
-          <h3>{{ content.weeklyPassage.title }}</h3>
-          <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
-          
-          <div class="passage-text">{{ content.weeklyPassage.text }}</div>
-        </div>
-        
-        <!-- Compact: Full passage included -->
-        <div v-if="content.weeklyPassage && isCompactVersion" class="passage-section">
+        <!-- Passage Section (Day 3 - Single Display) -->
+        <div v-if="content.weeklyPassage" class="passage-section">
           <h3>{{ content.weeklyPassage.title }}</h3>
           <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.weeklyPassage.text) }} words</p>
           <div class="passage-text">{{ content.weeklyPassage.text }}</div>
