@@ -303,33 +303,21 @@
           </div>
         </div>
         
-        <!-- Student Version: Vocab worksheet -->
+        <!-- Student Version: Simplified vocab -->
         <div v-else class="student-vocab-section">
-          <div v-for="(word, index) in content.vocab" :key="index" class="vocab-item-student">
-            <h4>{{ index + 1 }}. {{ word.word }}</h4>
+          <h3>Review Vocabulary</h3>
+          <p class="vocab-list">{{ content.vocab.slice(0, 2).map(v => v.word).join(', ') }}</p>
+          
+          <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e2e8f0;" />
+          
+          <h3>New Vocabulary Words</h3>
+          <div v-for="(word, index) in content.vocab.slice(2)" :key="index" class="vocab-item-student">
+            <h4>{{ index + 3 }}. {{ word.word }}</h4>
             <p class="definition-line"><strong>Definition:</strong> {{ word.definition }}</p>
             <p class="context-sentence"><strong>Sentence from text:</strong> "{{ word.exampleSentence || '' }}"</p>
             
             <div class="student-work-space">
               <p><strong>Part of Speech:</strong> <span class="blank-line-short"></span></p>
-              
-              <div v-if="word.whatItIs || word.whatItIsNot" class="clarification-section">
-                <p><strong>It is:</strong></p>
-                <p class="clarif-text">{{ word.whatItIs || '' }}</p>
-                
-                <p><strong>It is not:</strong></p>
-                <p class="clarif-text">{{ word.whatItIsNot || '' }}</p>
-              </div>
-              <div v-else class="clarification-section">
-                <p><strong>It is:</strong> <span class="blank-line-long"></span></p>
-                <p><strong>It is not:</strong> <span class="blank-line-long"></span></p>
-              </div>
-              
-              <p><strong>My Sentence:</strong></p>
-              <div class="write-lines"></div>
-              
-              <p><strong>Picture:</strong></p>
-              <div class="picture-box"></div>
             </div>
           </div>
           
