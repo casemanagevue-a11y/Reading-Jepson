@@ -525,24 +525,24 @@
               <h5>Step 1: Vocabulary Review</h5>
               <p class="script-line">"Let's review our vocabulary words from Day 1."</p>
               
-              <!-- Vocabulary Matching Practice -->
+              <!-- Vocabulary & Affix Matching Practice -->
               <div class="vocab-practice">
-                <h4>Vocabulary Matching (Review)</h4>
-                <p class="script-note">Students match words to definitions as warm-up.</p>
+                <h4>Vocabulary & Affix Matching (Review)</h4>
+                <p class="script-note">Students match words/affixes to definitions as warm-up.</p>
                 <div class="matching-section">
                   <div class="matching-column">
-                    <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                    <div v-for="(word, index) in combinedVocabAffixes" :key="index">
                       {{ index + 1 }}. {{ word.word }}
                     </div>
                   </div>
                   <div class="matching-column">
-                    <p><strong>Word Bank</strong></p>
-                    <div v-for="(word, index) in content.vocab.slice(0, 6)" :key="index">
+                    <p><strong>Word Bank (Shuffled)</strong></p>
+                    <div v-for="(word, index) in shuffledWordBank" :key="index">
                       {{ String.fromCharCode(65 + index) }}. {{ word.definition }}
                     </div>
                   </div>
                 </div>
-                <p class="teacher-answer"><strong>Answer Key:</strong> 1-A, 2-B, 3-C, 4-D, 5-E, 6-F</p>
+                <p class="teacher-answer"><strong>Answer Key:</strong> {{ matchingAnswerKey }}</p>
               </div>
             </div>
             
@@ -681,9 +681,16 @@
             </div>
             
             <div class="routine-step">
-              <h5>Step 2: Quick Vocabulary Review</h5>
-              <p class="script-line">"Let's quickly review our vocabulary words."</p>
-              <p class="script-note">Rapid oral review: Teacher says word, student gives definition or vice versa.</p>
+              <h5>Step 2: Vocabulary Fill-in-the-Blank Review</h5>
+              <p class="script-line">"Fill in the blank with the correct vocabulary word."</p>
+              <p class="script-note">Students complete cloze sentences using this week's vocabulary.</p>
+              
+              <div class="cloze-section">
+                <div v-for="(cloze, index) in clozeSentences" :key="index" class="cloze-item">
+                  <p class="cloze-sentence">{{ index + 1 }}. {{ cloze.sentence }}</p>
+                  <p v-if="isTeacherVersion" class="cloze-answer"><strong>Answer:</strong> {{ cloze.answer }}</p>
+                </div>
+              </div>
             </div>
             
             <div class="routine-step">
@@ -738,6 +745,16 @@
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+        
+        <!-- Vocabulary Fill-in-the-Blank (All Versions for Day 4) -->
+        <div class="vocab-cloze-section">
+          <h3>Vocabulary Review (Fill in the Blank)</h3>
+          <div v-for="(cloze, index) in clozeSentences" :key="index" class="cloze-item">
+            <p class="cloze-sentence">{{ index + 1 }}. {{ cloze.sentence }}</p>
+            <div v-if="!isTeacherVersion && !isCompactVersion" class="cloze-blank-line"></div>
+            <p v-else class="cloze-answer"><strong>Answer:</strong> {{ cloze.answer }}</p>
           </div>
         </div>
         
@@ -999,6 +1016,51 @@ const error = ref<string | null>(null)
 
 const isTeacherVersion = computed(() => route.query.version === 'teacher')
 const isCompactVersion = computed(() => route.query.version === 'compact')
+
+// Combined vocab + affixes for matching
+const combinedVocabAffixes = computed(() => {
+  const combined = [
+    ...content.value.vocab.slice(0, 6).map(v => ({ word: v.word, definition: v.definition })),
+    ...content.value.affixes.slice(0, 2).map(a => ({ word: a.affix, definition: a.meaning }))
+  ]
+  return combined.slice(0, 8)
+})
+
+// Shuffled word bank
+const shuffledWordBank = computed(() => {
+  const arr = [...combinedVocabAffixes.value]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+})
+
+// Answer key for matching
+const matchingAnswerKey = computed(() => {
+  const answerKey = combinedVocabAffixes.value.map((item, index) => {
+    const shuffledIndex = shuffledWordBank.value.findIndex(s => s.word === item.word)
+    return `${index + 1}-${String.fromCharCode(65 + shuffledIndex)}`
+  })
+  return answerKey.join(', ')
+})
+
+// Cloze sentences for Day 4 vocab review
+const clozeSentences = computed(() => {
+  const templates = [
+    `The WORD was important to the story.`,
+    `They talked about the WORD.`,
+    `The people used WORD to help them.`,
+    `WORD is important to understand.`,
+    `The text explains what WORD means.`
+  ]
+  
+  return content.value.vocab.slice(0, 5).map((word, index) => ({
+    sentence: templates[index % templates.length].replace('WORD', '_____'),
+    sentenceWithWord: templates[index % templates.length].replace('WORD', word.word),
+    answer: word.word
+  }))
+})
 
 const content = ref<{
   vocab: (VocabDocument | PassageVocabItem)[]
