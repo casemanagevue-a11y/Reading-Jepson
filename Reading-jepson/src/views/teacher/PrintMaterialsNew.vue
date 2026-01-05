@@ -1073,7 +1073,10 @@ const clozeSentences = computed(() => {
     
     if (word.exampleSentence) {
       // Use actual sentence from passage, replace word with blank
-      sentence = word.exampleSentence.replace(new RegExp(`\\b${word.word}\\b`, 'gi'), '_____')
+      // Handle inflectional forms: griot/griots, lineage/lineages, etc.
+      const wordPattern = word.word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') // Escape special chars
+      const regex = new RegExp(`\\b${wordPattern}(s|es|ed|ing|er|est|'s)?\\b`, 'gi')
+      sentence = word.exampleSentence.replace(regex, '________________')
     } else {
       // Fallback: Create sentence based on definition
       const def = word.definition.toLowerCase()
