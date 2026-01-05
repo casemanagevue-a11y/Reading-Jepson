@@ -985,7 +985,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SemanticMap from '@/components/SemanticMap.vue'
 import { 
@@ -1026,24 +1026,36 @@ const combinedVocabAffixes = computed(() => {
   return combined.slice(0, 8)
 })
 
-// Shuffled word bank
-const shuffledWordBank = computed(() => {
+// Shuffled word bank - use ref to maintain fixed shuffle
+const shuffledWordBank = ref<Array<{ word: string; definition: string }>>([])
+const matchingAnswerKey = ref('')
+
+// Shuffle function that actually randomizes
+function shuffleDefinitions() {
   const arr = [...combinedVocabAffixes.value]
+  
+  // Fisher-Yates shuffle algorithm
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]]
   }
-  return arr
-})
-
-// Answer key for matching
-const matchingAnswerKey = computed(() => {
+  
+  shuffledWordBank.value = arr
+  
+  // Generate answer key based on this shuffle
   const answerKey = combinedVocabAffixes.value.map((item, index) => {
-    const shuffledIndex = shuffledWordBank.value.findIndex(s => s.word === item.word)
+    const shuffledIndex = shuffledWordBank.value.findIndex(s => s.word === item.word && s.definition === item.definition)
     return `${index + 1}-${String.fromCharCode(65 + shuffledIndex)}`
   })
-  return answerKey.join(', ')
-})
+  matchingAnswerKey.value = answerKey.join(', ')
+}
+
+// Watch for vocab/affix changes and reshuffle
+watch([() => content.value.vocab, () => content.value.affixes], () => {
+  if (content.value.vocab.length > 0) {
+    shuffleDefinitions()
+  }
+}, { immediate: true })
 
 // Cloze sentences for Day 4 vocab review
 const clozeSentences = computed(() => {
