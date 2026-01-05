@@ -682,6 +682,11 @@
               <p class="script-line">"Fill in the blank with the correct vocabulary word."</p>
               <p class="script-note">Students complete cloze sentences using this week's vocabulary.</p>
               
+              <div class="word-bank-box">
+                <p><strong>Word Bank:</strong></p>
+                <p class="word-bank-list">{{ content.vocab.slice(0, 5).map(v => v.word).join(', ') }}</p>
+              </div>
+              
               <div class="cloze-section">
                 <div v-for="(cloze, index) in clozeSentences" :key="index" class="cloze-item">
                   <p class="cloze-sentence">{{ index + 1 }}. {{ cloze.sentence }}</p>
@@ -748,6 +753,12 @@
         <!-- Vocabulary Fill-in-the-Blank (All Versions for Day 4) -->
         <div class="vocab-cloze-section">
           <h3>Vocabulary Review (Fill in the Blank)</h3>
+          
+          <div class="word-bank-box">
+            <p><strong>Word Bank:</strong></p>
+            <p class="word-bank-list">{{ content.vocab.slice(0, 5).map(v => v.word).join(', ') }}</p>
+          </div>
+          
           <div v-for="(cloze, index) in clozeSentences" :key="index" class="cloze-item">
             <p class="cloze-sentence">{{ index + 1 }}. {{ cloze.sentence }}</p>
             <div v-if="!isTeacherVersion && !isCompactVersion" class="cloze-blank-line"></div>
@@ -1054,21 +1065,34 @@ watch([() => content.value.vocab, () => content.value.affixes], () => {
   }
 }, { immediate: true })
 
-// Cloze sentences for Day 4 vocab review
+// Cloze sentences for Day 4 vocab review - with more context
 const clozeSentences = computed(() => {
-  const templates = [
-    `The WORD was important to the story.`,
-    `They talked about the WORD.`,
-    `The people used WORD to help them.`,
-    `WORD is important to understand.`,
-    `The text explains what WORD means.`
-  ]
-  
-  return content.value.vocab.slice(0, 5).map((word, index) => ({
-    sentence: templates[index % templates.length].replace('WORD', '_____'),
-    sentenceWithWord: templates[index % templates.length].replace('WORD', word.word),
-    answer: word.word
-  }))
+  return content.value.vocab.slice(0, 5).map((word) => {
+    // Use the actual sentence from passage if available, otherwise create contextual sentence
+    let sentence = ''
+    
+    if (word.exampleSentence) {
+      // Use actual sentence from passage, replace word with blank
+      sentence = word.exampleSentence.replace(new RegExp(`\\b${word.word}\\b`, 'gi'), '_____')
+    } else {
+      // Fallback: Create sentence based on definition
+      const def = word.definition.toLowerCase()
+      if (def.includes('story') || def.includes('tell')) {
+        sentence = `The _____ helped people remember their history and culture.`
+      } else if (def.includes('family') || def.includes('ancestor')) {
+        sentence = `The person's _____ connects them to their ancestors.`
+      } else if (def.includes('rule') || def.includes('lead')) {
+        sentence = `The _____ was an important person in the community.`
+      } else {
+        sentence = `The text explains the meaning of _____.`
+      }
+    }
+    
+    return {
+      sentence,
+      answer: word.word
+    }
+  })
 })
 
 const content = ref<{
