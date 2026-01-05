@@ -809,6 +809,19 @@
       <div class="print-section page-break">
         <h2>Day 5: Reading Assessment + Vocab Spiral</h2>
         
+        <!-- Tier 2 Words Pre-Teaching (Before Passage) -->
+        <div v-if="content.fridayPassage?.tier2Words && content.fridayPassage.tier2Words.length > 0" class="tier2-preteach">
+          <h3>Tier 2 Academic Vocabulary (Pre-Teach Before Reading)</h3>
+          <p class="tier2-note">Teach these words before students read the passage:</p>
+          <div v-for="(t2word, idx) in content.fridayPassage.tier2Words" :key="idx" class="tier2-word-box">
+            <p class="tier2-word"><strong>{{ idx + 1 }}. {{ t2word.word }}</strong></p>
+            <p class="tier2-definition">{{ t2word.definition }}</p>
+            <p v-if="t2word.reasoning && (isTeacherVersion || isCompactVersion)" class="tier2-reasoning">
+              <em>Why tier 2:</em> {{ t2word.reasoning }}
+            </p>
+          </div>
+        </div>
+        
         <div v-if="content.fridayPassage && !isCompactVersion" class="passage-section">
           <h3>{{ content.fridayPassage.title }}</h3>
           <p class="word-count"><strong>Word Count:</strong> {{ calculateWordCount(content.fridayPassage.text) }} words</p>

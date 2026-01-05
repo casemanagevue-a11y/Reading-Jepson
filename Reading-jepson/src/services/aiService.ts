@@ -1212,6 +1212,88 @@ Output format (STRICT JSON):
   return JSON.parse(response)
 }
 
+// ============================================================================
+// Tier 2 Word Detection from Passage
+// ============================================================================
+
+export interface Tier2WordResult {
+  word: string
+  definition: string
+  reasoning: string // Why it's tier 2
+}
+
+export async function detectTier2Words(
+  passageText: string,
+  usedWords: string[] = [],
+  requestedCount: number = 2
+): Promise<Tier2WordResult[]> {
+  const usedWordsStr = usedWords.length > 0 
+    ? `\n\nWORDS ALREADY USED (avoid these if possible):\n${usedWords.join(', ')}`
+    : ''
+
+  const prompt = `Identify ${requestedCount} tier 2 vocabulary words from this passage for a 7th grade student with Developmental Language Disorder (DLD).
+
+Passage:
+"""
+${passageText}
+"""${usedWordsStr}
+
+TIER 2 WORDS ARE:
+- High-frequency words used across content areas
+- Words students will encounter in many texts
+- Mature vocabulary (not baby words, not super academic)
+- Examples: analyze, examine, compare, establish, tradition, conflict
+
+NOT TIER 2:
+- Tier 1: Basic everyday words (run, happy, house)
+- Tier 3: Domain-specific/rare words (photosynthesis, bureaucracy, savanna)
+- Proper nouns (Sundiata, Mali, Kirina)
+
+SELECT WORDS THAT:
+1. Appear in this passage
+2. Are tier 2 (general academic vocabulary)
+3. Would be useful across multiple subjects
+4. Haven't been used before (if possible - but OK to repeat if no new tier 2 words exist)
+
+For each word provide:
+- The word (exactly as it appears in passage)
+- A clear, simple definition for DLD students
+- Brief reasoning why it's tier 2
+
+Example:
+{
+  "words": [
+    {
+      "word": "tradition",
+      "definition": "A custom or belief passed down through families and communities",
+      "reasoning": "Tier 2 - appears across history, culture, and family topics"
+    },
+    {
+      "word": "connection",
+      "definition": "A relationship or link between two things",
+      "reasoning": "Tier 2 - used in science, social studies, and literature"
+    }
+  ]
+}
+
+Respond with JSON.`
+
+  const messages = [
+    {
+      role: 'system',
+      content: 'You are an expert in vocabulary assessment and tiered vocabulary instruction. You identify tier 2 academic vocabulary that will benefit students across content areas.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ]
+
+  const response = await callGemini(messages, 0.5, { type: 'json_object' })
+  const result = JSON.parse(response)
+  return result.words || []
+}
+
 export default {
   estimateReadingLevel,
   adjustPassageWithVocab,
@@ -1223,7 +1305,8 @@ export default {
   generateSentenceSorting,
   generateMainIdeaAnswer,
   detectAndBreakdownAffixWords,
-  validateAffixBreakdown
+  validateAffixBreakdown,
+  detectTier2Words
 }
 
 

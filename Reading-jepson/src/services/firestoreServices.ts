@@ -246,6 +246,51 @@ export async function updateWeekTemplate(
   });
 }
 
+// ============================================================================
+// tier2Words Collection Services
+// ============================================================================
+
+export async function getTier2WordsByTemplate(templateId: string): Promise<any | null> {
+  const docRef = doc(db, COLLECTIONS.tier2Words, templateId);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() : null;
+}
+
+export async function saveTier2Words(
+  templateId: string,
+  teacherUid: string,
+  words: any[]
+): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.tier2Words, templateId);
+  await setDoc(docRef, {
+    templateId,
+    teacherUid,
+    words,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function getAllTier2WordsByTeacher(teacherUid: string): Promise<string[]> {
+  const q = query(
+    collection(db, COLLECTIONS.tier2Words),
+    where('teacherUid', '==', teacherUid)
+  );
+  const querySnapshot = await getDocs(q);
+  const allWords: string[] = [];
+  
+  querySnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.words && Array.isArray(data.words)) {
+      data.words.forEach((entry: any) => {
+        if (entry.word) allWords.push(entry.word.toLowerCase());
+      });
+    }
+  });
+  
+  return [...new Set(allWords)]; // Remove duplicates
+}
+
 export async function deleteWeekTemplate(templateId: string): Promise<void> {
   const docRef = doc(db, COLLECTIONS.weekTemplates, templateId);
   await deleteDoc(docRef);

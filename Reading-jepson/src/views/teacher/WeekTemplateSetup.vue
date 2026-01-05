@@ -227,6 +227,38 @@
             <textarea v-model="weeklyPassage.text" class="form-input" rows="10" required></textarea>
           </div>
           
+          <!-- Tier 2 Words Section -->
+          <div class="section" v-if="weeklyPassage.text">
+            <h3>Tier 2 Academic Vocabulary (Pre-Passage Support)</h3>
+            <p class="section-note">AI will identify 2 high-utility tier 2 words from the passage to pre-teach before reading.</p>
+            
+            <div class="ai-generate-section">
+              <button 
+                @click="generateTier2ForDay3"
+                :disabled="!weeklyPassage.text || generatingTier2 === 3"
+                class="btn btn-ai"
+              >
+                {{ generatingTier2 === 3 ? '🤖 Detecting Tier 2 Words...' : '✨ AI Detect Tier 2 Words (Day 3)' }}
+              </button>
+              <small class="form-hint">AI will check what words have been used before and find new tier 2 words</small>
+            </div>
+            
+            <div v-if="tier2WordsDay3.length > 0" class="tier2-display">
+              <h4>Tier 2 Words for Day 3:</h4>
+              <div v-for="(t2word, idx) in tier2WordsDay3" :key="idx" class="tier2-word-card">
+                <div class="form-group">
+                  <label>Word {{ idx + 1 }}</label>
+                  <input v-model="t2word.word" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label>Definition</label>
+                  <input v-model="t2word.definition" class="form-input" />
+                </div>
+                <button @click="tier2WordsDay3.splice(idx, 1)" class="btn btn-danger btn-sm">Remove</button>
+              </div>
+            </div>
+          </div>
+          
           <!-- Assign Vocabulary to Passage -->
           <div class="section" v-if="vocabWords.some(v => v.word && v.definition)">
             <h3>Assign Vocabulary to This Passage</h3>
@@ -506,6 +538,38 @@
             <textarea v-model="fridayPassage.text" class="form-input" rows="10" required></textarea>
           </div>
           
+          <!-- Tier 2 Words Section -->
+          <div class="section" v-if="fridayPassage.text">
+            <h3>Tier 2 Academic Vocabulary (Pre-Passage Support)</h3>
+            <p class="section-note">AI will identify 2 high-utility tier 2 words from the passage to pre-teach before reading.</p>
+            
+            <div class="ai-generate-section">
+              <button 
+                @click="generateTier2ForDay5"
+                :disabled="!fridayPassage.text || generatingTier2 === 5"
+                class="btn btn-ai"
+              >
+                {{ generatingTier2 === 5 ? '🤖 Detecting Tier 2 Words...' : '✨ AI Detect Tier 2 Words (Day 5)' }}
+              </button>
+              <small class="form-hint">AI will check what words have been used before and find new tier 2 words</small>
+            </div>
+            
+            <div v-if="tier2WordsDay5.length > 0" class="tier2-display">
+              <h4>Tier 2 Words for Day 5:</h4>
+              <div v-for="(t2word, idx) in tier2WordsDay5" :key="idx" class="tier2-word-card">
+                <div class="form-group">
+                  <label>Word {{ idx + 1 }}</label>
+                  <input v-model="t2word.word" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label>Definition</label>
+                  <input v-model="t2word.definition" class="form-input" />
+                </div>
+                <button @click="tier2WordsDay5.splice(idx, 1)" class="btn btn-danger btn-sm">Remove</button>
+              </div>
+            </div>
+          </div>
+          
           <!-- Assign Vocabulary to Passage -->
           <div class="section" v-if="vocabWords.some(v => v.word && v.definition)">
             <h3>Assign Vocabulary to This Passage</h3>
@@ -711,9 +775,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer, generateVocabClarifications, detectAndBreakdownAffixWords } from '@/services/aiService'
-import type { MainIdeaAnswerResult } from '@/services/aiService'
-import { 
+import { generateSentenceSorting, generateComprehensionQuestions, generateMainIdeaAnswer, generateVocabClarifications, detectAndBreakdownAffixWords, detectTier2Words } from '@/services/aiService'
+import type { MainIdeaAnswerResult, Tier2WordResult } from '@/services/aiService'
+import {
   createWeekTemplate,
   updateWeekTemplate,
   getWeekTemplate,
@@ -728,7 +792,10 @@ import {
   createAffix,
   deleteAffix,
   createQuestion,
-  deleteQuestion
+  deleteQuestion,
+  getTier2WordsByTemplate,
+  saveTier2Words,
+  getAllTier2WordsByTeacher
 } from '@/services/firestoreServices'
 import libraryServices from '@/services/libraryServices'
 import type { VocabLibraryWithId, AffixLibraryWithId } from '@/services/libraryServices'
@@ -749,7 +816,10 @@ const generatingAI = ref<number | null>(null)
 const generatingQuestions = ref<number | null>(null)
 const generatingMainIdea = ref(false)
 const generatingClarifications = ref(false)
+const generatingTier2 = ref<number | null>(null)
 const mainIdeaAnswer = ref<MainIdeaAnswerResult | null>(null)
+const tier2WordsDay3 = ref<Tier2WordResult[]>([])
+const tier2WordsDay5 = ref<Tier2WordResult[]>([])
 
 const templateData = ref({
   templateName: '',
@@ -1103,6 +1173,21 @@ async function loadTemplateData() {
     if (day3Qs.length > 0) day3Questions.value = day3Qs
     if (day4Qs.length > 0) day4Questions.value = day4Qs
     if (day5Qs.length > 0) day5Questions.value = day5Qs
+    
+    // Load tier 2 words
+    const tier2Data = await getTier2WordsByTemplate(templateId.value)
+    if (tier2Data && tier2Data.words) {
+      tier2WordsDay3.value = tier2Data.words.filter((w: any) => w.passageDay === 3)
+      tier2WordsDay5.value = tier2Data.words.filter((w: any) => w.passageDay === 5)
+    }
+    
+    // Also load from passage if saved there
+    if (weeklyPassageDoc?.tier2Words) {
+      tier2WordsDay3.value = weeklyPassageDoc.tier2Words as any[]
+    }
+    if (fridayPassageDoc?.tier2Words) {
+      tier2WordsDay5.value = fridayPassageDoc.tier2Words as any[]
+    }
     
     console.log('[WeekTemplateSetup] Template loaded successfully')
   } catch (error) {
@@ -1565,6 +1650,68 @@ async function generateDay5Questions() {
   }
 }
 
+// Generate Tier 2 Words for Day 3
+async function generateTier2ForDay3() {
+  if (!weeklyPassage.value.text) {
+    alert('Please enter the weekly passage text first')
+    return
+  }
+  
+  try {
+    generatingTier2.value = 3
+    
+    // Get all tier 2 words already used by this teacher
+    const usedWords = user.value ? await getAllTier2WordsByTeacher(user.value.uid) : []
+    
+    // Detect new tier 2 words
+    const words = await detectTier2Words(weeklyPassage.value.text, usedWords, 2)
+    
+    tier2WordsDay3.value = words.map(w => ({
+      word: w.word,
+      definition: w.definition,
+      reasoning: w.reasoning
+    }))
+    
+    alert(`✅ Found ${words.length} tier 2 word(s) for Day 3!\n\nThese will appear before the passage to pre-teach.`)
+  } catch (error: any) {
+    console.error('Error detecting tier 2 words:', error)
+    alert('Failed to detect tier 2 words. Please try again or add manually.')
+  } finally {
+    generatingTier2.value = null
+  }
+}
+
+// Generate Tier 2 Words for Day 5
+async function generateTier2ForDay5() {
+  if (!fridayPassage.value.text) {
+    alert('Please enter the Friday passage text first')
+    return
+  }
+  
+  try {
+    generatingTier2.value = 5
+    
+    // Get all tier 2 words already used by this teacher
+    const usedWords = user.value ? await getAllTier2WordsByTeacher(user.value.uid) : []
+    
+    // Detect new tier 2 words
+    const words = await detectTier2Words(fridayPassage.value.text, usedWords, 2)
+    
+    tier2WordsDay5.value = words.map(w => ({
+      word: w.word,
+      definition: w.definition,
+      reasoning: w.reasoning
+    }))
+    
+    alert(`✅ Found ${words.length} tier 2 word(s) for Day 5!\n\nThese will appear before the passage to pre-teach.`)
+  } catch (error: any) {
+    console.error('Error detecting tier 2 words:', error)
+    alert('Failed to detect tier 2 words. Please try again or add manually.')
+  } finally {
+    generatingTier2.value = null
+  }
+}
+
 // Generate Main Idea Answer with Supporting Details
 async function generateMainIdeaWithDetails() {
   if (!weeklyPassage.value.text) {
@@ -1829,6 +1976,7 @@ const saveTemplate = async () => {
     if (cleanWeeklyVocabItems.length > 0) weeklyPassagePayload.vocabItems = cleanWeeklyVocabItems
     if (weeklyAffixItems.length > 0) weeklyPassagePayload.affixItems = weeklyAffixItems
     if (mainIdeaAnswer.value) weeklyPassagePayload.mainIdeaAnswer = mainIdeaAnswer.value
+    if (tier2WordsDay3.value.length > 0) weeklyPassagePayload.tier2Words = tier2WordsDay3.value
     
     console.log('[WeekTemplateSetup] Saving weekly passage with payload:', {
       hasVocabItems: !!weeklyPassagePayload.vocabItems,
@@ -1870,8 +2018,22 @@ const saveTemplate = async () => {
     }
     if (cleanFridayVocabItems.length > 0) fridayPassagePayload.vocabItems = cleanFridayVocabItems
     if (fridayAffixItems.length > 0) fridayPassagePayload.affixItems = fridayAffixItems
+    if (tier2WordsDay5.value.length > 0) fridayPassagePayload.tier2Words = tier2WordsDay5.value
     
     await createPassage(fridayPassagePayload)
+    
+    // Save tier 2 words to tracking collection
+    if (tier2WordsDay3.value.length > 0 || tier2WordsDay5.value.length > 0) {
+      const allTier2Words = [
+        ...tier2WordsDay3.value.map(w => ({ ...w, passageDay: 3, usedInTemplateId: finalTemplateId })),
+        ...tier2WordsDay5.value.map(w => ({ ...w, passageDay: 5, usedInTemplateId: finalTemplateId }))
+      ]
+      
+      if (user.value) {
+        await saveTier2Words(finalTemplateId, user.value.uid, allTier2Words)
+        console.log('[WeekTemplateSetup] Saved tier 2 words to tracking collection')
+      }
+    }
     
     // Create vocab words (only include fields with values)
     for (const vocab of vocabWords.value) {

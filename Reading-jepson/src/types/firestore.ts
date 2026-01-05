@@ -124,6 +124,11 @@ export interface PassageDocument {
     mainIdea: string;
     supportingDetails: string[];
   };
+  tier2Words?: { // AI-detected tier 2 words to pre-teach
+    word: string;
+    definition: string;
+    reasoning?: string;
+  }[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -451,7 +456,27 @@ export const COLLECTIONS = {
   vocabLibrary: 'vocabLibrary',
   affixLibrary: 'affixLibrary',
   passageLibrary: 'passageLibrary',
+  tier2Words: 'tier2Words',
 } as const;
+
+// ============================================================================
+// 16. tier2Words Collection (Tier 2 vocabulary tracking by template)
+// ============================================================================
+
+export interface Tier2WordEntry {
+  word: string;
+  definition: string;
+  passageDay: 3 | 4 | 5; // Which passage it came from
+  usedInTemplateId: string; // Which template used this word
+}
+
+export interface Tier2WordsDocument {
+  templateId: string; // Links to weekTemplates
+  teacherUid: string;
+  words: Tier2WordEntry[]; // All tier 2 words used in this template
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
 
 /**
  * Helper function to generate wordMastery document ID

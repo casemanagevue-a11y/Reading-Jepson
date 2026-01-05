@@ -459,5 +459,14 @@ service cloud.firestore {
     match /schoolCalendar/{eventId} {
       allow read, write: if isTeacher();
     }
+    
+    // ============================================================================
+    // 16. tier2Words Collection
+    // ============================================================================
+    
+    match /tier2Words/{docId} {
+      // Teachers can read/write their own tier 2 word tracking
+      allow read, write: if isTeacher();
+    }
   }
 }
